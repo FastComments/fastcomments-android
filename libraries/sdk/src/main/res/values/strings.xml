@@ -1,3 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">fastcomments</string>
+    <string name="no_comments_yet">No comments yet. Be the first to comment!</string>
+    <string name="error_loading_comments">Error loading comments. Please try again.</string>
+    <string name="anonymous">Anonymous</string>
+    <string name="comment_hint">Write a comment…</string>
+    <string name="submit_comment">Submit</string>
+    <string name="reply">Reply</string>
+    <string name="show_replies">Show Replies</string>
+    <string name="hide_replies">Hide Replies</string>
+    <string name="user_avatar">User Avatar</string>
+    <string name="empty_comment_error">Comment cannot be empty</string>
 </resources>
