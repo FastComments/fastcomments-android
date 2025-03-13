@@ -6,26 +6,34 @@ import android.view.LayoutInflater;
 import android.widget.LinearLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.fastcomments.client.R;
+import com.fastcomments.core.CommentWidgetConfig;
+
 import java.util.List;
 
 public class FastCommentsView extends LinearLayout {
 
     private RecyclerView recyclerView;
     private CommentsAdapter adapter;
+    private CommentWidgetConfig config;
     private int currentPage = 1;
 
-    public FastCommentsView(Context context) {
+    public FastCommentsView(Context context, CommentWidgetConfig config) {
         super(context);
+        this.config = config;
         init(context);
     }
 
-    public FastCommentsView(Context context, AttributeSet attrs) {
+    public FastCommentsView(Context context, AttributeSet attrs, CommentWidgetConfig config) {
         super(context, attrs);
+        this.config = config;
         init(context);
     }
 
-    public FastCommentsView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public FastCommentsView(Context context, AttributeSet attrs, int defStyleAttr, CommentWidgetConfig config) {
         super(context, attrs, defStyleAttr);
+        this.config = config;
         init(context);
     }
 
@@ -42,12 +50,7 @@ public class FastCommentsView extends LinearLayout {
     }
 
     private void loadComments(int page) {
-        FastCommentsSDK.init(getContext()).fetchComments(page, new FastCommentsSDK.CommentsCallback() {
-            @Override
-            public void onCommentsFetched(List<Comment> comments) {
-                adapter.setComments(comments);
-            }
-        });
+        new FastCommentsSDK(getContext()).loadForConfig(config);
     }
 
     // Public method to load a specific page.
