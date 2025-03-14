@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.fastcomments.client.R;
 import com.fastcomments.model.APICommentPublicComment;
-import com.fastcomments.model.CommentAuthor;
 
 import java.util.ArrayList;
 import java.util.Date;
