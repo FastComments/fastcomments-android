@@ -56,6 +56,8 @@ dependencies {
     
     // FastComments SDK
     implementation(project(":libraries:sdk"))
+    implementation(libs.fastcommentsCore)
+    implementation(libs.fastcommentsClient)
     
     // Testing
     testImplementation(libs.junit)

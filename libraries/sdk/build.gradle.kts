@@ -3,11 +3,12 @@ plugins {
 }
 
 android {
-    namespace = "com.fastcomments.client"
+    namespace = "com.fastcomments.sdk"
+    resourcePrefix = "fastcomments_"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.fastcomments.client"
+        applicationId = "com.fastcomments.sdk"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -34,9 +35,12 @@ android {
 dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
+    
+    // FastComments Java client
+    implementation(libs.fastcommentsCore)
+    implementation(libs.fastcommentsClient)
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation(libs.fastcommentsCore)
-    implementation(libs.fastcommentsClient)
 }
