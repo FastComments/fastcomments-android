@@ -11,15 +11,11 @@ public class RenderableComment {
 
 
     private PublicComment comment;
-    private int nestingLevel;
     private RenderableComment parent;
     private List<RenderableComment> children;
     private boolean expanded = true;
     private static int BASE_INDENT = 50;
-
-    public RenderableComment(PublicComment comment) {
-        this.comment = comment;
-    }
+    public int nestingLevel;
 
     public PublicComment getComment() {
         return comment;
@@ -34,7 +30,7 @@ public class RenderableComment {
     public RenderableComment(PublicComment comment, RenderableComment parent) {
         this.comment = comment;
         this.parent = parent;
-        this.nestingLevel = parent != null ? parent.getNestingLevel() + 1 : 0;
+        this.nestingLevel = determineNestingLevel(parent);
         this.children = new ArrayList<>();
     }
 
@@ -46,6 +42,15 @@ public class RenderableComment {
     public void addChild(RenderableComment child) {
         children.add(child);
         child.setParent(this);
+    }
+
+    public void setParent(RenderableComment parent) {
+        this.parent = parent;
+        this.nestingLevel = determineNestingLevel(parent);
+    }
+
+    private int determineNestingLevel(RenderableComment parent) {
+        return parent != null ? parent.nestingLevel + 1 : 0;
     }
 
     public int getIndentMargin() {
@@ -112,7 +117,7 @@ public class RenderableComment {
 
         // Process all comments and create RenderableComment objects
         for (PublicComment comment : comments) {
-            commentMap.put(comment.getId(), new RenderableComment(comment));
+            commentMap.put(comment.getId(), new RenderableComment(comment, null));
         }
 
         // Second pass - build the tree by connecting parents and children
@@ -126,16 +131,15 @@ public class RenderableComment {
             if (renderableComment == null) continue;
 
             if (parentId == null || parentId.isEmpty()) {
-                // This is a root comment
                 rootComments.add(renderableComment);
             } else {
                 // This is a child comment
                 RenderableComment parentComment = commentMap.get(parentId);
+                //noinspection StatementWithEmptyBody
                 if (parentComment != null) {
                     parentComment.addChild(renderableComment);
                 } else {
-                    // Parent not found, treat as root
-                    rootComments.add(renderableComment);
+                    // Parent not found, ignore
                 }
             }
         }
