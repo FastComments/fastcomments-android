@@ -10,30 +10,20 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.fastcomments.client.R;
-import com.fastcomments.model.APICommentPublicComment;
-
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.CommentViewHolder> {
 
-    private List<APICommentPublicComment> comments = new ArrayList<>();
-    private Set<String> expandedComments = new HashSet<>();
-    private OnCommentReplyListener replyListener;
+    private final List<RenderableComment> comments = new ArrayList<>();
+    private Callback<RenderableComment> replyListener;
 
-    public interface OnCommentReplyListener {
-        void onReply(APICommentPublicComment parentComment);
-    }
-
-    public void setOnCommentReplyListener(OnCommentReplyListener listener) {
+    public void setOnCommentReplyListener(Callback<RenderableComment> listener) {
         this.replyListener = listener;
     }
 
-    public void setComments(List<APICommentPublicComment> newComments) {
+    public void setComments(List<RenderableComment> newComments) {
         comments.clear();
         comments.addAll(newComments);
         notifyDataSetChanged();
@@ -42,10 +32,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
     @Override
     public int getItemCount() {
         int count = 0;
-        for (APICommentPublicComment comment : comments) {
+        for (RenderableComment comment : comments) {
             count++; // Count parent comment
-            if (expandedComments.contains(comment.getId()) && comment.getReplies() != null) {
-                count += comment.getReplies().size(); // Count visible child replies
+            if (comment.isExpanded()) {
+                count += comment.getChildCount();
             }
         }
         return count;
@@ -60,14 +50,14 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
 
     @Override
     public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
-        Pair<APICommentPublicComment, Boolean> commentPair = findCommentForPosition(position);
-        final APICommentPublicComment comment = commentPair.first;
+        Pair<RenderableComment, Boolean> commentPair = findCommentForPosition(position);
+        final RenderableComment comment = commentPair.first;
         boolean isChild = commentPair.second;
         boolean isExpanded = expandedComments.contains(comment.getParentId());
 
         holder.bind(comment, isChild, isExpanded, new OnToggleRepliesListener() {
             @Override
-            public void onToggle(APICommentPublicComment comment) {
+            public void onToggle(RenderableComment comment) {
                 if (expandedComments.contains(comment.getId())) {
                     expandedComments.remove(comment.getId());
                 } else {
@@ -86,9 +76,9 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
     }
 
     // Helper method to determine which comment corresponds to a given adapter position
-    private Pair<APICommentPublicComment, Boolean> findCommentForPosition(int position) {
+    private Pair<RenderableComment, Boolean> findCommentForPosition(int position) {
         int pos = position;
-        for (APICommentPublicComment comment : comments) {
+        for (RenderableComment comment : comments) {
             if (pos == 0) {
                 return new Pair<>(comment, false);
             }
@@ -106,7 +96,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
     }
 
     public interface OnToggleRepliesListener {
-        void onToggle(APICommentPublicComment comment);
+        void onToggle(RenderableComment comment);
     }
 
     public static class CommentViewHolder extends RecyclerView.ViewHolder {
@@ -127,7 +117,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
             replyButton = itemView.findViewById(R.id.replyButton);
         }
 
-        public void bind(final APICommentPublicComment comment, boolean isChild, boolean isExpanded, 
+        public void bind(final RenderableComment comment, boolean isChild, boolean isExpanded,
                         final OnToggleRepliesListener listener) {
             // Display author information
             CommentAuthor author = comment.getAuthor();
@@ -165,7 +155,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
             }
 
             // Show the toggle replies button only if there are replies
-            List<APICommentPublicComment> replies = comment.getReplies();
+            List<RenderableComment> replies = comment.getReplies();
             if (replies != null && !replies.isEmpty()) {
                 toggleRepliesButton.setVisibility(View.VISIBLE);
                 toggleRepliesButton.setText(isExpanded ? "Hide Replies" : "Show Replies (" + replies.size() + ")");

@@ -1,34 +1,37 @@
 package com.fastcomments.sdk;
 
+import com.fastcomments.model.PublicComment;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class RenderableComment {
 
-    private static final com.google.gson.Gson GSON = new com.google.gson.Gson();
 
-    private APICommentPublicComment comment;
+    private PublicComment comment;
     private int nestingLevel;
     private RenderableComment parent;
     private List<RenderableComment> children;
     private boolean expanded = true;
+    private static int BASE_INDENT = 50;
 
-    /**
-     * Create a new renderable comment
-     *
-     * @param comment The API comment object
-     * @param nestingLevel The nesting level (0 for root comments)
-     */
-    public RenderableComment(APICommentPublicComment comment, int nestingLevel) {
+    public RenderableComment(PublicComment comment) {
         this.comment = comment;
-        this.nestingLevel = nestingLevel;
-        this.children = new ArrayList<>();
+    }
+
+    public PublicComment getComment() {
+        return comment;
     }
 
     /**
      * Create a new renderable comment with a parent
      *
      * @param comment The API comment object
-     * @param parent The parent comment
+     * @param parent  The parent comment
      */
-    public RenderableComment(APICommentPublicComment comment, RenderableComment parent) {
+    public RenderableComment(PublicComment comment, RenderableComment parent) {
         this.comment = comment;
         this.parent = parent;
         this.nestingLevel = parent != null ? parent.getNestingLevel() + 1 : 0;
@@ -45,14 +48,8 @@ public class RenderableComment {
         child.setParent(this);
     }
 
-    /**
-     * Get the indent margin for this comment based on nesting level
-     *
-     * @param baseIndent The base indent value for each level
-     * @return The total indent margin
-     */
-    public int getIndentMargin(int baseIndent) {
-        return nestingLevel * baseIndent;
+    public int getIndentMargin() {
+        return nestingLevel * BASE_INDENT;
     }
 
     /**
@@ -88,12 +85,12 @@ public class RenderableComment {
      *
      * @return The total comment count
      */
-    public int getTotalCount() {
-        int count = 1; // This comment
+    public int getChildCount() {
+        int count = 0;
 
         if (children != null) {
             for (RenderableComment child : children) {
-                count += child.getTotalCount();
+                count += child.getChildCount();
             }
         }
 
@@ -101,33 +98,29 @@ public class RenderableComment {
     }
 
     /**
-     * Build a tree of RenderableComment objects from a flat list of APICommentPublicComment objects
+     * Build a tree of RenderableComment objects from a flat list of PublicComment objects
      *
      * @param comments The flat list of comments
      * @return A list of root RenderableComment objects with proper nesting
      */
-    public static List<RenderableComment> buildCommentTree(List<APICommentPublicComment> comments) {
+    public static List<RenderableComment> buildCommentTree(List<PublicComment> comments) {
         if (comments == null || comments.isEmpty()) {
             return new ArrayList<>();
         }
 
-        // First pass - create renderable comments and store in a map by their ID
-        Map<String, RenderableComment> commentMap = new HashMap<>();
+        final Map<String, RenderableComment> commentMap = new HashMap<>();
 
         // Process all comments and create RenderableComment objects
-        for (APICommentPublicComment comment : comments) {
-            String commentId = getCommentId(comment);
-            if (commentId != null) {
-                commentMap.put(commentId, new RenderableComment(comment, 0));
-            }
+        for (PublicComment comment : comments) {
+            commentMap.put(comment.getId(), new RenderableComment(comment));
         }
 
         // Second pass - build the tree by connecting parents and children
         List<RenderableComment> rootComments = new ArrayList<>();
 
-        for (APICommentPublicComment comment : comments) {
-            String commentId = getCommentId(comment);
-            String parentId = getParentId(comment);
+        for (PublicComment comment : comments) {
+            final String commentId = comment.getId();
+            final String parentId = comment.getParentId();
 
             RenderableComment renderableComment = commentMap.get(commentId);
             if (renderableComment == null) continue;
@@ -150,78 +143,6 @@ public class RenderableComment {
         return rootComments;
     }
 
-    /**
-     * Get the comment ID from an APICommentPublicComment object
-     *
-     * @param comment The comment object
-     * @return The comment ID or null if not available
-     */
-    private static String getCommentId(APICommentPublicComment comment) {
-        // This would need to be implemented based on the actual structure of APICommentPublicComment
-        // Placeholder implementation - actual field names may vary
-        try {
-            java.lang.reflect.Field field = comment.getClass().getDeclaredField("id");
-            field.setAccessible(true);
-            return (String) field.get(comment);
-        } catch (Exception e) {
-            // Handle reflection exceptions
-            return null;
-        }
-    }
-
-    /**
-     * Get the parent ID from an APICommentPublicComment object
-     *
-     * @param comment The comment object
-     * @return The parent ID or null if not available
-     */
-    private static String getParentId(APICommentPublicComment comment) {
-        // This would need to be implemented based on the actual structure of APICommentPublicComment
-        // Placeholder implementation - actual field names may vary
-        try {
-            java.lang.reflect.Field field = comment.getClass().getDeclaredField("parentId");
-            field.setAccessible(true);
-            return (String) field.get(comment);
-        } catch (Exception e) {
-            // Handle reflection exceptions
-            return null;
-        }
-    }
-
-    // Getters and setters
-
-    public APICommentPublicComment getComment() {
-        return comment;
-    }
-
-    public void setComment(APICommentPublicComment comment) {
-        this.comment = comment;
-    }
-
-    public int getNestingLevel() {
-        return nestingLevel;
-    }
-
-    public void setNestingLevel(int nestingLevel) {
-        this.nestingLevel = nestingLevel;
-    }
-
-    public RenderableComment getParent() {
-        return parent;
-    }
-
-    public void setParent(RenderableComment parent) {
-        this.parent = parent;
-        this.nestingLevel = parent != null ? parent.getNestingLevel() + 1 : 0;
-    }
-
-    public List<RenderableComment> getChildren() {
-        return children;
-    }
-
-    public void setChildren(List<RenderableComment> children) {
-        this.children = children;
-    }
 
     public boolean isExpanded() {
         return expanded;

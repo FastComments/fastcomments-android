@@ -14,9 +14,9 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.fastcomments.client.R;
 import com.fastcomments.core.CommentWidgetConfig;
-import com.fastcomments.model.APICommentPublicComment;
+import com.fastcomments.model.APIError;
+import com.fastcomments.model.GetCommentsResponseWithPresencePublicComment;
 
 import java.util.List;
 
@@ -30,6 +30,7 @@ public class FastCommentsView extends LinearLayout {
     private FastCommentsSDK sdk;
     private CommentWidgetConfig config;
     private int currentPage = 1;
+    // TODO maintain relative comment dates
 
     public FastCommentsView(Context context, FastCommentsSDK sdk) {
         super(context);
@@ -84,24 +85,6 @@ public class FastCommentsView extends LinearLayout {
     }
     
     /**
-     * Set a callback for when comments are loaded
-     */
-    public interface OnCommentsLoadedListener {
-        void onCommentsLoaded(List<APICommentPublicComment> comments);
-        void onError(Exception e);
-    }
-    
-    private OnCommentsLoadedListener commentsLoadedListener;
-    
-    /**
-     * Set a listener to be notified when comments are loaded
-     * @param listener OnCommentsLoadedListener
-     */
-    public void setOnCommentsLoadedListener(OnCommentsLoadedListener listener) {
-        this.commentsLoadedListener = listener;
-    }
-    
-    /**
      * Set reply listener for comment adapter
      */
     public void setOnCommentReplyListener(CommentsAdapter.OnCommentReplyListener listener) {
@@ -117,33 +100,27 @@ public class FastCommentsView extends LinearLayout {
         }
         
         showLoading(true);
-        
-        sdk.getComments(new FastCommentsSDK.CommentsCallback() {
-            @Override
-            public void onSuccess(List<APICommentPublicComment> comments) {
-                showLoading(false);
-                
-                if (comments.isEmpty()) {
-                    showEmptyState(true);
-                } else {
-                    showEmptyState(false);
-                    adapter.setComments(comments);
-                }
-                
-                if (commentsLoadedListener != null) {
-                    commentsLoadedListener.onCommentsLoaded(comments);
-                }
-            }
 
+        sdk.getComments(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
             @Override
-            public void onError(Exception e) {
+            public boolean onFailure(APIError error) {
                 showLoading(false);
                 showEmptyState(true);
                 emptyStateView.setText(R.string.error_loading_comments);
-                
-                if (commentsLoadedListener != null) {
-                    commentsLoadedListener.onError(e);
+                return CONSUME;
+            }
+
+            @Override
+            public boolean onSuccess(GetCommentsResponseWithPresencePublicComment response) {
+                showLoading(false);
+
+                if (response.getComments().isEmpty()) {
+                    showEmptyState(true);
+                } else {
+                    showEmptyState(false);
+                    adapter.setComments(response.getComments());
                 }
+                return CONSUME;
             }
         });
     }
@@ -160,22 +137,22 @@ public class FastCommentsView extends LinearLayout {
         
         commentForm.setSubmitting(true);
         
-        sdk.postComment(commentText, parentId, new FastCommentsSDK.CommentPostCallback() {
-            @Override
-            public void onSuccess(APICommentPublicComment comment) {
-                commentForm.setSubmitting(false);
-                commentForm.clearText();
-                
-                // Refresh comments to include the new one
-                loadComments();
-            }
-
-            @Override
-            public void onError(Exception e) {
-                commentForm.setSubmitting(false);
-                commentForm.showError(e.getMessage());
-            }
-        });
+//        sdk.postComment(commentText, parentId, new FastCommentsSDK.CommentPostCallback() {
+//            @Override
+//            public void onSuccess(APICommentPublicComment comment) {
+//                commentForm.setSubmitting(false);
+//                commentForm.clearText();
+//
+//                // Refresh comments to include the new one
+//                loadComments();
+//            }
+//
+//            @Override
+//            public void onError(Exception e) {
+//                commentForm.setSubmitting(false);
+//                commentForm.showError(e.getMessage());
+//            }
+//        });
     }
     
     private void showLoading(boolean show) {

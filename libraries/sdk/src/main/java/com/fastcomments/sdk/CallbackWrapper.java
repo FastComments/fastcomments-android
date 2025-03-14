@@ -52,11 +52,16 @@ public class CallbackWrapper<T> {
         };
     }
 
-    public static void handleAPIException(Handler handler, FCCallback<?> cb, ApiException e) {
+    public static APIError createErrorFromException(ApiException e) {
         final APIError error = new APIError();
         error.setCode("internal");
         error.setReason(e.getMessage() != null ? e.getMessage() : "N/A");
         error.setStatusCode((double) e.getCode());
+        return error;
+    }
+
+    public static void handleAPIException(Handler handler, FCCallback<?> cb, ApiException e) {
+        final APIError error = createErrorFromException(e);
         handler.post(() -> {
             cb.onFailure(error);
         });
