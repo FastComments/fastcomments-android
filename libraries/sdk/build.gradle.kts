@@ -39,7 +39,8 @@ dependencies {
     // FastComments Java client
     implementation(libs.fastcommentsCore)
     implementation(libs.fastcommentsClient)
-    
+    implementation("com.google.code.gson:gson:2.12.1")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

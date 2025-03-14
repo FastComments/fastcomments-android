@@ -31,22 +31,22 @@ public class FastCommentsView extends LinearLayout {
     private CommentWidgetConfig config;
     private int currentPage = 1;
 
-    public FastCommentsView(Context context) {
+    public FastCommentsView(Context context, FastCommentsSDK sdk) {
         super(context);
-        init(context, null);
+        init(context, null, sdk);
     }
 
-    public FastCommentsView(Context context, AttributeSet attrs) {
+    public FastCommentsView(Context context, AttributeSet attrs, FastCommentsSDK sdk) {
         super(context, attrs);
-        init(context, attrs);
+        init(context, attrs, sdk);
     }
 
-    public FastCommentsView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public FastCommentsView(Context context, AttributeSet attrs, int defStyleAttr, FastCommentsSDK sdk) {
         super(context, attrs, defStyleAttr);
-        init(context, attrs);
+        init(context, attrs, sdk);
     }
 
-    private void init(Context context, AttributeSet attrs) {
+    private void init(Context context, AttributeSet attrs, FastCommentsSDK sdk) {
         setOrientation(VERTICAL);
         LayoutInflater.from(context).inflate(R.layout.fast_comments_view, this, true);
         
@@ -62,8 +62,7 @@ public class FastCommentsView extends LinearLayout {
         commentForm = new CommentFormView(context);
         addView(commentForm);
         
-        // Get SDK instance - this will throw an exception if not initialized
-        sdk = FastCommentsSDK.getInstance();
+        this.sdk = sdk;
     }
     
     /**
