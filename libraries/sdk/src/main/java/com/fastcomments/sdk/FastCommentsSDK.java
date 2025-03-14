@@ -93,36 +93,17 @@ public class FastCommentsSDK {
     }
 
     /**
-     * Load comments asynchronously with pagination and threading options
-     *
-     * @param page         The page number (starting from 0)
-     * @param skip         Number of comments to skip
-     * @param limit        Maximum number of comments to return
-     * @param asTree       Whether to return comments in tree structure
-     * @param maxTreeDepth Maximum depth of reply tree
-     * @param parentId     Parent comment ID to fetch replies for
-     * @param callback     Callback to receive the response
+     * Load comments asynchronously with pagination and threading options.
      */
     public void getComments(
             Integer page,
             Integer skip,
             Integer limit,
-            Boolean asTree,
             Integer maxTreeDepth,
             String parentId,
             final FCCallback<GetComments200Response> callback) {
 
-        if (config == null) {
-            callback.onError(new IllegalStateException("SDK not configured. Call configure() first."));
-            return;
-        }
-
         SortDirections direction = config.defaultSortDirection;
-
-        String ssoParam = null;
-        if (config.sso != null) {
-            ssoParam = config.sso.prepareToSend();
-        }
 
         // If page is not provided, use the one from config
         Double pageParam = null;
@@ -145,24 +126,24 @@ public class FastCommentsSDK {
             // Make the API call asynchronously
             api.getCommentsAsync(
                     config.tenantId,
-                    urlId,
+                    config.urlId,
                     pageParam,
                     direction,
-                    ssoParam,
+                    config.getSSOToken(),
                     skipParam,
                     skipChildren,
                     limitParam,
                     limitChildren,
                     null, // lastGenDate
                     null, // fetchPageForCommentId
-                    true, // includeConfig
-                    config.countAll, // countAll
+                    BooleanQueryParam.TRUE, // includeConfig
+                    config.countAll ? BooleanQueryParam.TRUE : BooleanQueryParam.FALSE, // countAll
                     null, // includei10n
                     config.locale, // locale
                     null, // modules
                     null, // isCrawler
-                    true, // includeNotificationCount
-                    asTree, // asTree - hierarchical comment structure
+                    BooleanQueryParam.TRUE, // includeNotificationCount
+                    BooleanQueryParam.TRUE, // asTree - hierarchical comment structure
                     maxTreeDepthParam, // maxTreeDepth
                     null, // useFullTranslationIds
                     parentId, // parentId - for loading replies to a specific comment
