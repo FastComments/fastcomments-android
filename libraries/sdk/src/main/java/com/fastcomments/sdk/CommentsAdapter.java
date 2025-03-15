@@ -153,10 +153,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
             }
 
             // Show the toggle replies button only if there are replies
-            List<RenderableComment> replies = comment.getComment().getHasChildren();
-            if (replies != null && !replies.isEmpty()) {
+            final Integer childCount = comment.getComment().getChildCount();
+            if (childCount != null && childCount > 0) {
                 toggleRepliesButton.setVisibility(View.VISIBLE);
-                toggleRepliesButton.setText(isExpanded ? "Hide Replies" : "Show Replies (" + replies.size() + ")");
+                toggleRepliesButton.setText(comment.isExpanded() ? "Hide Replies" : "Show Replies (" + childCount + ")");
                 toggleRepliesButton.setOnClickListener(v -> {
                     if (listener != null) {
                         listener.onToggle(comment);
