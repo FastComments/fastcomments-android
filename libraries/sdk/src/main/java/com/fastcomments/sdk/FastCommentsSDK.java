@@ -155,7 +155,7 @@ public class FastCommentsSDK {
                     .limitChildren(limit)
                     .lastGenDate(lastGenDate)
                     .includeConfig(BooleanQueryParam.TRUE)
-                    .countAll(config.countAll ? BooleanQueryParam.TRUE : BooleanQueryParam.FALSE)
+                    .countAll(Boolean.TRUE.equals(config.countAll) ? BooleanQueryParam.TRUE : BooleanQueryParam.FALSE)
                     .locale(config.locale)
                     .includeNotificationCount(BooleanQueryParam.TRUE)
                     .executeAsync(new ApiCallback<GetComments200Response>() {
