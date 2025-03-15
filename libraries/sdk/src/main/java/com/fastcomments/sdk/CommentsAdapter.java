@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -53,9 +54,8 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
         Pair<RenderableComment, Boolean> commentPair = findCommentForPosition(position);
         final RenderableComment comment = commentPair.first;
         boolean isChild = commentPair.second;
-        boolean isExpanded = expandedComments.contains(comment.getParentId());
 
-        holder.bind(comment, isChild, isExpanded, new OnToggleRepliesListener() {
+        holder.bind(comment, isChild, new OnToggleRepliesListener() {
             @Override
             public void onToggle(RenderableComment comment) {
                 if (expandedComments.contains(comment.getId())) {
@@ -117,12 +117,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
             replyButton = itemView.findViewById(R.id.replyButton);
         }
 
-        public void bind(final RenderableComment comment, boolean isChild, boolean isExpanded,
-                        final OnToggleRepliesListener listener) {
-            // Display author information
-            CommentAuthor author = comment.getAuthor();
-            if (author != null) {
-                nameTextView.setText(author.getName());
+        public void bind(final RenderableComment comment, boolean isChild, final OnToggleRepliesListener listener) {
+            //noinspection ConstantValue
+            if (comment.getComment().getCommenterName() != null) {
+                nameTextView.setText(comment.getComment().getCommenterName());
                 // You would use an image loading library like Glide or Picasso here
                 // For now, just use a placeholder
                 avatarImageView.setImageResource(R.drawable.default_avatar);
@@ -132,10 +130,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
             }
             
             // Format and display the date
-            Date date = comment.getDate();
+            OffsetDateTime date = comment.getComment().getDate();
             if (date != null) {
                 CharSequence relativeTime = DateUtils.getRelativeTimeSpanString(
-                    date.getTime(), 
+                    date.toInstant().toEpochMilli(),
                     System.currentTimeMillis(), 
                     DateUtils.MINUTE_IN_MILLIS
                 );
@@ -145,7 +143,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
             }
             
             // Display the comment content
-            contentTextView.setText(comment.getHtml());
+            contentTextView.setText(comment.getComment().getCommentHTML());
 
             // Indent child comments to reflect hierarchy
             ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) itemView.getLayoutParams();
@@ -155,7 +153,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
             }
 
             // Show the toggle replies button only if there are replies
-            List<RenderableComment> replies = comment.getReplies();
+            List<RenderableComment> replies = comment.getComment().getHasChildren();
             if (replies != null && !replies.isEmpty()) {
                 toggleRepliesButton.setVisibility(View.VISIBLE);
                 toggleRepliesButton.setText(isExpanded ? "Hide Replies" : "Show Replies (" + replies.size() + ")");

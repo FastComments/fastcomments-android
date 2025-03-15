@@ -108,12 +108,10 @@ public class RenderableComment {
      * @param comments The flat list of comments
      * @return A list of root RenderableComment objects with proper nesting
      */
-    public static List<RenderableComment> buildCommentTree(List<PublicComment> comments) {
+    public static List<RenderableComment> buildCommentTree(Map<String, RenderableComment> commentMap, List<PublicComment> comments) {
         if (comments == null || comments.isEmpty()) {
             return new ArrayList<>();
         }
-
-        final Map<String, RenderableComment> commentMap = new HashMap<>();
 
         // Process all comments and create RenderableComment objects
         for (PublicComment comment : comments) {

@@ -12,7 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.fastcomments.client.R;
+import com.fastcomments.sdk.R;
 import com.fastcomments.model.UserSessionInfo;
 
 public class CommentFormView extends LinearLayout {
@@ -88,7 +88,7 @@ public class CommentFormView extends LinearLayout {
      */
     public void setCurrentUser(UserSessionInfo userInfo) {
         if (userInfo != null) {
-            userNameTextView.setText(userInfo.getUserName());
+            userNameTextView.setText(userInfo.getDisplayName());
             // Load avatar image if available
             // For now, use the default avatar
             avatarImageView.setImageResource(R.drawable.default_avatar);

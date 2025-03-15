@@ -4,21 +4,15 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.GetCommentsResponseWithPresencePublicComment;
-
-import java.util.List;
 
 public class FastCommentsView extends LinearLayout {
 
@@ -28,8 +22,6 @@ public class FastCommentsView extends LinearLayout {
     private ProgressBar progressBar;
     private TextView emptyStateView;
     private FastCommentsSDK sdk;
-    private CommentWidgetConfig config;
-    private int currentPage = 1;
     // TODO maintain relative comment dates
 
     public FastCommentsView(Context context, FastCommentsSDK sdk) {
@@ -65,40 +57,8 @@ public class FastCommentsView extends LinearLayout {
         
         this.sdk = sdk;
     }
-    
-    /**
-     * Configure the FastCommentsView with the specified configuration
-     * @param config CommentWidgetConfig object
-     */
-    public void setConfig(CommentWidgetConfig config) {
-        this.config = config;
-        // Load comments when configuration is set
-        loadComments();
-        
-        // Set up comment submission
-        commentForm.setOnCommentSubmitListener(new CommentFormView.OnCommentSubmitListener() {
-            @Override
-            public void onCommentSubmit(String commentText) {
-                postComment(commentText, null);
-            }
-        });
-    }
-    
-    /**
-     * Set reply listener for comment adapter
-     */
-    public void setOnCommentReplyListener(CommentsAdapter.OnCommentReplyListener listener) {
-        adapter.setOnCommentReplyListener(listener);
-    }
 
-    /**
-     * Load comments from the API
-     */
-    public void loadComments() {
-        if (config == null) {
-            throw new IllegalStateException("Config not set. Call setConfig() first.");
-        }
-        
+    public void load() {
         showLoading(true);
 
         sdk.getComments(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
@@ -118,7 +78,7 @@ public class FastCommentsView extends LinearLayout {
                     showEmptyState(true);
                 } else {
                     showEmptyState(false);
-                    adapter.setComments(response.getComments());
+                    adapter.setComments(sdk.commentsTree);
                 }
                 return CONSUME;
             }
@@ -131,10 +91,6 @@ public class FastCommentsView extends LinearLayout {
      * @param parentId Parent comment ID for replies (null for top-level comments)
      */
     public void postComment(String commentText, String parentId) {
-        if (config == null) {
-            throw new IllegalStateException("Config not set. Call setConfig() first.");
-        }
-        
         commentForm.setSubmitting(true);
         
 //        sdk.postComment(commentText, parentId, new FastCommentsSDK.CommentPostCallback() {
@@ -169,6 +125,6 @@ public class FastCommentsView extends LinearLayout {
      * Public method to manually reload comments
      */
     public void refresh() {
-        loadComments();
+        load();
     }
 }
