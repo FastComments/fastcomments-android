@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         val config = CommentWidgetConfig(
             "demo",
-            "android-demo-page",
+            "test",
             "https://example.com/some-page",
             "example.com",
             "Some Page Title"
