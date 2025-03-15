@@ -58,11 +58,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
         holder.bind(comment, isChild, new OnToggleRepliesListener() {
             @Override
             public void onToggle(RenderableComment comment) {
-                if (expandedComments.contains(comment.getId())) {
-                    expandedComments.remove(comment.getId());
-                } else {
-                    expandedComments.add(comment.getId());
-                }
+                comment.setExpanded(!comment.isExpanded());
                 notifyDataSetChanged();
             }
         });
