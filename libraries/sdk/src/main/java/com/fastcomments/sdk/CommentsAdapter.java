@@ -7,12 +7,12 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.CommentViewHolder> {
@@ -62,7 +62,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
                 notifyDataSetChanged();
             }
         });
-        
+
         // Set up reply click listener
         holder.replyButton.setOnClickListener(v -> {
             if (replyListener != null) {
@@ -79,12 +79,14 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
                 return new Pair<>(comment, false);
             }
             pos--;
-            if (expandedComments.contains(comment.getId()) && comment.getReplies() != null) {
-                int replyCount = comment.getReplies().size();
-                if (pos < replyCount) {
-                    return new Pair<>(comment.getReplies().get(pos), true);
-                } else {
-                    pos -= replyCount;
+            if (comment.isExpanded()) {
+                final Integer replyCount = comment.getComment().getChildCount();
+                if (replyCount != null && replyCount > 0) {
+                    if (pos < replyCount) {
+                        return new Pair<>(comment.getChildren().get(pos), true);
+                    } else {
+                        pos -= replyCount;
+                    }
                 }
             }
         }
@@ -124,20 +126,20 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
                 nameTextView.setText(R.string.anonymous);
                 avatarImageView.setImageResource(R.drawable.default_avatar);
             }
-            
+
             // Format and display the date
             OffsetDateTime date = comment.getComment().getDate();
             if (date != null) {
                 CharSequence relativeTime = DateUtils.getRelativeTimeSpanString(
-                    date.toInstant().toEpochMilli(),
-                    System.currentTimeMillis(), 
-                    DateUtils.MINUTE_IN_MILLIS
+                        date.toInstant().toEpochMilli(),
+                        System.currentTimeMillis(),
+                        DateUtils.MINUTE_IN_MILLIS
                 );
                 dateTextView.setText(relativeTime);
             } else {
                 dateTextView.setText("");
             }
-            
+
             // Display the comment content
             contentTextView.setText(comment.getComment().getCommentHTML());
 
@@ -168,6 +170,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
     public static class Pair<F, S> {
         public final F first;
         public final S second;
+
         public Pair(F first, S second) {
             this.first = first;
             this.second = second;

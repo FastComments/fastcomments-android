@@ -3,7 +3,6 @@ package com.fastcomments.sdk;
 import com.fastcomments.model.PublicComment;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,6 +41,10 @@ public class RenderableComment {
     public void addChild(RenderableComment child) {
         children.add(child);
         child.setParent(this);
+    }
+
+    public List<RenderableComment> getChildren() {
+        return children;
     }
 
     public void setParent(RenderableComment parent) {
