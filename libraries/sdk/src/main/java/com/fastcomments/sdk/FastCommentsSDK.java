@@ -50,7 +50,7 @@ public class FastCommentsSDK {
         this.commentsTree = new ArrayList<>(30);
         this.broadcastIdsSent = new HashSet<>(0);
         this.config = config;
-        this.api.getApiClient().setBasePath("http://localhost:3001");
+        this.api.getApiClient().setBasePath("https://fastcomments.com");
     }
 
     public FastCommentsSDK() {
