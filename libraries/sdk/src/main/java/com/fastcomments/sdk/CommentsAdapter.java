@@ -66,7 +66,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
         // Set up reply click listener
         holder.replyButton.setOnClickListener(v -> {
             if (replyListener != null) {
-                replyListener.onReply(comment);
+                replyListener.call(comment);
             }
         });
     }
