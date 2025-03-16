@@ -14,11 +14,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val config = CommentWidgetConfig(
-            "demo",
-            "test",
-            "https://example.com/some-page",
-            "example.com",
-            "Some Page Title"
+            "L177BUDVvSe",
+            "https://blog.fastcomments.com/(12-30-2019)-fastcomments-demo.html",
+            "https://fastcomments.com/demo",
+            "fastcomments.com",
+            "Demo"
         )
 
         // TODO simple sso example
