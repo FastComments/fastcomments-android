@@ -26,7 +26,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
 
     @Override
     public int getItemCount() {
-        return commentsTree.visibleSize();
+        return commentsTree.totalSize();
     }
 
     @NonNull
@@ -40,9 +40,11 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
     public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
         final RenderableComment comment = findCommentForPosition(position);
 
+        if (comment == null) {
+            return;
+        }
         holder.setComment(comment, updatedComment -> {
             commentsTree.setRepliesVisible(updatedComment, !updatedComment.isRepliesShown());
-            notifyDataSetChanged();
         });
 
 //        holder.replyButton.setOnClickListener(v -> {
@@ -55,7 +57,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
     // Helper method to determine which comment corresponds to a given adapter position
     private RenderableComment findCommentForPosition(int position) {
         if (position < 0 || position >= commentsTree.visibleComments.size()) {
-            throw new IndexOutOfBoundsException("Invalid position");
+            return null;
         }
         return commentsTree.visibleComments.get(position);
     }

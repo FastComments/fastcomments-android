@@ -13,7 +13,7 @@ import java.util.Map;
  * To keep this as an n-time lookup without hashmaps it means we need to maintain an array of visible items.
  * When adding or removing items, we could rebuild the whole tree each time, but this would add to lag during certain operations, and
  * for live sessions would drain the user's battery with rebuilding the tree all the time.
- *
+ * <p>
  * So we have efficient implements for each common operation (toggling replies, adding/removing comments).
  */
 public class CommentsTree {
@@ -71,8 +71,23 @@ public class CommentsTree {
         }
     }
 
+    public int totalSize() {
+        return allComments.size();
+    }
+
     public int visibleSize() {
         return visibleComments.size();
+    }
+
+    private void removeChildren(List<PublicComment> publicComments) {
+        for (PublicComment child : publicComments) {
+            final RenderableComment childRenderable = commentsById.get(child.getId());
+            // see explanation at top of class
+            visibleComments.remove(childRenderable);
+            if (child.getChildren() != null) {
+                removeChildren(child.getChildren());
+            }
+        }
     }
 
     public void setRepliesVisible(RenderableComment renderableComment, boolean areRepliesVisible) {
@@ -81,24 +96,24 @@ public class CommentsTree {
             return;
         }
         renderableComment.setRepliesShown(areRepliesVisible);
+        final List<PublicComment> children = renderableComment.getComment().getChildren();
         if (areRepliesVisible) {
-            if (renderableComment.getComment().getChildren() != null) {
-                int myIndex = visibleComments.indexOf(renderableComment) + 1;
-                List<PublicComment> children = renderableComment.getComment().getChildren();
+            if (children != null) {
+                int myIndex = visibleComments.indexOf(renderableComment);
+                int indexer = myIndex + 1;
                 for (int i = children.size() - 1; i >= 0; i--) {
                     final PublicComment child = children.get(i);
                     final RenderableComment childRenderable = commentsById.get(child.getId());
                     // see explanation at top of class
-                    visibleComments.add(myIndex, childRenderable);
+                    visibleComments.add(indexer, childRenderable);
                 }
+                adapter.notifyItemRangeChanged(myIndex, totalSize() - myIndex); // everything after me has changed/moved since it's a flat list
             }
         } else {
-            if (renderableComment.getComment().getChildren() != null) {
-                for (PublicComment child : renderableComment.getComment().getChildren()) {
-                    final RenderableComment childRenderable = commentsById.get(child.getId());
-                    // see explanation at top of class
-                    visibleComments.remove(childRenderable);
-                }
+            if (children != null) {
+                int myIndex = visibleComments.indexOf(renderableComment);
+                removeChildren(children);
+                adapter.notifyItemRangeChanged(myIndex, totalSize() - myIndex); // everything after me has changed/moved since it's a flat list
             }
         }
     }
