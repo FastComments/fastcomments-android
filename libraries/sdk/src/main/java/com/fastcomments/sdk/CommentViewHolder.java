@@ -1,6 +1,9 @@
 package com.fastcomments.sdk;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.text.Html;
 import android.text.format.DateUtils;
 import android.view.View;
@@ -10,10 +13,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 import java.time.OffsetDateTime;
 
@@ -72,7 +78,41 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         }
 
         // Display the comment content
-        contentTextView.setText(Html.fromHtml(comment.getComment().getCommentHTML(), Html.FROM_HTML_MODE_LEGACY));
+        contentTextView.setText(Html.fromHtml(comment.getComment().getCommentHTML(), Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {
+            @Override
+            public Drawable getDrawable(String source) {
+                System.out.println("Getting image " + source);
+                final URLDrawable urlDrawable = new URLDrawable();
+
+                // Use Glide to asynchronously load the image from the URL.
+                Glide.with(context)
+                        .asBitmap()
+                        .load(source)
+                        .into(new CustomTarget<Bitmap>() {
+                            @Override
+                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                // Create a BitmapDrawable from the loaded Bitmap
+                                BitmapDrawable drawable = new BitmapDrawable(context.getResources(), resource);
+                                // Set the bounds for the drawable (required)
+                                drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+                                // Update the URLDrawable with the loaded image
+                                urlDrawable.setDrawable(drawable);
+
+                                // Refresh the TextView so that the new image is displayed
+                                contentTextView.invalidate();
+                                contentTextView.setText(contentTextView.getText());
+                            }
+
+                            @Override
+                            public void onLoadCleared(@Nullable Drawable placeholder) {
+                                // Handle cleanup if needed
+                            }
+                        });
+
+                // Return the URLDrawable (which will be updated asynchronously)
+                return urlDrawable;
+            }
+        }, null));
 
         // Indent child comments to reflect hierarchy
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) itemView.getLayoutParams();
