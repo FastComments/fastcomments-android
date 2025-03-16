@@ -22,29 +22,29 @@
                 android:id="@+id/commentAvatar"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:src="@drawable/default_avatar"
-                android:contentDescription="@string/user_avatar" />
+                android:contentDescription="@string/user_avatar"
+                android:src="@drawable/default_avatar" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginStart="8dp"
+                android:layout_weight="1"
                 android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/commentName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textStyle="bold"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/commentDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:textColor="#757575" />
+                    android:textColor="#757575"
+                    android:textSize="12sp" />
 
             </LinearLayout>
 
@@ -65,29 +65,28 @@
 
             <Button
                 android:id="@+id/replyButton"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
+                android:minWidth="0dp"
                 android:minHeight="32dp"
                 android:text="@string/reply"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:textAlignment="textStart"
                 android:textColor="@color/fastcomments_reply_button_color"
+                android:textSize="12sp"
                 />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
 
             <Button
                 android:id="@+id/toggleReplies"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
+                android:minWidth="0dp"
                 android:minHeight="32dp"
                 android:text="@string/show_replies"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:textAlignment="textStart"
                 android:textColor="@color/fastcomments_toggle_replies_button_color"
+                android:textSize="12sp"
                 android:visibility="gone" />
 
         </LinearLayout>
