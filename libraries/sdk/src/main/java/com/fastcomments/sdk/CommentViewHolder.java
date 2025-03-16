@@ -1,5 +1,6 @@
 package com.fastcomments.sdk;
 
+import android.content.Context;
 import android.text.Html;
 import android.text.format.DateUtils;
 import android.view.View;
@@ -11,10 +12,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import java.time.OffsetDateTime;
 
 public class CommentViewHolder extends RecyclerView.ViewHolder {
 
+    private final Context context;
     private final ImageView avatarImageView;
     private final TextView nameTextView;
     private final TextView dateTextView;
@@ -23,7 +27,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private final Button replyButton;
     private final CommentsTree commentsTree;
 
-    public CommentViewHolder(CommentsTree commentsTree, @NonNull View itemView) {
+    public CommentViewHolder(Context context, CommentsTree commentsTree, @NonNull View itemView) {
         super(itemView);
         avatarImageView = itemView.findViewById(R.id.commentAvatar);
         nameTextView = itemView.findViewById(R.id.commentName);
@@ -32,17 +36,20 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         toggleRepliesButton = itemView.findViewById(R.id.toggleReplies);
         replyButton = itemView.findViewById(R.id.replyButton);
         this.commentsTree = commentsTree;
+        this.context = context;
     }
 
     public void setComment(final RenderableComment comment, final CommentsAdapter.OnToggleRepliesListener listener) {
         //noinspection ConstantValue
         if (comment.getComment().getCommenterName() != null) {
             nameTextView.setText(comment.getComment().getCommenterName());
-            // You would use an image loading library like Glide or Picasso here
-            // For now, just use a placeholder
-            avatarImageView.setImageResource(R.drawable.default_avatar);
         } else {
             nameTextView.setText(R.string.anonymous);
+        }
+
+        if (comment.getComment().getAvatarSrc() != null) {
+            Glide.with(context).load(comment.getComment().getAvatarSrc()).into(avatarImageView);
+        } else {
             avatarImageView.setImageResource(R.drawable.default_avatar);
         }
 

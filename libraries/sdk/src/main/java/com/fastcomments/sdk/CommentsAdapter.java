@@ -1,5 +1,6 @@
 package com.fastcomments.sdk;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,10 +10,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
 
-    private CommentsTree commentsTree;
+    private final Context context;
+    private final CommentsTree commentsTree;
     private Callback<RenderableComment> replyListener;
 
-    public CommentsAdapter(CommentsTree commentsTree) {
+    public CommentsAdapter(Context context, CommentsTree commentsTree) {
+        this.context = context;
         this.commentsTree = commentsTree;
         commentsTree.setAdapter(this);
     }
@@ -30,15 +33,15 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
     @Override
     public CommentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_comment, parent, false);
-        return new CommentViewHolder(commentsTree, view);
+        return new CommentViewHolder(context, commentsTree, view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
         final RenderableComment comment = findCommentForPosition(position);
 
-        holder.setComment(comment, comment1 -> {
-            comment1.setRepliesShown(!comment1.isRepliesShown());
+        holder.setComment(comment, updatedComment -> {
+            commentsTree.setRepliesVisible(updatedComment, !updatedComment.isRepliesShown());
             notifyDataSetChanged();
         });
 
@@ -51,14 +54,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
 
     // Helper method to determine which comment corresponds to a given adapter position
     private RenderableComment findCommentForPosition(int position) {
-        int pos = position;
-        for (RenderableComment comment : commentsTree.comments) {
-            if (pos == 0) {
-                return comment;
-            }
-            pos--;
+        if (position < 0 || position >= commentsTree.visibleComments.size()) {
+            throw new IndexOutOfBoundsException("Invalid position");
         }
-        throw new IndexOutOfBoundsException("Invalid position");
+        return commentsTree.visibleComments.get(position);
     }
 
     public interface OnToggleRepliesListener {

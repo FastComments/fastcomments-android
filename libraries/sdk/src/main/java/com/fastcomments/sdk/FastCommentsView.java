@@ -49,7 +49,7 @@ public class FastCommentsView extends LinearLayout {
         emptyStateView = findViewById(R.id.emptyStateView);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
-        adapter = new CommentsAdapter(sdk.commentsTree);
+        adapter = new CommentsAdapter(context, sdk.commentsTree);
         recyclerView.setAdapter(adapter);
 
         // Add comment form at the bottom
