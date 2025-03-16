@@ -62,13 +62,13 @@ public class FastCommentsView extends LinearLayout {
     public void load() {
         showLoading(true);
 
-        sdk.getComments(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
+        sdk.load(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
             @Override
             public boolean onFailure(APIError error) {
                 Log.e("FastCommentsView", error.toString());
                 getHandler().post(() -> {
                     showLoading(false);
-                    showEmptyState(true);
+                    setIsEmpty(true);
                     emptyStateView.setText(R.string.error_loading_comments);
                 });
                 return CONSUME;
@@ -80,9 +80,9 @@ public class FastCommentsView extends LinearLayout {
                     showLoading(false);
 
                     if (response.getComments().isEmpty()) {
-                        showEmptyState(true);
+                        setIsEmpty(true);
                     } else {
-                        showEmptyState(false);
+                        setIsEmpty(false);
                         adapter.setComments(sdk.commentsTree);
                     }
                 });
@@ -118,14 +118,16 @@ public class FastCommentsView extends LinearLayout {
 //        });
     }
 
-    private void showLoading(boolean show) {
-        progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-        recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
+    private void showLoading(boolean isLoading) {
+        progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        if (isLoading) {
+            recyclerView.setVisibility(View.GONE);
+        }
     }
 
-    private void showEmptyState(boolean show) {
-        emptyStateView.setVisibility(show ? View.VISIBLE : View.GONE);
-        recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
+    private void setIsEmpty(boolean isEmpty) {
+        emptyStateView.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
     }
 
     /**
