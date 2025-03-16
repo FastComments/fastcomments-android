@@ -1,5 +1,6 @@
 package com.fastcomments.sdk;
 
+import android.text.Html;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -141,7 +142,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
             }
 
             // Display the comment content
-            contentTextView.setText(comment.getComment().getCommentHTML());
+            contentTextView.setText(Html.fromHtml(comment.getComment().getCommentHTML(), Html.FROM_HTML_MODE_LEGACY));
 
             // Indent child comments to reflect hierarchy
             ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) itemView.getLayoutParams();
