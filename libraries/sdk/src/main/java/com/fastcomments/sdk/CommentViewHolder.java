@@ -72,7 +72,8 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         // Indent child comments to reflect hierarchy
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) itemView.getLayoutParams();
         if (params != null) {
-            params.leftMargin = comment.determineNestingLevel(commentsTree.commentsById);
+            final int nestingLevel = comment.determineNestingLevel(commentsTree.commentsById);
+            params.leftMargin = nestingLevel > 0 ? nestingLevel * 30 : 0;
             itemView.setLayoutParams(params);
         }
 

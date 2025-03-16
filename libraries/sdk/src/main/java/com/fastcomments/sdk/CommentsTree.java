@@ -7,6 +7,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+/**
+ * The way the RecyclerView works is that when it needs to load an element at an index it calls onBindViewHolder(index)
+ * To keep this as an n-time lookup without hashmaps it means we need to maintain an array of visible items.
+ * When adding or removing items, we could rebuild the whole tree each time, but this would add to lag during certain operations, and
+ * for live sessions would drain the user's battery with rebuilding the tree all the time.
+ *
+ * So we have efficient implements for each common operation (toggling replies, adding/removing comments).
+ */
 public class CommentsTree {
 
     public Map<String, RenderableComment> commentsById;
@@ -74,16 +83,20 @@ public class CommentsTree {
         renderableComment.setRepliesShown(areRepliesVisible);
         if (areRepliesVisible) {
             if (renderableComment.getComment().getChildren() != null) {
-                for (PublicComment child : renderableComment.getComment().getChildren()) {
+                int myIndex = visibleComments.indexOf(renderableComment) + 1;
+                List<PublicComment> children = renderableComment.getComment().getChildren();
+                for (int i = children.size() - 1; i >= 0; i--) {
+                    final PublicComment child = children.get(i);
                     final RenderableComment childRenderable = commentsById.get(child.getId());
-                    final int index = allComments.indexOf(childRenderable);
-                    visibleComments.add(index, childRenderable);
+                    // see explanation at top of class
+                    visibleComments.add(myIndex, childRenderable);
                 }
             }
         } else {
             if (renderableComment.getComment().getChildren() != null) {
                 for (PublicComment child : renderableComment.getComment().getChildren()) {
                     final RenderableComment childRenderable = commentsById.get(child.getId());
+                    // see explanation at top of class
                     visibleComments.remove(childRenderable);
                 }
             }
