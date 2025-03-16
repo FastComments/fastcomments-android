@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 
 import java.time.OffsetDateTime;
 
@@ -48,9 +49,13 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         }
 
         if (comment.getComment().getAvatarSrc() != null) {
-            Glide.with(context).load(comment.getComment().getAvatarSrc()).into(avatarImageView);
+            Glide.with(context).load(comment.getComment().getAvatarSrc())
+                    .apply(RequestOptions.circleCropTransform())
+                    .into(avatarImageView);
         } else {
-            avatarImageView.setImageResource(R.drawable.default_avatar);
+            Glide.with(context).load(R.drawable.default_avatar)
+                    .apply(RequestOptions.circleCropTransform())
+                    .into(avatarImageView);
         }
 
         // Format and display the date
