@@ -1,6 +1,5 @@
 package com.fastcomments.sdk;
 
-import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -27,8 +26,7 @@ public class FastCommentsSDK {
     private CommentWidgetConfig config;
     private final PublicApi api;
     private final Handler mainHandler;
-    public Map<String, RenderableComment> commentsById;
-    public List<RenderableComment> commentsTree;
+    public final CommentsTree commentsTree;
     public int commentCountOnClient;
     public int commentCountOnServer;
     public int newRootCommentCount;
@@ -46,11 +44,10 @@ public class FastCommentsSDK {
     public FastCommentsSDK(CommentWidgetConfig config) {
         this.api = new PublicApi();
         this.mainHandler = new Handler(Looper.getMainLooper());
-        this.commentsById = new HashMap<>(30);
-        this.commentsTree = new ArrayList<>(30);
         this.broadcastIdsSent = new HashSet<>(0);
         this.config = config;
         this.api.getApiClient().setBasePath("https://fastcomments.com");
+        this.commentsTree = new CommentsTree();
     }
 
     public FastCommentsSDK() {
@@ -104,7 +101,7 @@ public class FastCommentsSDK {
                 if (response.getCustomConfig() != null) {
                     config.mergeWith(response.getCustomConfig());
                 }
-                commentsTree = RenderableComment.buildCommentTree(commentsById, response.getComments());
+                commentsTree.build(response.getComments());
                 callback.onSuccess(response);
                 return CONSUME;
             }
@@ -157,6 +154,7 @@ public class FastCommentsSDK {
                     .lastGenDate(lastGenDate)
                     .includeConfig(BooleanQueryParam.TRUE)
                     .countAll(Boolean.TRUE.equals(config.countAll) ? BooleanQueryParam.TRUE : BooleanQueryParam.FALSE)
+                    .countChildren(BooleanQueryParam.TRUE)
                     .locale(config.locale)
                     .includeNotificationCount(BooleanQueryParam.TRUE)
                     .executeAsync(new ApiCallback<GetComments200Response>() {

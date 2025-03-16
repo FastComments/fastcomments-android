@@ -49,7 +49,7 @@ public class FastCommentsView extends LinearLayout {
         emptyStateView = findViewById(R.id.emptyStateView);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
-        adapter = new CommentsAdapter();
+        adapter = new CommentsAdapter(sdk.commentsTree);
         recyclerView.setAdapter(adapter);
 
         // Add comment form at the bottom
@@ -83,7 +83,7 @@ public class FastCommentsView extends LinearLayout {
                         setIsEmpty(true);
                     } else {
                         setIsEmpty(false);
-                        adapter.setComments(sdk.commentsTree);
+                        adapter.notifyDataSetChanged();
                     }
                 });
                 return CONSUME;

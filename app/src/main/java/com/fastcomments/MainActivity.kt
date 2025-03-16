@@ -13,6 +13,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // TODO simple sso example
+        // TODO secure sso example
+        // TODO all same examples as React library
+
         val config = CommentWidgetConfig(
             "L177BUDVvSe",
             "https://blog.fastcomments.com/(12-30-2019)-fastcomments-demo.html",
@@ -20,11 +25,6 @@ class MainActivity : AppCompatActivity() {
             "fastcomments.com",
             "Demo"
         )
-
-        // TODO simple sso example
-        // TODO secure sso example
-        // TODO all same examples as React library
-
         val sdk = FastCommentsSDK(config)
 
         val container = findViewById<android.widget.FrameLayout>(R.id.commentsContainer)
