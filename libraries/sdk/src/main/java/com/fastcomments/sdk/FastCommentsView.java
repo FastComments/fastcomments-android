@@ -56,6 +56,10 @@ public class FastCommentsView extends LinearLayout {
         commentForm = new CommentFormView(context);
         addView(commentForm);
 
+        adapter.setRequestingReplyListener((commentToReplyTo) -> {
+            // show form?
+        });
+
         this.sdk = sdk;
     }
 

@@ -20,7 +20,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
         commentsTree.setAdapter(this);
     }
 
-    public void setOnCommentReplyListener(Callback<RenderableComment> listener) {
+    public void setRequestingReplyListener(Callback<RenderableComment> listener) {
         this.replyListener = listener;
     }
 
