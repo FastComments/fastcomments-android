@@ -47,11 +47,12 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
             commentsTree.setRepliesVisible(updatedComment, !updatedComment.isRepliesShown());
         });
 
-//        holder.replyButton.setOnClickListener(v -> {
-//            if (replyListener != null) {
-//                replyListener.call(comment);
-//            }
-//        });
+        // Set up reply button click listener
+        holder.setReplyClickListener(v -> {
+            if (replyListener != null) {
+                replyListener.call(comment);
+            }
+        });
     }
 
     // Helper method to determine which comment corresponds to a given adapter position
@@ -60,6 +61,27 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
             return null;
         }
         return commentsTree.visibleComments.get(position);
+    }
+    
+    /**
+     * Get the position for a specific comment in the adapter
+     * @param comment The comment to find
+     * @return The position or 0 if not found
+     */
+    public int getPositionForComment(RenderableComment comment) {
+        if (comment == null || commentsTree.visibleComments.isEmpty()) {
+            return 0;
+        }
+        
+        String commentId = comment.getComment().getId();
+        for (int i = 0; i < commentsTree.visibleComments.size(); i++) {
+            RenderableComment renderableComment = commentsTree.visibleComments.get(i);
+            if (renderableComment.getComment().getId().equals(commentId)) {
+                return i;
+            }
+        }
+        
+        return 0;
     }
 
     public interface OnToggleRepliesListener {

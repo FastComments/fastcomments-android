@@ -13,6 +13,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.fastcomments.sdk.R;
+import com.fastcomments.model.PublicComment;
 import com.fastcomments.model.UserSessionInfo;
 
 public class CommentFormView extends LinearLayout {
@@ -21,12 +22,20 @@ public class CommentFormView extends LinearLayout {
     private TextView userNameTextView;
     private EditText commentEditText;
     private Button submitButton;
+    private Button cancelButton;
     private ProgressBar progressBar;
     private TextView errorTextView;
+    private TextView replyingToTextView;
     private OnCommentSubmitListener submitListener;
+    private OnCancelReplyListener cancelListener;
+    private String parentId;
 
     public interface OnCommentSubmitListener {
-        void onCommentSubmit(String commentText);
+        void onCommentSubmit(String commentText, String parentId);
+    }
+
+    public interface OnCancelReplyListener {
+        void onCancelReply();
     }
 
     public CommentFormView(Context context) {
@@ -54,9 +63,12 @@ public class CommentFormView extends LinearLayout {
         submitButton = findViewById(R.id.formSubmitButton);
         progressBar = findViewById(R.id.formProgressBar);
         errorTextView = findViewById(R.id.formErrorText);
+        replyingToTextView = findViewById(R.id.replyingToText);
+        cancelButton = findViewById(R.id.cancelReplyButton);
         
         // Hide error text initially
         errorTextView.setVisibility(View.GONE);
+        replyingToTextView.setVisibility(View.GONE);
         
         // Set up the submit button
         submitButton.setOnClickListener(v -> {
@@ -69,9 +81,20 @@ public class CommentFormView extends LinearLayout {
             
             errorTextView.setVisibility(View.GONE);
             if (submitListener != null) {
-                submitListener.onCommentSubmit(commentText);
+                submitListener.onCommentSubmit(commentText, parentId);
             }
         });
+        
+        // Set up cancel button
+        cancelButton.setOnClickListener(v -> {
+            if (cancelListener != null) {
+                cancelListener.onCancelReply();
+            }
+            resetReplyState();
+        });
+        
+        // Initially hide cancel button until replying
+        cancelButton.setVisibility(View.GONE);
     }
     
     /**
@@ -80,6 +103,14 @@ public class CommentFormView extends LinearLayout {
      */
     public void setOnCommentSubmitListener(OnCommentSubmitListener listener) {
         this.submitListener = listener;
+    }
+    
+    /**
+     * Set the listener for canceling a reply
+     * @param listener OnCancelReplyListener
+     */
+    public void setOnCancelReplyListener(OnCancelReplyListener listener) {
+        this.cancelListener = listener;
     }
     
     /**
@@ -106,6 +137,7 @@ public class CommentFormView extends LinearLayout {
         progressBar.setVisibility(submitting ? View.VISIBLE : View.GONE);
         submitButton.setEnabled(!submitting);
         commentEditText.setEnabled(!submitting);
+        cancelButton.setEnabled(!submitting);
     }
     
     /**
@@ -122,5 +154,39 @@ public class CommentFormView extends LinearLayout {
     public void showError(String errorMessage) {
         errorTextView.setText(errorMessage);
         errorTextView.setVisibility(View.VISIBLE);
+    }
+    
+    /**
+     * Set up the form for replying to a comment.
+     */
+    public void setReplyingTo(RenderableComment renderableComment) {
+        if (renderableComment != null) {
+            final PublicComment comment = renderableComment.getComment();
+            this.parentId = comment.getId();
+            String commenterName = comment.getCommenterName() != null 
+                ? comment.getCommenterName() 
+                : getContext().getString(R.string.anonymous);
+            
+            replyingToTextView.setText(getContext().getString(R.string.replying_to, commenterName));
+            replyingToTextView.setVisibility(View.VISIBLE);
+            cancelButton.setVisibility(View.VISIBLE);
+            
+            // Set hint to indicate replying
+            commentEditText.setHint(R.string.reply_hint);
+            
+            // Focus the comment box
+            commentEditText.requestFocus();
+        }
+    }
+    
+    /**
+     * Reset to top-level comment state (not replying)
+     */
+    public void resetReplyState() {
+        this.parentId = null;
+        replyingToTextView.setVisibility(View.GONE);
+        cancelButton.setVisibility(View.GONE);
+        commentEditText.setHint(R.string.comment_hint);
+        clearText();
     }
 }

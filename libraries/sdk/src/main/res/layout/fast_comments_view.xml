@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
     <FrameLayout
+        android:id="@+id/commentsContainer"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="match_parent"
+        android:layout_above="@+id/commentFormContainer">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewComments"
@@ -34,4 +34,13 @@
 
     </FrameLayout>
 
-</LinearLayout>
+    <!-- Container for the comment form, fixed at bottom -->
+    <FrameLayout
+        android:id="@+id/commentFormContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@android:color/white"
+        android:elevation="4dp" />
+
+</RelativeLayout>

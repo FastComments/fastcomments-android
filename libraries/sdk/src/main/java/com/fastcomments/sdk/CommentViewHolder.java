@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Handler;
 import android.text.Html;
 import android.text.format.DateUtils;
 import android.view.View;
@@ -135,7 +134,11 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         final Integer childCount = comment.getComment().getChildCount();
         if (childCount != null && childCount > 0) {
             toggleRepliesButton.setVisibility(View.VISIBLE);
-            toggleRepliesButton.setText(comment.isRepliesShown() ? "Hide Replies" : "Show Replies (" + childCount + ")");
+            if (comment.isRepliesShown()) {
+                toggleRepliesButton.setText(R.string.hide_replies);
+            } else {
+                toggleRepliesButton.setText(context.getString(R.string.show_replies, childCount));
+            }
             toggleRepliesButton.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onToggle(comment);
@@ -144,5 +147,13 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         } else {
             toggleRepliesButton.setVisibility(View.GONE);
         }
+    }
+    
+    /**
+     * Set the click listener for the reply button
+     * @param clickListener The click listener to set
+     */
+    public void setReplyClickListener(View.OnClickListener clickListener) {
+        replyButton.setOnClickListener(clickListener);
     }
 }

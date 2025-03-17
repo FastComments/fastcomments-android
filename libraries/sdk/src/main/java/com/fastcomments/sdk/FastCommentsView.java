@@ -5,7 +5,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.LinearLayout;
+import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -14,8 +14,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.GetCommentsResponseWithPresencePublicComment;
+import com.fastcomments.model.PublicComment;
 
-public class FastCommentsView extends LinearLayout {
+public class FastCommentsView extends FrameLayout {
 
     private RecyclerView recyclerView;
     private CommentsAdapter adapter;
@@ -41,23 +42,40 @@ public class FastCommentsView extends LinearLayout {
     }
 
     private void init(Context context, AttributeSet attrs, FastCommentsSDK sdk) {
-        setOrientation(VERTICAL);
         LayoutInflater.from(context).inflate(R.layout.fast_comments_view, this, true);
 
         recyclerView = findViewById(R.id.recyclerViewComments);
         progressBar = findViewById(R.id.commentsProgressBar);
         emptyStateView = findViewById(R.id.emptyStateView);
+        
+        // Find the comment form container and initialize the form
+        FrameLayout commentFormContainer = findViewById(R.id.commentFormContainer);
+        commentForm = new CommentFormView(context);
+        commentFormContainer.addView(commentForm);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         adapter = new CommentsAdapter(context, sdk.commentsTree);
         recyclerView.setAdapter(adapter);
 
-        // Add comment form at the bottom
-        commentForm = new CommentFormView(context);
-        addView(commentForm);
+        // Setup form listeners
+        commentForm.setOnCommentSubmitListener((commentText, parentId) -> {
+            postComment(commentText, parentId);
+        });
+        
+        commentForm.setOnCancelReplyListener(() -> {
+            // Just reset the form, the CommentFormView handles the UI changes
+        });
+        
+        if (sdk.getCurrentUser() != null) {
+            commentForm.setCurrentUser(sdk.getCurrentUser());
+        }
 
+        // Handle reply requests from comments
         adapter.setRequestingReplyListener((commentToReplyTo) -> {
-            // show form?
+            // Show form in reply mode
+            commentForm.setReplyingTo(commentToReplyTo);
+            // Scroll to show both the comment and the form
+            recyclerView.smoothScrollToPosition(adapter.getPositionForComment(commentToReplyTo));
         });
 
         this.sdk = sdk;
@@ -104,20 +122,27 @@ public class FastCommentsView extends LinearLayout {
     public void postComment(String commentText, String parentId) {
         commentForm.setSubmitting(true);
 
-//        sdk.postComment(commentText, parentId, new FastCommentsSDK.CommentPostCallback() {
+//        sdk.postComment(commentText, parentId, new FCCallback<PublicComment>() {
 //            @Override
-//            public void onSuccess(APICommentPublicComment comment) {
-//                commentForm.setSubmitting(false);
-//                commentForm.clearText();
-//
-//                // Refresh comments to include the new one
-//                loadComments();
+//            public boolean onFailure(APIError error) {
+//                getHandler().post(() -> {
+//                    commentForm.setSubmitting(false);
+//                    commentForm.showError(error.getMessage());
+//                });
+//                return CONSUME;
 //            }
 //
 //            @Override
-//            public void onError(Exception e) {
-//                commentForm.setSubmitting(false);
-//                commentForm.showError(e.getMessage());
+//            public boolean onSuccess(PublicComment comment) {
+//                getHandler().post(() -> {
+//                    commentForm.setSubmitting(false);
+//                    commentForm.clearText();
+//                    commentForm.resetReplyState();
+//
+//                    // Refresh comments to include the new one
+//                    refresh();
+//                });
+//                return CONSUME;
 //            }
 //        });
     }
