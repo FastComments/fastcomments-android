@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
 import android.text.Html;
 import android.text.format.DateUtils;
 import android.view.View;
@@ -83,6 +84,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             public Drawable getDrawable(String source) {
                 System.out.println("Getting image " + source);
                 final URLDrawable urlDrawable = new URLDrawable();
+                urlDrawable.setBounds(0, 0, contentTextView.getWidth(), 100);
 
                 // Use Glide to asynchronously load the image from the URL.
                 Glide.with(context)
@@ -93,14 +95,15 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
                             public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                                 // Create a BitmapDrawable from the loaded Bitmap
                                 BitmapDrawable drawable = new BitmapDrawable(context.getResources(), resource);
-                                // Set the bounds for the drawable (required)
                                 drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-                                // Update the URLDrawable with the loaded image
+                                contentTextView.setHeight(drawable.getIntrinsicHeight()); // ensure view is tall enough
                                 urlDrawable.setDrawable(drawable);
 
                                 // Refresh the TextView so that the new image is displayed
-                                contentTextView.invalidate();
                                 contentTextView.setText(contentTextView.getText());
+                                // these do not seem to be required, so we can omit them for performance!
+//                                contentTextView.requestLayout();
+//                                contentTextView.invalidate();
                             }
 
                             @Override
