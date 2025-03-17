@@ -78,6 +78,10 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             dateTextView.setText("");
         }
 
+        ViewGroup.LayoutParams textViewLayout = contentTextView.getLayoutParams();
+        textViewLayout.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        contentTextView.setLayoutParams(textViewLayout);
+
         // Display the comment content
         contentTextView.setText(Html.fromHtml(comment.getComment().getCommentHTML(), Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {
             @Override
@@ -96,7 +100,9 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
                                 // Create a BitmapDrawable from the loaded Bitmap
                                 BitmapDrawable drawable = new BitmapDrawable(context.getResources(), resource);
                                 drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-                                contentTextView.setHeight(drawable.getIntrinsicHeight()); // ensure view is tall enough
+                                ViewGroup.LayoutParams textViewLayout = contentTextView.getLayoutParams();
+                                textViewLayout.height = drawable.getIntrinsicHeight();
+                                contentTextView.setLayoutParams(textViewLayout);
                                 urlDrawable.setDrawable(drawable);
 
                                 // Refresh the TextView so that the new image is displayed
@@ -118,11 +124,11 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         }, null));
 
         // Indent child comments to reflect hierarchy
-        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) itemView.getLayoutParams();
-        if (params != null) {
+        ViewGroup.MarginLayoutParams itemViewLayoutParams = (ViewGroup.MarginLayoutParams) itemView.getLayoutParams();
+        if (itemViewLayoutParams != null) {
             final int nestingLevel = comment.determineNestingLevel(commentsTree.commentsById);
-            params.leftMargin = nestingLevel > 0 ? nestingLevel * 30 : 0;
-            itemView.setLayoutParams(params);
+            itemViewLayoutParams.leftMargin = nestingLevel > 0 ? nestingLevel * 30 : 0;
+            itemView.setLayoutParams(itemViewLayoutParams);
         }
 
         // Show the toggle replies button only if there are replies
