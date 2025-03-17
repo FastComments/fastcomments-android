@@ -144,7 +144,7 @@ public class FastCommentsSDK {
                     .page(pageParam)
                     .direction(direction)
                     .sso(config.getSSOToken())
-                    .asTree(BooleanQueryParam.TRUE)
+                    .asTree(true)
                     .maxTreeDepth(maxTreeDepth)
                     .parentId(parentId)
                     .skip(skip)
@@ -152,11 +152,11 @@ public class FastCommentsSDK {
                     .limit(limit)
                     .limitChildren(limit)
                     .lastGenDate(lastGenDate)
-                    .includeConfig(BooleanQueryParam.TRUE)
-                    .countAll(Boolean.TRUE.equals(config.countAll) ? BooleanQueryParam.TRUE : BooleanQueryParam.FALSE)
-                    .countChildren(BooleanQueryParam.TRUE)
+                    .includeConfig(true)
+                    .countAll(Boolean.TRUE.equals(config.countAll))
+                    .countChildren(true)
                     .locale(config.locale)
-                    .includeNotificationCount(BooleanQueryParam.TRUE)
+                    .includeNotificationCount(true)
                     .executeAsync(new ApiCallback<GetComments200Response>() {
                         @Override
                         public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
