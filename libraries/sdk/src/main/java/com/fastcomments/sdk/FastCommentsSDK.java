@@ -114,14 +114,13 @@ public class FastCommentsSDK {
      * @param callback Callback to receive the response
      */
     public void getComments(FCCallback<GetCommentsResponseWithPresencePublicComment> callback) {
-        getComments(currentPage, null, null, 1, null, callback);
+        getComments(null, null, 1, null, callback);
     }
 
     /**
      * Load comments asynchronously with pagination and threading options.
      */
     public void getComments(
-            Integer page,
             Integer skip,
             Integer limit,
             Integer maxTreeDepth,
@@ -130,18 +129,9 @@ public class FastCommentsSDK {
 
         SortDirections direction = config.defaultSortDirection;
 
-        // If page is not provided, use the one from config
-        Integer pageParam = null;
-        if (page != null) {
-            pageParam = page;
-        } else if (config.startingPage != null) {
-            pageParam = config.startingPage;
-        }
-
         try {
             // Make the API call asynchronously
             api.getComments(config.tenantId, config.urlId)
-                    .page(pageParam)
                     .direction(direction)
                     .sso(config.getSSOToken())
                     .asTree(true)
