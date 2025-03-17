@@ -1,15 +1,20 @@
 package com.fastcomments.sdk;
 
+import android.app.Activity;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,6 +30,9 @@ public class FastCommentsView extends FrameLayout {
     private ProgressBar progressBar;
     private TextView emptyStateView;
     private FastCommentsSDK sdk;
+    private FrameLayout commentFormContainer;
+    private Button newCommentButton;
+    private OnBackPressedCallback backPressedCallback;
     // TODO maintain relative comment dates
 
     public FastCommentsView(Context context, FastCommentsSDK sdk) {
@@ -48,45 +56,55 @@ public class FastCommentsView extends FrameLayout {
         recyclerView = findViewById(R.id.recyclerViewComments);
         progressBar = findViewById(R.id.commentsProgressBar);
         emptyStateView = findViewById(R.id.emptyStateView);
-        Button newCommentButton = findViewById(R.id.newCommentButton);
+        this.newCommentButton = findViewById(R.id.newCommentButton);
         
         // Find the comment form container and initialize the form
-        FrameLayout commentFormContainer = findViewById(R.id.commentFormContainer);
+        this.commentFormContainer = findViewById(R.id.commentFormContainer);
         commentForm = new CommentFormView(context);
-        commentFormContainer.addView(commentForm);
+        this.commentFormContainer.addView(commentForm);
         
         // Hide the form initially
-        commentFormContainer.setVisibility(View.GONE);
+        this.commentFormContainer.setVisibility(View.GONE);
+        
+        // Set up back button handling if in an AppCompatActivity
+        if (context instanceof AppCompatActivity) {
+            AppCompatActivity activity = (AppCompatActivity) context;
+            backPressedCallback = new OnBackPressedCallback(false) {
+                @Override
+                public void handleOnBackPressed() {
+                    // Hide the form with animation
+                    hideCommentForm();
+                    // Reset the form
+                    commentForm.resetReplyState();
+                }
+            };
+            activity.getOnBackPressedDispatcher().addCallback(backPressedCallback);
+        } else if (context instanceof Activity) {
+            // Log a warning that back press won't be handled
+            Log.w("FastCommentsView", "Context is an Activity but not AppCompatActivity. Back button handling not supported.");
+        }
 
         // Setup new comment button
         newCommentButton.setOnClickListener(v -> {
             // Show form for a new top-level comment
             commentForm.resetReplyState();
-            commentFormContainer.setVisibility(View.VISIBLE);
-            newCommentButton.setVisibility(View.GONE);
+            showCommentForm();
         });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         adapter = new CommentsAdapter(context, sdk.commentsTree);
         recyclerView.setAdapter(adapter);
-
-        // Make button accessible from other methods
-        final Button finalNewCommentButton = newCommentButton;
         
         // Setup form listeners
         commentForm.setOnCommentSubmitListener((commentText, parentId) -> {
             postComment(commentText, parentId);
-            // Hide form after submitting
-            commentFormContainer.setVisibility(View.GONE);
-            // Show the new comment button again
-            finalNewCommentButton.setVisibility(View.VISIBLE);
+            // Hide form after submitting with animation
+            hideCommentForm();
         });
         
         commentForm.setOnCancelReplyListener(() -> {
-            // Hide the form when canceling a reply
-            commentFormContainer.setVisibility(View.GONE);
-            // Show the new comment button again
-            finalNewCommentButton.setVisibility(View.VISIBLE);
+            // Hide the form when canceling a reply with animation
+            hideCommentForm();
         });
         
         if (sdk.getCurrentUser() != null) {
@@ -97,10 +115,8 @@ public class FastCommentsView extends FrameLayout {
         adapter.setRequestingReplyListener((commentToReplyTo) -> {
             // Show form in reply mode
             commentForm.setReplyingTo(commentToReplyTo);
-            // Make form visible
-            commentFormContainer.setVisibility(View.VISIBLE);
-            // Hide the new comment button while replying
-            finalNewCommentButton.setVisibility(View.GONE);
+            // Make form visible with animation
+            showCommentForm();
             // Scroll to show both the comment and the form
             recyclerView.smoothScrollToPosition(adapter.getPositionForComment(commentToReplyTo));
         });
@@ -184,6 +200,57 @@ public class FastCommentsView extends FrameLayout {
     private void setIsEmpty(boolean isEmpty) {
         emptyStateView.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+    }
+    
+    /**
+     * Shows the comment form with animation
+     */
+    private void showCommentForm() {
+        // Load and start the animation
+        Animation slideUpAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.slide_up);
+        commentFormContainer.startAnimation(slideUpAnimation);
+        commentFormContainer.setVisibility(View.VISIBLE);
+        
+        // Hide the new comment button
+        Animation fadeOutAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.fade_out);
+        newCommentButton.startAnimation(fadeOutAnimation);
+        newCommentButton.setVisibility(View.GONE);
+        
+        // Enable back button handling
+        if (backPressedCallback != null) {
+            backPressedCallback.setEnabled(true);
+        }
+    }
+    
+    /**
+     * Hides the comment form with animation
+     */
+    private void hideCommentForm() {
+        // Load and start the animation
+        Animation slideDownAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.slide_down);
+        slideDownAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {}
+            
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                commentFormContainer.setVisibility(View.GONE);
+            }
+            
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+        commentFormContainer.startAnimation(slideDownAnimation);
+        
+        // Show the new comment button
+        Animation fadeInAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.fade_in);
+        newCommentButton.startAnimation(fadeInAnimation);
+        newCommentButton.setVisibility(View.VISIBLE);
+        
+        // Disable back button handling
+        if (backPressedCallback != null) {
+            backPressedCallback.setEnabled(false);
+        }
     }
 
     /**
