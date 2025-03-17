@@ -34,6 +34,17 @@
 
     </FrameLayout>
 
+    <!-- New Comment Button -->
+    <Button
+        android:id="@+id/newCommentButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:text="@string/new_comment"
+        android:visibility="visible" />
+
     <!-- Container for the comment form, fixed at bottom -->
     <FrameLayout
         android:id="@+id/commentFormContainer"

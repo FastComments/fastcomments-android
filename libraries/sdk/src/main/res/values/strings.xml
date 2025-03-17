@@ -14,4 +14,5 @@
     <string name="empty_comment_error">Comment cannot be empty</string>
     <string name="cancel">Cancel</string>
     <string name="replying_to">Replying to %s</string>
+    <string name="new_comment">Add a comment</string>
 </resources>

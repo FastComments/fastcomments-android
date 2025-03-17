@@ -47,23 +47,45 @@ public class FastCommentsView extends FrameLayout {
         recyclerView = findViewById(R.id.recyclerViewComments);
         progressBar = findViewById(R.id.commentsProgressBar);
         emptyStateView = findViewById(R.id.emptyStateView);
+        Button newCommentButton = findViewById(R.id.newCommentButton);
         
         // Find the comment form container and initialize the form
         FrameLayout commentFormContainer = findViewById(R.id.commentFormContainer);
         commentForm = new CommentFormView(context);
         commentFormContainer.addView(commentForm);
+        
+        // Hide the form initially
+        commentFormContainer.setVisibility(View.GONE);
+
+        // Setup new comment button
+        newCommentButton.setOnClickListener(v -> {
+            // Show form for a new top-level comment
+            commentForm.resetReplyState();
+            commentFormContainer.setVisibility(View.VISIBLE);
+            newCommentButton.setVisibility(View.GONE);
+        });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         adapter = new CommentsAdapter(context, sdk.commentsTree);
         recyclerView.setAdapter(adapter);
 
+        // Make button accessible from other methods
+        final Button finalNewCommentButton = newCommentButton;
+        
         // Setup form listeners
         commentForm.setOnCommentSubmitListener((commentText, parentId) -> {
             postComment(commentText, parentId);
+            // Hide form after submitting
+            commentFormContainer.setVisibility(View.GONE);
+            // Show the new comment button again
+            finalNewCommentButton.setVisibility(View.VISIBLE);
         });
         
         commentForm.setOnCancelReplyListener(() -> {
-            // Just reset the form, the CommentFormView handles the UI changes
+            // Hide the form when canceling a reply
+            commentFormContainer.setVisibility(View.GONE);
+            // Show the new comment button again
+            finalNewCommentButton.setVisibility(View.VISIBLE);
         });
         
         if (sdk.getCurrentUser() != null) {
@@ -74,6 +96,10 @@ public class FastCommentsView extends FrameLayout {
         adapter.setRequestingReplyListener((commentToReplyTo) -> {
             // Show form in reply mode
             commentForm.setReplyingTo(commentToReplyTo);
+            // Make form visible
+            commentFormContainer.setVisibility(View.VISIBLE);
+            // Hide the new comment button while replying
+            finalNewCommentButton.setVisibility(View.GONE);
             // Scroll to show both the comment and the form
             recyclerView.smoothScrollToPosition(adapter.getPositionForComment(commentToReplyTo));
         });
