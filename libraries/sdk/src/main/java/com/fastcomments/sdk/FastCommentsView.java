@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -30,7 +31,7 @@ public class FastCommentsView extends FrameLayout {
     private TextView emptyStateView;
     private FastCommentsSDK sdk;
     private FrameLayout commentFormContainer;
-    private Button newCommentButton;
+    private FloatingActionButton newCommentButton;
     private View paginationControls;
     private Button btnNextComments;
     private Button btnLoadAll;
