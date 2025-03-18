@@ -559,6 +559,12 @@ public class FastCommentsView extends FrameLayout {
         Animation fadeOutAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.fade_out);
         newCommentButton.startAnimation(fadeOutAnimation);
         newCommentButton.setVisibility(View.GONE);
+        
+        // Hide pagination controls while commenting
+        if (paginationControls.getVisibility() == View.VISIBLE) {
+            paginationControls.startAnimation(fadeOutAnimation);
+            paginationControls.setVisibility(View.GONE);
+        }
 
         // Enable back button handling
         if (backPressedCallback != null) {
@@ -592,6 +598,16 @@ public class FastCommentsView extends FrameLayout {
         Animation fadeInAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.fade_in);
         newCommentButton.startAnimation(fadeInAnimation);
         newCommentButton.setVisibility(View.VISIBLE);
+        
+        // Restore pagination controls if needed
+        if (sdk.hasMore && adapter.getItemCount() > 0) {
+            updatePaginationControls();
+            if (paginationControls.getVisibility() == View.GONE && 
+                    (sdk.getCountRemainingToShow() > 0 || sdk.shouldShowLoadAll())) {
+                paginationControls.startAnimation(fadeInAnimation);
+                paginationControls.setVisibility(View.VISIBLE);
+            }
+        }
 
         // Disable back button handling
         if (backPressedCallback != null) {
