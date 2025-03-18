@@ -22,6 +22,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.fastcomments.core.VoteStyle;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -44,6 +45,10 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private final TextView upVoteCountTextView;
     private final TextView downVoteCountTextView;
     private final ImageView pinIcon;
+    private final ImageButton heartButton; // Heart style vote button
+    private final View standardVoteContainer; // Container for standard up/down vote buttons
+    private final View heartVoteContainer; // Container for heart vote button
+    private final TextView heartVoteCountTextView; // Count for heart votes
     private final CommentsTree commentsTree;
     
     // Child comments pagination
@@ -70,6 +75,12 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         upVoteCountTextView = itemView.findViewById(R.id.upVoteCount);
         downVoteCountTextView = itemView.findViewById(R.id.downVoteCount);
         pinIcon = itemView.findViewById(R.id.pinIcon);
+        heartButton = itemView.findViewById(R.id.heartButton);
+        
+        // Get references to vote containers
+        standardVoteContainer = itemView.findViewById(R.id.standardVoteContainer);
+        heartVoteContainer = itemView.findViewById(R.id.heartVoteContainer);
+        heartVoteCountTextView = itemView.findViewById(R.id.heartVoteCount);
         
         // Child pagination controls
         childPaginationControls = itemView.findViewById(R.id.childPaginationControls);
@@ -159,6 +170,27 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         
         Boolean isVotedDown = comment.getComment().getIsVotedDown();
         downVoteButton.setSelected(isVotedDown != null && isVotedDown);
+        
+        // Heart button state is based on upvote state (heart vote is equivalent to upvote)
+        heartButton.setSelected(isVotedUp != null && isVotedUp);
+        
+        // Set heart vote count (same as upvote count)
+        if (upVotes != null && upVotes > 0) {
+            heartVoteCountTextView.setText(String.valueOf(upVotes));
+            heartVoteCountTextView.setTypeface(null, android.graphics.Typeface.BOLD);
+            heartVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_color));
+        } else {
+            heartVoteCountTextView.setText(R.string.vote_count_zero);
+            heartVoteCountTextView.setTypeface(null, android.graphics.Typeface.NORMAL);
+            heartVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_zero_color));
+        }
+        
+        // Show the appropriate vote style based on configuration
+        boolean useHeartStyle = commentsTree.getSdk().getConfig().voteStyle != null && 
+                                commentsTree.getSdk().getConfig().voteStyle == VoteStyle.Heart;
+        
+        standardVoteContainer.setVisibility(useHeartStyle ? View.GONE : View.VISIBLE);
+        heartVoteContainer.setVisibility(useHeartStyle ? View.VISIBLE : View.GONE);
 
         // Show the toggle replies button only if there are replies
         final Integer childCount = comment.getComment().getChildCount();
@@ -209,6 +241,14 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
      */
     public void setDownVoteClickListener(View.OnClickListener clickListener) {
         downVoteButton.setOnClickListener(clickListener);
+    }
+    
+    /**
+     * Set the click listener for the heart vote button
+     * @param clickListener The click listener to set
+     */
+    public void setHeartClickListener(View.OnClickListener clickListener) {
+        heartButton.setOnClickListener(clickListener);
     }
     
     /**
@@ -286,5 +326,17 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             );
             dateTextView.setText(relativeTime);
         }
+        
+        // Also update vote buttons and counts if necessary
+        // This is needed for the heart button to stay in sync when vote counts update
+        Boolean isVotedUp = currentComment.getComment().getIsVotedUp();
+        heartButton.setSelected(isVotedUp != null && isVotedUp);
+        
+        // Show the appropriate vote style based on configuration
+        boolean useHeartStyle = commentsTree.getSdk().getConfig().voteStyle != null && 
+                                commentsTree.getSdk().getConfig().voteStyle == com.fastcomments.core.VoteStyle.HEART;
+        
+        standardVoteContainer.setVisibility(useHeartStyle ? View.GONE : View.VISIBLE);
+        heartVoteContainer.setVisibility(useHeartStyle ? View.VISIBLE : View.GONE);
     }
 }

@@ -97,6 +97,13 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
             }
         });
         
+        // Set up heart button click listener (uses same upvote handler)
+        holder.setHeartClickListener(v -> {
+            if (upVoteListener != null) {
+                upVoteListener.call(comment);
+            }
+        });
+        
         // Set up load more children click listener
         holder.setLoadMoreChildrenClickListener(v -> {
             if (getChildren != null && comment.isRepliesShown && comment.hasMoreChildren) {

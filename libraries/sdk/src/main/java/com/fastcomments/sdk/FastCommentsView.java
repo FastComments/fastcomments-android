@@ -198,6 +198,10 @@ public class FastCommentsView extends FrameLayout {
             
             String toastMessage;
             
+            // Check vote style for appropriate message
+            boolean isHeartStyle = sdk.getConfig().voteStyle != null && 
+                                   sdk.getConfig().voteStyle == com.fastcomments.core.VoteStyle.HEART;
+            
             // Toggle the vote state
             boolean needToDelete = false;
             if (originalIsVotedUp != null && originalIsVotedUp) {
@@ -208,7 +212,11 @@ public class FastCommentsView extends FrameLayout {
                 if (votesUp != null && votesUp > 0) {
                     commentToVote.getComment().setVotesUp(votesUp - 1);
                 }
-                toastMessage = getContext().getString(R.string.you_removed_upvote, commenterName);
+                if (isHeartStyle) {
+                    toastMessage = getContext().getString(R.string.you_removed_like, commenterName);
+                } else {
+                    toastMessage = getContext().getString(R.string.you_removed_upvote, commenterName);
+                }
                 needToDelete = true;
             } else {
                 // User hasn't upvoted, so add the vote
@@ -231,7 +239,11 @@ public class FastCommentsView extends FrameLayout {
                 } else {
                     commentToVote.getComment().setVotesUp(1);
                 }
-                toastMessage = getContext().getString(R.string.you_upvoted, commenterName);
+                if (isHeartStyle) {
+                    toastMessage = getContext().getString(R.string.you_liked, commenterName);
+                } else {
+                    toastMessage = getContext().getString(R.string.you_upvoted, commenterName);
+                }
             }
             
             // Notify adapter to update UI immediately for better UX

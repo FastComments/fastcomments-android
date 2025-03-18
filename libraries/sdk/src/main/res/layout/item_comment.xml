@@ -110,71 +110,112 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
                 
-                <!-- Up Vote Count and Button -->
+                <!-- Heart Vote Button (for Heart style) -->
                 <LinearLayout
+                    android:id="@+id/heartVoteContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:gravity="center_vertical"
+                    android:visibility="gone">
                     
                     <TextView
-                        android:id="@+id/upVoteCount"
+                        android:id="@+id/heartVoteCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textSize="12sp"
                         android:textColor="@color/fastcomments_vote_count_zero_color"
                         android:minWidth="14dp"
-                        android:gravity="right"
-                        android:paddingEnd="2dp"
+                        android:gravity="center_vertical"
+                        android:paddingEnd="4dp"
                         android:text="@string/vote_count_zero" />
                         
                     <ImageButton
-                        android:id="@+id/upVoteButton"
+                        android:id="@+id/heartButton"
                         style="@style/Widget.MaterialComponents.Button.TextButton"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/thumbs_up_selector"
+                        android:src="@drawable/heart_selector"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="@string/upvote"
+                        android:contentDescription="@string/like"
                         android:padding="3dp" />
                 </LinearLayout>
                 
-                <!-- Vertical Divider -->
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="16dp"
-                    android:layout_marginHorizontal="4dp"
-                    android:background="@color/fastcomments_vote_divider_color" />
-                
-                <!-- Down Vote Button and Count -->
+                <!-- Up/Down Vote Container (for standard style) -->
                 <LinearLayout
+                    android:id="@+id/standardVoteContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
                     
-                    <ImageButton
-                        android:id="@+id/downVoteButton"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/thumbs_down_selector"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="@string/downvote"
-                        android:padding="3dp" />
-                        
-                    <TextView
-                        android:id="@+id/downVoteCount"
+                    <!-- Up Vote Count and Button -->
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textSize="12sp"
-                        android:textColor="@color/fastcomments_vote_count_zero_color"
-                        android:minWidth="14dp"
-                        android:gravity="left"
-                        android:paddingStart="2dp"
-                        android:text="@string/vote_count_zero" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        
+                        <TextView
+                            android:id="@+id/upVoteCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:textColor="@color/fastcomments_vote_count_zero_color"
+                            android:minWidth="14dp"
+                            android:gravity="right"
+                            android:paddingEnd="2dp"
+                            android:text="@string/vote_count_zero" />
+                            
+                        <ImageButton
+                            android:id="@+id/upVoteButton"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/thumbs_up_selector"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/upvote"
+                            android:padding="3dp" />
+                    </LinearLayout>
+                    
+                    <!-- Vertical Divider -->
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="16dp"
+                        android:layout_marginHorizontal="4dp"
+                        android:background="@color/fastcomments_vote_divider_color" />
+                    
+                    <!-- Down Vote Button and Count -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        
+                        <ImageButton
+                            android:id="@+id/downVoteButton"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/thumbs_down_selector"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/downvote"
+                            android:padding="3dp" />
+                            
+                        <TextView
+                            android:id="@+id/downVoteCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:textColor="@color/fastcomments_vote_count_zero_color"
+                            android:minWidth="14dp"
+                            android:gravity="left"
+                            android:paddingStart="2dp"
+                            android:text="@string/vote_count_zero" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
             

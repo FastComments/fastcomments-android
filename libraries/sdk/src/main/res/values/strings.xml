@@ -24,15 +24,19 @@
     <!-- Voting strings -->
     <string name="upvote">Upvote</string>
     <string name="downvote">Downvote</string>
+    <string name="like">Like</string>
     <string name="upvoted">Upvoted</string>
     <string name="downvoted">Downvoted</string>
+    <string name="liked">Liked</string>
     <string name="vote_success">Vote recorded</string>
     <string name="vote_removed">Vote removed</string>
     <string name="error_voting">Error recording vote</string>
     <string name="you_upvoted">You upvoted %1$s\'s comment</string>
     <string name="you_downvoted">You downvoted %1$s\'s comment</string>
+    <string name="you_liked">You liked %1$s\'s comment</string>
     <string name="you_removed_upvote">You removed your upvote from %1$s\'s comment</string>
     <string name="you_removed_downvote">You removed your downvote from %1$s\'s comment</string>
+    <string name="you_removed_like">You removed your like from %1$s\'s comment</string>
     <string name="login_to_vote">Please log in to vote</string>
     <string name="vote_count_zero">0</string>
     
