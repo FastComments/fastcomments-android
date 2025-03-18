@@ -175,9 +175,9 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         // Heart button state is based on upvote state (heart vote is equivalent to upvote)
         heartButton.setSelected(isVotedUp != null && isVotedUp);
 
-        // Set heart vote count (same as upvote count)
+        // Set heart vote count (same as upvote count) with abbreviation
         if (upVotes != null && upVotes > 0) {
-            heartVoteCountTextView.setText(String.valueOf(upVotes));
+            heartVoteCountTextView.setText(formatAbbreviatedCount(upVotes));
             heartVoteCountTextView.setTypeface(null, android.graphics.Typeface.BOLD);
             heartVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_color));
         } else {
@@ -329,11 +329,52 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         // This is needed for the heart button to stay in sync when vote counts update
         Boolean isVotedUp = currentComment.getComment().getIsVotedUp();
         heartButton.setSelected(isVotedUp != null && isVotedUp);
+        
+        // Update heart count with abbreviated format
+        Integer upVotes = currentComment.getComment().getVotesUp();
+        if (upVotes != null && upVotes > 0) {
+            heartVoteCountTextView.setText(formatAbbreviatedCount(upVotes));
+        }
 
         // Show the appropriate vote style based on configuration
         boolean useHeartStyle = Objects.equals(sdk.getConfig().voteStyle, VoteStyle.Heart);
 
         standardVoteContainer.setVisibility(useHeartStyle ? View.GONE : View.VISIBLE);
         heartVoteContainer.setVisibility(useHeartStyle ? View.VISIBLE : View.GONE);
+    }
+    
+    /**
+     * Format a count number to an abbreviated format
+     * Examples:
+     * - 0-999: Shows as is (123)
+     * - 1,000-999,999: Shows as #K (1.2K, 45K, 999K)
+     * - 1,000,000+: Shows as #M (1.2M, 45M)
+     * 
+     * @param count The count to format
+     * @return Formatted string
+     */
+    private String formatAbbreviatedCount(int count) {
+        if (count < 1000) {
+            return String.valueOf(count);
+        } else if (count < 10000) {
+            // For 1,000-9,999, show with one decimal (1.2K)
+            float thousands = count / 1000f;
+            return String.format(Locale.getDefault(), "%.1fK", thousands);
+        } else if (count < 1000000) {
+            // For 10,000-999,999, show without decimal (45K)
+            int thousands = Math.round(count / 1000f);
+            return thousands + "K";
+        } else {
+            // For 1,000,000+, show in millions
+            float millions = count / 1000000f;
+            if (millions < 10) {
+                // For 1M-9.9M, show with one decimal
+                return String.format(Locale.getDefault(), "%.1fM", millions);
+            } else {
+                // For 10M+, show without decimal
+                int roundedMillions = Math.round(millions);
+                return roundedMillions + "M";
+            }
+        }
     }
 }
