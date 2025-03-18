@@ -60,6 +60,7 @@
         android:contentDescription="@string/new_comment"
         android:src="@drawable/add_comment"
         app:tint="@android:color/white"
+        app:backgroundTint="@color/purple_500"
         android:visibility="visible" />
 
     <!-- Container for the comment form, fixed at bottom -->
