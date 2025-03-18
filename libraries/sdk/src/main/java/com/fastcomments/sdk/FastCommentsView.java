@@ -135,6 +135,64 @@ public class FastCommentsView extends FrameLayout {
             // Scroll to show both the comment and the form
             recyclerView.smoothScrollToPosition(adapter.getPositionForComment(commentToReplyTo));
         });
+        
+        // Handle upvote requests
+        adapter.setUpVoteListener((commentToVote) -> {
+            if (sdk.getCurrentUser() == null) {
+                // Show login required message
+                android.widget.Toast.makeText(
+                        getContext(),
+                        R.string.login_to_vote,
+                        android.widget.Toast.LENGTH_SHORT
+                ).show();
+                return;
+            }
+            
+            // Get commenter name for the toast message
+            String commenterName = commentToVote.getComment().getCommenterName();
+            if (commenterName == null || commenterName.isEmpty()) {
+                commenterName = getContext().getString(R.string.anonymous);
+            }
+            
+            // For now, just show a toast message until API implementation
+            android.widget.Toast.makeText(
+                    getContext(),
+                    getContext().getString(R.string.you_upvoted, commenterName),
+                    android.widget.Toast.LENGTH_SHORT
+            ).show();
+            
+            // TODO: Implement the actual upvote API call here
+            // sdk.voteComment(commentToVote.getComment().getId(), true, new FCCallback<VoteResponse>() {...
+        });
+        
+        // Handle downvote requests
+        adapter.setDownVoteListener((commentToVote) -> {
+            if (sdk.getCurrentUser() == null) {
+                // Show login required message
+                android.widget.Toast.makeText(
+                        getContext(),
+                        R.string.login_to_vote,
+                        android.widget.Toast.LENGTH_SHORT
+                ).show();
+                return;
+            }
+            
+            // Get commenter name for the toast message
+            String commenterName = commentToVote.getComment().getCommenterName();
+            if (commenterName == null || commenterName.isEmpty()) {
+                commenterName = getContext().getString(R.string.anonymous);
+            }
+            
+            // For now, just show a toast message until API implementation
+            android.widget.Toast.makeText(
+                    getContext(),
+                    getContext().getString(R.string.you_downvoted, commenterName),
+                    android.widget.Toast.LENGTH_SHORT
+            ).show();
+            
+            // TODO: Implement the actual downvote API call here
+            // sdk.voteComment(commentToVote.getComment().getId(), false, new FCCallback<VoteResponse>() {...
+        });
 
         adapter.setGetChildrenProducer((request, sendResults) -> {
             String parentId = request.getParentId();

@@ -19,6 +19,8 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
     private final CommentsTree commentsTree;
     private final FastCommentsSDK sdk;
     private Callback<RenderableComment> replyListener;
+    private Callback<RenderableComment> upVoteListener;
+    private Callback<RenderableComment> downVoteListener;
     private Producer<GetChildrenRequest, List<PublicComment>> getChildren;
 
     public CommentsAdapter(Context context, FastCommentsSDK sdk) {
@@ -30,6 +32,14 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
 
     public void setRequestingReplyListener(Callback<RenderableComment> listener) {
         this.replyListener = listener;
+    }
+    
+    public void setUpVoteListener(Callback<RenderableComment> listener) {
+        this.upVoteListener = listener;
+    }
+    
+    public void setDownVoteListener(Callback<RenderableComment> listener) {
+        this.downVoteListener = listener;
     }
 
     public void setGetChildrenProducer(Producer<GetChildrenRequest, List<PublicComment>> getChildren) {
@@ -67,6 +77,19 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
         holder.setReplyClickListener(v -> {
             if (replyListener != null) {
                 replyListener.call(comment);
+            }
+        });
+        
+        // Set up vote button click listeners
+        holder.setUpVoteClickListener(v -> {
+            if (upVoteListener != null) {
+                upVoteListener.call(comment);
+            }
+        });
+        
+        holder.setDownVoteClickListener(v -> {
+            if (downVoteListener != null) {
+                downVoteListener.call(comment);
             }
         });
     }

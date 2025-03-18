@@ -9,6 +9,7 @@ import android.text.format.DateUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -32,6 +33,10 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private final TextView contentTextView;
     private final Button toggleRepliesButton;
     private final Button replyButton;
+    private final ImageButton upVoteButton;
+    private final ImageButton downVoteButton;
+    private final TextView upVoteCountTextView;
+    private final TextView downVoteCountTextView;
     private final CommentsTree commentsTree;
 
     public CommentViewHolder(Context context, CommentsTree commentsTree, @NonNull View itemView) {
@@ -42,6 +47,10 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         contentTextView = itemView.findViewById(R.id.commentContent);
         toggleRepliesButton = itemView.findViewById(R.id.toggleReplies);
         replyButton = itemView.findViewById(R.id.replyButton);
+        upVoteButton = itemView.findViewById(R.id.upVoteButton);
+        downVoteButton = itemView.findViewById(R.id.downVoteButton);
+        upVoteCountTextView = itemView.findViewById(R.id.upVoteCount);
+        downVoteCountTextView = itemView.findViewById(R.id.downVoteCount);
         this.commentsTree = commentsTree;
         this.context = context;
     }
@@ -93,6 +102,21 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             itemViewLayoutParams.leftMargin = nestingLevel > 0 ? nestingLevel * 30 : 0;
             itemView.setLayoutParams(itemViewLayoutParams);
         }
+        
+        // Display vote counts
+        Integer upVotes = comment.getComment().getVotesUp();
+        if (upVotes != null) {
+            upVoteCountTextView.setText(String.valueOf(upVotes));
+        } else {
+            upVoteCountTextView.setText(R.string.vote_count_zero);
+        }
+        
+        Integer downVotes = comment.getComment().getVotesDown();
+        if (downVotes != null) {
+            downVoteCountTextView.setText(String.valueOf(downVotes));
+        } else {
+            downVoteCountTextView.setText(R.string.vote_count_zero);
+        }
 
         // Show the toggle replies button only if there are replies
         final Integer childCount = comment.getComment().getChildCount();
@@ -120,5 +144,21 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
      */
     public void setReplyClickListener(View.OnClickListener clickListener) {
         replyButton.setOnClickListener(clickListener);
+    }
+    
+    /**
+     * Set the click listener for the up vote button
+     * @param clickListener The click listener to set
+     */
+    public void setUpVoteClickListener(View.OnClickListener clickListener) {
+        upVoteButton.setOnClickListener(clickListener);
+    }
+    
+    /**
+     * Set the click listener for the down vote button
+     * @param clickListener The click listener to set
+     */
+    public void setDownVoteClickListener(View.OnClickListener clickListener) {
+        downVoteButton.setOnClickListener(clickListener);
     }
 }

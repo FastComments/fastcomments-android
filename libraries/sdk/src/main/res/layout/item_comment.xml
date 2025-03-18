@@ -66,20 +66,77 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/replyButton"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+            
+            <!-- Vote Buttons Group -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:minWidth="0dp"
-                android:minHeight="32dp"
-                android:text="@string/reply"
-                android:textAlignment="textStart"
-                android:textColor="@color/fastcomments_reply_button_color"
-                android:textSize="12sp"
-                />
-
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                
+                <!-- Up Vote Button and Count -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    
+                    <ImageButton
+                        android:id="@+id/upVoteButton"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/comment_like"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/upvote"
+                        android:padding="4dp" />
+                        
+                    <TextView
+                        android:id="@+id/upVoteCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:minWidth="16dp"
+                        android:text="@string/vote_count_zero" />
+                </LinearLayout>
+                
+                <!-- Down Vote Button and Count -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginStart="8dp">
+                    
+                    <ImageButton
+                        android:id="@+id/downVoteButton"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/comment_thumbs_down"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/downvote"
+                        android:padding="4dp" />
+                        
+                    <TextView
+                        android:id="@+id/downVoteCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:minWidth="16dp"
+                        android:text="@string/vote_count_zero" />
+                </LinearLayout>
+            </LinearLayout>
+            
+            <!-- Flexible space -->
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+            
+            <!-- Show Replies Button -->
             <Button
                 android:id="@+id/toggleReplies"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
@@ -88,10 +145,29 @@
                 android:minWidth="0dp"
                 android:minHeight="32dp"
                 android:text="@string/show_replies"
-                android:textAlignment="textStart"
+                android:textAlignment="center"
                 android:textColor="@color/fastcomments_toggle_replies_button_color"
                 android:textSize="12sp"
                 android:visibility="gone" />
+                
+            <!-- Flexible space -->
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+                
+            <!-- Reply Button -->
+            <Button
+                android:id="@+id/replyButton"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="0dp"
+                android:minHeight="32dp"
+                android:text="@string/reply"
+                android:textAlignment="center"
+                android:textColor="@color/fastcomments_reply_button_color"
+                android:textSize="12sp" />
 
         </LinearLayout>
 
