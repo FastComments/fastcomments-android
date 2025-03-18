@@ -35,4 +35,17 @@
     <string name="you_removed_downvote">You removed your downvote from %1$s\'s comment</string>
     <string name="login_to_vote">Please log in to vote</string>
     <string name="vote_count_zero">0</string>
+    
+    <!-- User authentication dialog -->
+    <string name="vote_login_title">Log in to Vote</string>
+    <string name="comment_login_title">Log in to Comment</string>
+    <string name="enter_username_email_message">Please enter your name and email to continue</string>
+    <string name="enter_username_message">Please enter your name to continue</string>
+    <string name="vote_anon_notice">You can continue as a guest user.</string>
+    <string name="comment_anon_notice">You can comment as a guest, but your name will be shown with your comment.</string>
+    <string name="username_hint">Your Name</string>
+    <string name="email_hint">Email Address</string>
+    <string name="username_required">Name is required</string>
+    <string name="email_required">Email is required</string>
+    <string name="submit">Submit</string>
 </resources>

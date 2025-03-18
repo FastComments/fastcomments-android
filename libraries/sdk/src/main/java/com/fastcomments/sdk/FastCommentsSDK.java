@@ -410,6 +410,19 @@ public class FastCommentsSDK {
      * @param callback Callback to receive the response
      */
     public void deleteCommentVote(String commentId, String voteId, final FCCallback<VoteDeleteResponse> callback) {
+        deleteCommentVote(commentId, voteId, null, null, callback);
+    }
+    
+    /**
+     * Delete a vote from a comment with anonymous user credentials
+     *
+     * @param commentId The ID of the comment
+     * @param voteId The ID of the vote to delete
+     * @param commenterName Name for anonymous user (optional, can be null if user is authenticated)
+     * @param commenterEmail Email for anonymous user (optional, can be null if user is authenticated)
+     * @param callback Callback to receive the response
+     */
+    public void deleteCommentVote(String commentId, String voteId, String commenterName, String commenterEmail, final FCCallback<VoteDeleteResponse> callback) {
         if (commentId == null || commentId.isEmpty()) {
             callback.onFailure(new APIError().status(ImportedAPIStatusFAILED.FAILED).reason("Comment ID is required").code("invalid_comment_id"));
             return;
@@ -427,7 +440,8 @@ public class FastCommentsSDK {
         broadcastIdsSent.add(broadcastId);
         
         try {
-            // Make the API call
+            // Make the API call - for delete votes, we don't actually need to pass commenter info
+            // because the vote is identified by its ID, but we'll keep the method signature consistent
             api.deleteCommentVote(config.tenantId, commentId, voteId, config.urlId, broadcastId)
                     .sso(config.getSSOToken())
                     .executeAsync(new ApiCallback<DeleteCommentVote200Response>() {
@@ -469,6 +483,19 @@ public class FastCommentsSDK {
      * @param callback Callback to receive the response
      */
     public void voteComment(String commentId, boolean isUpvote, final FCCallback<VoteResponse> callback) {
+        voteComment(commentId, isUpvote, null, null, callback);
+    }
+    
+    /**
+     * Vote on a comment (upvote or downvote) with anonymous user credentials
+     *
+     * @param commentId The ID of the comment to vote on
+     * @param isUpvote True for upvote, false for downvote
+     * @param commenterName Name for anonymous user (optional, can be null if user is authenticated)
+     * @param commenterEmail Email for anonymous user (optional, can be null if user is authenticated)
+     * @param callback Callback to receive the response
+     */
+    public void voteComment(String commentId, boolean isUpvote, String commenterName, String commenterEmail, final FCCallback<VoteResponse> callback) {
         if (commentId == null || commentId.isEmpty()) {
             callback.onFailure(new APIError().status(ImportedAPIStatusFAILED.FAILED).reason("Comment ID is required").code("invalid_comment_id"));
             return;
@@ -484,11 +511,16 @@ public class FastCommentsSDK {
         VoteBodyParams voteParams = new VoteBodyParams()
                 .voteDir(isUpvote ? VoteBodyParams.VoteDirEnum.UP : VoteBodyParams.VoteDirEnum.DOWN);
         
-        // Set user info if available
-        if (currentUser != null) {
-            // These would be set by the API based on the user session
-            // voteParams.commenterName();
-            // voteParams.commenterEmail();
+        // Set user info based on what's available
+        if (currentUser != null && currentUser.getAuthorized() != null && currentUser.getAuthorized()) {
+            // User is authenticated, API will use their session info
+        } else if (commenterName != null && !commenterName.isEmpty()) {
+            // Using provided anonymous credentials
+            voteParams.commenterName(commenterName);
+            
+            if (commenterEmail != null && !commenterEmail.isEmpty()) {
+                voteParams.commenterEmail(commenterEmail);
+            }
         }
         
         // Set URL if available
