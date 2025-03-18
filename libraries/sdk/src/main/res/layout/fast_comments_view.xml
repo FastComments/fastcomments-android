@@ -9,10 +9,24 @@
         android:layout_height="match_parent"
         android:layout_above="@+id/commentFormContainer">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewComments"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewComments"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <include 
+                android:id="@+id/paginationControls"
+                layout="@layout/pagination_controls"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <ProgressBar
             android:id="@+id/commentsProgressBar"

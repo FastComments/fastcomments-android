@@ -17,4 +17,7 @@
     <string name="cancel">Cancel</string>
     <string name="replying_to">Replying to %s</string>
     <string name="new_comment">Add a comment</string>
+    <string name="next_comments">Next (%1$d)</string>
+    <string name="load_all">Load All (%1$d)</string>
+    <string name="loading_more">Loading...</string>
 </resources>

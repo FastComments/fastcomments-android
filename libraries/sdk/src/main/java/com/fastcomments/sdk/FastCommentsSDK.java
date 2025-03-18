@@ -25,7 +25,6 @@ public class FastCommentsSDK {
     private final PublicApi api;
     private final Handler mainHandler;
     public final CommentsTree commentsTree;
-    public int commentCountOnClient;
     public int commentCountOnServer;
     public int newRootCommentCount;
     public boolean isSiteAdmin;
@@ -35,6 +34,8 @@ public class FastCommentsSDK {
     public boolean isDemo;
     public boolean hasMore;
     public int currentPage;
+    public int currentSkip;
+    public int pageSize = 30; // Default page size for pagination
     public long lastGenDate;
     public Set<String> broadcastIdsSent;
     public String blockingErrorMessage;
@@ -46,6 +47,9 @@ public class FastCommentsSDK {
         this.config = config;
         this.api.getApiClient().setBasePath("https://fastcomments.com");
         this.commentsTree = new CommentsTree();
+        this.currentSkip = 0;
+        this.currentPage = 0;
+        this.hasMore = false;
     }
 
     public FastCommentsSDK() {
@@ -86,6 +90,10 @@ public class FastCommentsSDK {
      * setup any other required state.
      */
     public void load(FCCallback<GetCommentsResponseWithPresencePublicComment> callback) {
+        // Reset pagination for initial load
+        currentSkip = 0;
+        currentPage = 0;
+        
         getCommentsAndRelatedData(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
             @Override
             public boolean onFailure(APIError error) {
@@ -102,6 +110,13 @@ public class FastCommentsSDK {
                 if (response.getUser() != null) {
                     currentUser = response.getUser();
                 }
+                
+                // Update the total server count
+                commentCountOnServer = response.getCount() != null ? response.getCount().intValue() : 0;
+                
+                // Determine if we have more comments to load from the response
+                hasMore = response.getHasMore() != null ? response.getHasMore() : false;
+                
                 commentsTree.build(response.getComments());
                 callback.onSuccess(response);
                 return CONSUME;
@@ -115,7 +130,7 @@ public class FastCommentsSDK {
      * @param callback Callback to receive the response
      */
     public void getCommentsAndRelatedData(FCCallback<GetCommentsResponseWithPresencePublicComment> callback) {
-        getCommentsAndRelatedData(null, null, 1, callback);
+        getCommentsAndRelatedData(currentSkip, pageSize, 1, callback);
     }
 
     /**
@@ -285,6 +300,100 @@ public class FastCommentsSDK {
         }
 
         return commentData;
+    }
+
+    /**
+     * Load more comments for pagination
+     *
+     * @param callback Callback to receive the response
+     */
+    public void loadMore(FCCallback<GetCommentsResponseWithPresencePublicComment> callback) {
+        // Increment skip value to get the next page
+        currentSkip += pageSize;
+        currentPage++;
+        
+        getCommentsAndRelatedData(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
+            @Override
+            public boolean onFailure(APIError error) {
+                // If there's a failure, reset the pagination values to the previous state
+                currentSkip -= pageSize;
+                currentPage--;
+                callback.onFailure(error);
+                return CONSUME;
+            }
+
+            @Override
+            public boolean onSuccess(GetCommentsResponseWithPresencePublicComment response) {
+                // Update the total server count
+                commentCountOnServer = response.getCount() != null ? response.getCount().intValue() : commentCountOnServer;
+                
+                // Determine if we have more comments to load
+                hasMore = response.getHasMore() != null ? response.getHasMore() : false;
+                
+                // Append the new comments to the existing ones
+                commentsTree.appendComments(response.getComments());
+                callback.onSuccess(response);
+                return CONSUME;
+            }
+        });
+    }
+
+    /**
+     * Load all remaining comments at once
+     *
+     * @param callback Callback to receive the response
+     */
+    public void loadAll(FCCallback<GetCommentsResponseWithPresencePublicComment> callback) {
+        // Temporarily set the pageSize to a large number to get all comments
+        int originalPageSize = pageSize;
+        pageSize = 1000; // A large enough value to get all comments
+        
+        // Reset skip to ensure we get all comments from the beginning
+        currentSkip = 0;
+        
+        getCommentsAndRelatedData(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
+            @Override
+            public boolean onFailure(APIError error) {
+                // Restore original page size
+                pageSize = originalPageSize;
+                callback.onFailure(error);
+                return CONSUME;
+            }
+
+            @Override
+            public boolean onSuccess(GetCommentsResponseWithPresencePublicComment response) {
+                // Restore original page size
+                pageSize = originalPageSize;
+                
+                // Update the total server count
+                commentCountOnServer = response.getCount() != null ? response.getCount().intValue() : 0;
+                
+                // We loaded all comments, so there are no more
+                hasMore = false;
+                
+                // Replace all comments with the new ones
+                commentsTree.build(response.getComments());
+                callback.onSuccess(response);
+                return CONSUME;
+            }
+        });
+    }
+    
+    /**
+     * Check if we should show the "Load All" button based on total comment count
+     * @return true if "Load All" should be shown (less than 1000 comments)
+     */
+    public boolean shouldShowLoadAll() {
+        return commentCountOnServer < 1000;
+    }
+
+    /**
+     * Get the count of remaining comments to load
+     * @return The number of comments that can be loaded next
+     */
+    public int getCountRemainingToShow() {
+        int remaining = commentCountOnServer - commentsTree.totalSize();
+        return Math.min(Math.max(remaining, 0), pageSize);
     }
 
     /**
