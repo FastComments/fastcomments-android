@@ -17,6 +17,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -119,9 +120,35 @@ public class FastCommentsView extends FrameLayout {
             showCommentForm();
         });
 
-        recyclerView.setLayoutManager(new LinearLayoutManager(context));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(context);
+        recyclerView.setLayoutManager(layoutManager);
         adapter = new CommentsAdapter(context, sdk);
         recyclerView.setAdapter(adapter);
+        
+        // Set up infinite scrolling if enabled in config
+        boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null && 
+                                           sdk.getConfig().enableInfiniteScrolling;
+        
+        if (isInfiniteScrollingEnabled) {
+            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+                    
+                    if (dy > 0) { // Scrolling down
+                        int visibleItemCount = layoutManager.getChildCount();
+                        int totalItemCount = layoutManager.getItemCount();
+                        int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
+                        
+                        // Load more when user is near the end (last 5 items)
+                        if ((visibleItemCount + firstVisibleItemPosition + 5) >= totalItemCount
+                                && sdk.hasMore) {
+                            loadMoreComments();
+                        }
+                    }
+                }
+            });
+        }
 
         // Setup form listeners
         commentForm.setOnCommentSubmitListener((commentText, parentId) -> {
@@ -692,6 +719,17 @@ public class FastCommentsView extends FrameLayout {
      * Update the pagination controls based on current state
      */
     private void updatePaginationControls() {
+        // Check if infinite scrolling is enabled
+        boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null && 
+                                           sdk.getConfig().enableInfiniteScrolling;
+        
+        if (isInfiniteScrollingEnabled) {
+            // Hide pagination controls when infinite scrolling is enabled
+            paginationControls.setVisibility(View.GONE);
+            return;
+        }
+        
+        // Standard pagination controls logic for when infinite scrolling is disabled
         if (sdk.hasMore) {
             paginationControls.setVisibility(View.VISIBLE);
 
@@ -720,10 +758,30 @@ public class FastCommentsView extends FrameLayout {
      * Load more comments (next page)
      */
     private void loadMoreComments() {
+        // Check if we're already loading
+        if (paginationProgressBar.getVisibility() == View.VISIBLE) {
+            return;
+        }
+        
+        // Check if infinite scrolling is enabled
+        boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null && 
+                                           sdk.getConfig().enableInfiniteScrolling;
+        
         // Show loading indicator
-        btnNextComments.setVisibility(View.GONE);
-        btnLoadAll.setVisibility(View.GONE);
-        paginationProgressBar.setVisibility(View.VISIBLE);
+        if (isInfiniteScrollingEnabled) {
+            // In infinite scrolling mode, the pagination controls are hidden
+            // but we still need to show a loading indicator - use the paginationProgressBar
+            // but make it visible at the bottom of the comment list
+            paginationControls.setVisibility(View.VISIBLE);
+            btnNextComments.setVisibility(View.GONE);
+            btnLoadAll.setVisibility(View.GONE);
+            paginationProgressBar.setVisibility(View.VISIBLE);
+        } else {
+            // Standard pagination loading UI
+            btnNextComments.setVisibility(View.GONE);
+            btnLoadAll.setVisibility(View.GONE);
+            paginationProgressBar.setVisibility(View.VISIBLE);
+        }
 
         sdk.loadMore(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
             @Override
@@ -731,10 +789,20 @@ public class FastCommentsView extends FrameLayout {
                 getHandler().post(() -> {
                     // Hide loading indicator
                     paginationProgressBar.setVisibility(View.GONE);
-                    btnNextComments.setVisibility(View.VISIBLE);
-
-                    if (sdk.shouldShowLoadAll()) {
-                        btnLoadAll.setVisibility(View.VISIBLE);
+                    
+                    // Check if infinite scrolling is enabled
+                    boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null && 
+                                                       sdk.getConfig().enableInfiniteScrolling;
+                    
+                    if (isInfiniteScrollingEnabled) {
+                        // For infinite scrolling, hide the pagination controls on error
+                        paginationControls.setVisibility(View.GONE);
+                    } else {
+                        // For standard pagination, restore buttons
+                        btnNextComments.setVisibility(View.VISIBLE);
+                        if (sdk.shouldShowLoadAll()) {
+                            btnLoadAll.setVisibility(View.VISIBLE);
+                        }
                     }
 
                     // Show error toast
@@ -752,9 +820,18 @@ public class FastCommentsView extends FrameLayout {
                 getHandler().post(() -> {
                     // Hide loading indicator
                     paginationProgressBar.setVisibility(View.GONE);
-
-                    // Update pagination controls
-                    updatePaginationControls();
+                    
+                    // Check if infinite scrolling is enabled
+                    boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null && 
+                                                       sdk.getConfig().enableInfiniteScrolling;
+                    
+                    if (isInfiniteScrollingEnabled) {
+                        // For infinite scrolling, hide the pagination controls again
+                        paginationControls.setVisibility(View.GONE);
+                    } else {
+                        // For standard pagination, update pagination controls
+                        updatePaginationControls();
+                    }
                 });
                 return CONSUME;
             }
