@@ -54,9 +54,10 @@ public class CommentsTree {
         this.allComments = allComments;
         this.visibleComments = visibleComments;
     }
-    
+
     /**
      * Append new comments to the existing tree (for pagination)
+     *
      * @param comments The new comments to append
      */
     public void appendComments(List<PublicComment> comments) {
@@ -68,12 +69,14 @@ public class CommentsTree {
 
         // Process all comments and create RenderableComment objects
         for (PublicComment comment : comments) {
-            final RenderableComment renderableComment = new RenderableComment(comment);
-            commentsById.put(comment.getId(), renderableComment);
-            allComments.add(renderableComment);
-            visibleComments.add(renderableComment);
-            if (comment.getChildren() != null) {
-                handleChildren(allComments, visibleComments, comment.getChildren(), renderableComment.isRepliesShown());
+            if (!commentsById.containsKey(comment.getId())) {
+                final RenderableComment renderableComment = new RenderableComment(comment);
+                commentsById.put(comment.getId(), renderableComment);
+                allComments.add(renderableComment);
+                visibleComments.add(renderableComment);
+                if (comment.getChildren() != null) {
+                    handleChildren(allComments, visibleComments, comment.getChildren(), renderableComment.isRepliesShown());
+                }
             }
         }
 
