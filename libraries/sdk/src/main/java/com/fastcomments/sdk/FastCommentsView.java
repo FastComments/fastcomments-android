@@ -21,6 +21,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.GetCommentsResponseWithPresencePublicComment;
+import com.fastcomments.model.VoteResponse;
+import com.fastcomments.model.VoteDeleteResponse;
+import com.fastcomments.model.ImportedAPIStatusFAILED;
 
 public class FastCommentsView extends FrameLayout {
 
@@ -154,12 +157,18 @@ public class FastCommentsView extends FrameLayout {
                 commenterName = getContext().getString(R.string.anonymous);
             }
             
-            // Check if the user has already voted
-            Boolean isVotedUp = commentToVote.getComment().getIsVotedUp();
+            // Save original state for rollback in case of API failure
+            final Boolean originalIsVotedUp = commentToVote.getComment().getIsVotedUp();
+            final Boolean originalIsVotedDown = commentToVote.getComment().getIsVotedDown();
+            final Integer originalVotesUp = commentToVote.getComment().getVotesUp();
+            final Integer originalVotesDown = commentToVote.getComment().getVotesDown();
+            final String originalVoteId = commentToVote.getComment().getMyVoteId();
+            
             String toastMessage;
+            boolean needToDelete = false;
             
             // Toggle the vote state
-            if (isVotedUp != null && isVotedUp) {
+            if (originalIsVotedUp != null && originalIsVotedUp) {
                 // User already upvoted, so remove the vote
                 commentToVote.getComment().setIsVotedUp(false);
                 // Update vote count
@@ -168,6 +177,7 @@ public class FastCommentsView extends FrameLayout {
                     commentToVote.getComment().setVotesUp(votesUp - 1);
                 }
                 toastMessage = getContext().getString(R.string.you_removed_upvote, commenterName);
+                needToDelete = true;
             } else {
                 // User hasn't upvoted, so add the vote
                 commentToVote.getComment().setIsVotedUp(true);
@@ -180,6 +190,7 @@ public class FastCommentsView extends FrameLayout {
                     if (votesDown != null && votesDown > 0) {
                         commentToVote.getComment().setVotesDown(votesDown - 1);
                     }
+                    needToDelete = true;
                 }
                 // Update upvote count
                 Integer votesUp = commentToVote.getComment().getVotesUp();
@@ -191,7 +202,7 @@ public class FastCommentsView extends FrameLayout {
                 toastMessage = getContext().getString(R.string.you_upvoted, commenterName);
             }
             
-            // Notify adapter to update UI
+            // Notify adapter to update UI immediately for better UX
             adapter.notifyDataSetChanged();
             
             // Show toast message
@@ -201,8 +212,96 @@ public class FastCommentsView extends FrameLayout {
                     android.widget.Toast.LENGTH_SHORT
             ).show();
             
-            // TODO: Implement the actual upvote API call here
-            // sdk.voteComment(commentToVote.getComment().getId(), isVotedUp != null && isVotedUp, new FCCallback<VoteResponse>() {...
+            // Create error handler for voting operations
+            final FCCallback<APIError> upvoteErrorHandler = new FCCallback<APIError>() {
+                @Override
+                public boolean onFailure(APIError error) {
+                    // This shouldn't get called since we're already in a failure handler
+                    return CONSUME;
+                }
+                
+                @Override
+                public boolean onSuccess(APIError error) {
+                    // Revert to original state on failure
+                    commentToVote.getComment().setIsVotedUp(originalIsVotedUp);
+                    commentToVote.getComment().setIsVotedDown(originalIsVotedDown);
+                    commentToVote.getComment().setVotesUp(originalVotesUp);
+                    commentToVote.getComment().setVotesDown(originalVotesDown);
+                    commentToVote.getComment().setMyVoteId(originalVoteId);
+                    
+                    // Show error message
+                    getHandler().post(() -> {
+                        android.widget.Toast.makeText(
+                                getContext(),
+                                R.string.error_voting,
+                                android.widget.Toast.LENGTH_SHORT
+                        ).show();
+                        
+                        // Update the UI
+                        adapter.notifyDataSetChanged();
+                    });
+                    
+                    return CONSUME;
+                }
+            };
+            
+            // The general vote flow: 
+            // 1. If there's an existing vote, delete it first
+            // 2. Then make a new vote if needed (not needed when removing an upvote)
+            
+            if (needToDelete && originalVoteId != null) {
+                // Delete the existing vote first
+                sdk.deleteCommentVote(commentToVote.getComment().getId(), originalVoteId, new FCCallback<VoteDeleteResponse>() {
+                    @Override
+                    public boolean onFailure(APIError error) {
+                        return upvoteErrorHandler.onSuccess(error);
+                    }
+                    
+                    @Override
+                    public boolean onSuccess(VoteDeleteResponse response) {
+                        // Clear vote ID since it was deleted
+                        commentToVote.getComment().setMyVoteId(null);
+                        
+                        // If removing an upvote, we're done
+                        if (originalIsVotedUp != null && originalIsVotedUp) {
+                            return CONSUME;
+                        }
+                        
+                        // Otherwise, we need to add a new upvote
+                        sdk.voteComment(commentToVote.getComment().getId(), true, new FCCallback<VoteResponse>() {
+                            @Override
+                            public boolean onFailure(APIError error) {
+                                return upvoteErrorHandler.onSuccess(error);
+                            }
+                            
+                            @Override
+                            public boolean onSuccess(VoteResponse response) {
+                                // Store new vote ID
+                                commentToVote.getComment().setMyVoteId(response.getVoteId());
+                                return CONSUME;
+                            }
+                        });
+                        
+                        return CONSUME;
+                    }
+                });
+            } else if (originalIsVotedUp == null || !originalIsVotedUp) {
+                // No existing vote to delete or it's a downvote being converted to upvote
+                // Just add a new upvote
+                sdk.voteComment(commentToVote.getComment().getId(), true, new FCCallback<VoteResponse>() {
+                    @Override
+                    public boolean onFailure(APIError error) {
+                        return upvoteErrorHandler.onSuccess(error);
+                    }
+                    
+                    @Override
+                    public boolean onSuccess(VoteResponse response) {
+                        // Store new vote ID
+                        commentToVote.getComment().setMyVoteId(response.getVoteId());
+                        return CONSUME;
+                    }
+                });
+            }
         });
         
         // Handle downvote requests
@@ -223,12 +322,18 @@ public class FastCommentsView extends FrameLayout {
                 commenterName = getContext().getString(R.string.anonymous);
             }
             
-            // Check if the user has already voted
-            Boolean isVotedDown = commentToVote.getComment().getIsVotedDown();
+            // Save original state for rollback in case of API failure
+            final Boolean originalIsVotedUp = commentToVote.getComment().getIsVotedUp();
+            final Boolean originalIsVotedDown = commentToVote.getComment().getIsVotedDown();
+            final Integer originalVotesUp = commentToVote.getComment().getVotesUp();
+            final Integer originalVotesDown = commentToVote.getComment().getVotesDown();
+            final String originalVoteId = commentToVote.getComment().getMyVoteId();
+            
             String toastMessage;
+            boolean needToDelete = false;
             
             // Toggle the vote state
-            if (isVotedDown != null && isVotedDown) {
+            if (originalIsVotedDown != null && originalIsVotedDown) {
                 // User already downvoted, so remove the vote
                 commentToVote.getComment().setIsVotedDown(false);
                 // Update vote count
@@ -237,6 +342,7 @@ public class FastCommentsView extends FrameLayout {
                     commentToVote.getComment().setVotesDown(votesDown - 1);
                 }
                 toastMessage = getContext().getString(R.string.you_removed_downvote, commenterName);
+                needToDelete = true;
             } else {
                 // User hasn't downvoted, so add the vote
                 commentToVote.getComment().setIsVotedDown(true);
@@ -249,6 +355,7 @@ public class FastCommentsView extends FrameLayout {
                     if (votesUp != null && votesUp > 0) {
                         commentToVote.getComment().setVotesUp(votesUp - 1);
                     }
+                    needToDelete = true;
                 }
                 // Update downvote count
                 Integer votesDown = commentToVote.getComment().getVotesDown();
@@ -260,7 +367,7 @@ public class FastCommentsView extends FrameLayout {
                 toastMessage = getContext().getString(R.string.you_downvoted, commenterName);
             }
             
-            // Notify adapter to update UI
+            // Notify adapter to update UI immediately for better UX
             adapter.notifyDataSetChanged();
             
             // Show toast message
@@ -270,8 +377,96 @@ public class FastCommentsView extends FrameLayout {
                     android.widget.Toast.LENGTH_SHORT
             ).show();
             
-            // TODO: Implement the actual downvote API call here
-            // sdk.voteComment(commentToVote.getComment().getId(), false, new FCCallback<VoteResponse>() {...
+            // Create error handler for voting operations
+            final FCCallback<APIError> downvoteErrorHandler = new FCCallback<APIError>() {
+                @Override
+                public boolean onFailure(APIError error) {
+                    // This shouldn't get called since we're already in a failure handler
+                    return CONSUME;
+                }
+                
+                @Override
+                public boolean onSuccess(APIError error) {
+                    // Revert to original state on failure
+                    commentToVote.getComment().setIsVotedUp(originalIsVotedUp);
+                    commentToVote.getComment().setIsVotedDown(originalIsVotedDown);
+                    commentToVote.getComment().setVotesUp(originalVotesUp);
+                    commentToVote.getComment().setVotesDown(originalVotesDown);
+                    commentToVote.getComment().setMyVoteId(originalVoteId);
+                    
+                    // Show error message
+                    getHandler().post(() -> {
+                        android.widget.Toast.makeText(
+                                getContext(),
+                                R.string.error_voting,
+                                android.widget.Toast.LENGTH_SHORT
+                        ).show();
+                        
+                        // Update the UI
+                        adapter.notifyDataSetChanged();
+                    });
+                    
+                    return CONSUME;
+                }
+            };
+            
+            // The general vote flow: 
+            // 1. If there's an existing vote, delete it first
+            // 2. Then make a new vote if needed (not needed when removing a downvote)
+            
+            if (needToDelete && originalVoteId != null) {
+                // Delete the existing vote first
+                sdk.deleteCommentVote(commentToVote.getComment().getId(), originalVoteId, new FCCallback<VoteDeleteResponse>() {
+                    @Override
+                    public boolean onFailure(APIError error) {
+                        return downvoteErrorHandler.onSuccess(error);
+                    }
+                    
+                    @Override
+                    public boolean onSuccess(VoteDeleteResponse response) {
+                        // Clear vote ID since it was deleted
+                        commentToVote.getComment().setMyVoteId(null);
+                        
+                        // If removing a downvote, we're done
+                        if (originalIsVotedDown != null && originalIsVotedDown) {
+                            return CONSUME;
+                        }
+                        
+                        // Otherwise, we need to add a new downvote
+                        sdk.voteComment(commentToVote.getComment().getId(), false, new FCCallback<VoteResponse>() {
+                            @Override
+                            public boolean onFailure(APIError error) {
+                                return downvoteErrorHandler.onSuccess(error);
+                            }
+                            
+                            @Override
+                            public boolean onSuccess(VoteResponse response) {
+                                // Store new vote ID
+                                commentToVote.getComment().setMyVoteId(response.getVoteId());
+                                return CONSUME;
+                            }
+                        });
+                        
+                        return CONSUME;
+                    }
+                });
+            } else if (originalIsVotedDown == null || !originalIsVotedDown) {
+                // No existing vote to delete or it's an upvote being converted to downvote
+                // Just add a new downvote
+                sdk.voteComment(commentToVote.getComment().getId(), false, new FCCallback<VoteResponse>() {
+                    @Override
+                    public boolean onFailure(APIError error) {
+                        return downvoteErrorHandler.onSuccess(error);
+                    }
+                    
+                    @Override
+                    public boolean onSuccess(VoteResponse response) {
+                        // Store new vote ID
+                        commentToVote.getComment().setMyVoteId(response.getVoteId());
+                        return CONSUME;
+                    }
+                });
+            }
         });
 
         adapter.setGetChildrenProducer((request, sendResults) -> {

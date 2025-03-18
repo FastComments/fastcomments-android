@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Main SDK class for interacting with FastComments API
@@ -400,5 +401,133 @@ public class FastCommentsSDK {
         int remaining = commentCountOnServer - commentsTree.totalSize();
         return Math.min(Math.max(remaining, 0), pageSize);
     }
+    
+    /**
+     * Delete a vote from a comment
+     *
+     * @param commentId The ID of the comment
+     * @param voteId The ID of the vote to delete
+     * @param callback Callback to receive the response
+     */
+    public void deleteCommentVote(String commentId, String voteId, final FCCallback<VoteDeleteResponse> callback) {
+        if (commentId == null || commentId.isEmpty()) {
+            callback.onFailure(new APIError().status(ImportedAPIStatusFAILED.FAILED).reason("Comment ID is required").code("invalid_comment_id"));
+            return;
+        }
+        
+        if (voteId == null || voteId.isEmpty()) {
+            callback.onFailure(new APIError().status(ImportedAPIStatusFAILED.FAILED).reason("Vote ID is required").code("invalid_vote_id"));
+            return;
+        }
+        
+        // Create a unique broadcast ID
+        String broadcastId = UUID.randomUUID().toString();
+        
+        // Track broadcast ID before sending
+        broadcastIdsSent.add(broadcastId);
+        
+        try {
+            // Make the API call
+            api.deleteCommentVote(config.tenantId, commentId, voteId, config.urlId, broadcastId)
+                    .sso(config.getSSOToken())
+                    .executeAsync(new ApiCallback<DeleteCommentVote200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                        }
 
+                        @Override
+                        public void onSuccess(DeleteCommentVote200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                            } else {
+                                VoteDeleteResponse response = result.getVoteDeleteResponse();
+                                callback.onSuccess(response);
+                            }
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                            // Not used
+                        }
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                            // Not used
+                        }
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+
+    /**
+     * Vote on a comment (upvote or downvote)
+     *
+     * @param commentId The ID of the comment to vote on
+     * @param isUpvote True for upvote, false for downvote
+     * @param callback Callback to receive the response
+     */
+    public void voteComment(String commentId, boolean isUpvote, final FCCallback<VoteResponse> callback) {
+        if (commentId == null || commentId.isEmpty()) {
+            callback.onFailure(new APIError().status(ImportedAPIStatusFAILED.FAILED).reason("Comment ID is required").code("invalid_comment_id"));
+            return;
+        }
+        
+        // Create a unique broadcast ID
+        String broadcastId = UUID.randomUUID().toString();
+        
+        // Track broadcast ID before sending
+        broadcastIdsSent.add(broadcastId);
+        
+        // Create vote parameters
+        VoteBodyParams voteParams = new VoteBodyParams()
+                .voteDir(isUpvote ? VoteBodyParams.VoteDirEnum.UP : VoteBodyParams.VoteDirEnum.DOWN);
+        
+        // Set user info if available
+        if (currentUser != null) {
+            // These would be set by the API based on the user session
+            // voteParams.commenterName();
+            // voteParams.commenterEmail();
+        }
+        
+        // Set URL if available
+        if (config.url != null && !config.url.isEmpty()) {
+            voteParams.url(config.url);
+        }
+        
+        try {
+            // Make the API call
+            api.voteComment(config.tenantId, commentId, config.urlId, broadcastId, voteParams)
+                    .sso(config.getSSOToken())
+                    .executeAsync(new ApiCallback<VoteComment200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                        }
+
+                        @Override
+                        public void onSuccess(VoteComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                            } else {
+                                VoteResponse response = result.getVoteResponse();
+                                callback.onSuccess(response);
+                            }
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                            // Not used
+                        }
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                            // Not used
+                        }
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
 }
