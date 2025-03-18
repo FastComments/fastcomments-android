@@ -63,9 +63,9 @@ public class CommentsTree {
         if (comments == null || comments.isEmpty()) {
             return;
         }
-        
+
         int initialSize = visibleComments.size();
-        
+
         // Process all comments and create RenderableComment objects
         for (PublicComment comment : comments) {
             final RenderableComment renderableComment = new RenderableComment(comment);
@@ -76,10 +76,11 @@ public class CommentsTree {
                 handleChildren(allComments, visibleComments, comment.getChildren(), renderableComment.isRepliesShown());
             }
         }
-        
-        // Notify the adapter of exactly what changed (the newly added comments)
-        int itemCount = visibleComments.size() - initialSize;
-        adapter.notifyItemRangeInserted(initialSize, itemCount);
+
+        // Notify the adapter of exactly what changed (the newly added comments) TODO doesn't work right
+//        int itemCount = visibleComments.size() - initialSize;
+//        adapter.notifyItemRangeInserted(initialSize, itemCount);
+        adapter.notifyDataSetChanged();
     }
 
     public void addForParent(String parentId, List<PublicComment> comments) {
