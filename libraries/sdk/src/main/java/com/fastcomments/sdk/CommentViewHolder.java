@@ -24,6 +24,10 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.Date;
+import java.util.Locale;
 
 public class CommentViewHolder extends RecyclerView.ViewHolder {
 
@@ -93,18 +97,11 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             unverifiedLabel.setVisibility(View.GONE);
         }
 
+        // Store current comment reference first, so updateDateDisplay has the correct reference
+        this.currentComment = comment;
+        
         // Format and display the date
-        OffsetDateTime date = comment.getComment().getDate();
-        if (date != null) {
-            CharSequence relativeTime = DateUtils.getRelativeTimeSpanString(
-                    date.toInstant().toEpochMilli(),
-                    System.currentTimeMillis(),
-                    DateUtils.MINUTE_IN_MILLIS
-            );
-            dateTextView.setText(relativeTime);
-        } else {
-            dateTextView.setText("");
-        }
+        updateDateDisplay();
 
         ViewGroup.LayoutParams textViewLayout = contentTextView.getLayoutParams();
         textViewLayout.height = ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -240,5 +237,48 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
      */
     public void setLoadMoreChildrenClickListener(View.OnClickListener clickListener) {
         btnLoadMoreReplies.setOnClickListener(clickListener);
+    }
+    
+    /**
+     * Updates the date display based on the current comment and configuration
+     */
+    public void updateDateDisplay() {
+        if (currentComment == null || currentComment.getComment() == null) {
+            dateTextView.setText("");
+            return;
+        }
+        
+        OffsetDateTime date = currentComment.getComment().getDate();
+        if (date == null) {
+            dateTextView.setText("");
+            return;
+        }
+        
+        // Check if we should use absolute dates based on config
+        boolean useAbsoluteDates = false;
+        
+        // Get config from the FastCommentsSDK instance in the CommentsTree
+        if (commentsTree != null && commentsTree.getSdk() != null) {
+            useAbsoluteDates = commentsTree.getSdk().getConfig().absoluteDates != null && 
+                               commentsTree.getSdk().getConfig().absoluteDates;
+        }
+        
+        if (useAbsoluteDates) {
+            // Use system's locale-aware date formatting
+            Locale currentLocale = context.getResources().getConfiguration().getLocales().get(0);
+            DateTimeFormatter formatter = DateTimeFormatter
+                    .ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+                    .withLocale(currentLocale);
+            
+            dateTextView.setText(date.format(formatter));
+        } else {
+            // Format as relative date: 2 minutes ago, 1 hour ago, etc.
+            CharSequence relativeTime = DateUtils.getRelativeTimeSpanString(
+                    date.toInstant().toEpochMilli(),
+                    System.currentTimeMillis(),
+                    DateUtils.MINUTE_IN_MILLIS
+            );
+            dateTextView.setText(relativeTime);
+        }
     }
 }

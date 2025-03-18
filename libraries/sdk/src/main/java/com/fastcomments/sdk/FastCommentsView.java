@@ -2,6 +2,8 @@ package com.fastcomments.sdk;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -40,7 +42,9 @@ public class FastCommentsView extends FrameLayout {
     private Button btnLoadAll;
     private ProgressBar paginationProgressBar;
     private OnBackPressedCallback backPressedCallback;
-    // TODO maintain relative comment dates
+    private Handler dateUpdateHandler;
+    private Runnable dateUpdateRunnable;
+    private static final long DATE_UPDATE_INTERVAL = 60000; // Update every minute
 
     public FastCommentsView(Context context, FastCommentsSDK sdk) {
         super(context);
@@ -59,6 +63,17 @@ public class FastCommentsView extends FrameLayout {
 
     private void init(Context context, AttributeSet attrs, FastCommentsSDK sdk) {
         LayoutInflater.from(context).inflate(R.layout.fast_comments_view, this, true);
+        
+        // Initialize the date update handler and runnable
+        dateUpdateHandler = new Handler(Looper.getMainLooper());
+        dateUpdateRunnable = new Runnable() {
+            @Override
+            public void run() {
+                updateDates();
+                // Schedule the next update
+                dateUpdateHandler.postDelayed(this, DATE_UPDATE_INTERVAL);
+            }
+        };
 
         recyclerView = findViewById(R.id.recyclerViewComments);
         progressBar = findViewById(R.id.commentsProgressBar);
@@ -506,6 +521,9 @@ public class FastCommentsView extends FrameLayout {
         });
 
         this.sdk = sdk;
+        
+        // Set SDK reference in CommentsTree for config access
+        this.sdk.commentsTree.setSdk(sdk);
     }
 
     public void load() {
@@ -537,6 +555,9 @@ public class FastCommentsView extends FrameLayout {
 
                         // Update pagination controls
                         updatePaginationControls();
+                        
+                        // Start the date update timer
+                        startDateUpdateTimer();
                     }
                 });
                 return CONSUME;
@@ -983,5 +1004,57 @@ public class FastCommentsView extends FrameLayout {
                 }
             });
         }
+    }
+    
+    /**
+     * Starts the timer for updating relative dates
+     */
+    private void startDateUpdateTimer() {
+        // Remove any existing callbacks to avoid duplicates
+        stopDateUpdateTimer();
+        
+        // Only start the timer if we have comments and absolute dates are not enabled
+        if (adapter.getItemCount() > 0 && (sdk.getConfig().absoluteDates == null || !sdk.getConfig().absoluteDates)) {
+            dateUpdateHandler.postDelayed(dateUpdateRunnable, DATE_UPDATE_INTERVAL);
+        }
+    }
+    
+    /**
+     * Stops the timer for updating relative dates
+     */
+    private void stopDateUpdateTimer() {
+        dateUpdateHandler.removeCallbacks(dateUpdateRunnable);
+    }
+    
+    /**
+     * Updates the dates for all visible comments
+     */
+    private void updateDates() {
+        // Skip if absolute dates are enabled
+        if (sdk.getConfig().absoluteDates != null && sdk.getConfig().absoluteDates) {
+            return;
+        }
+        
+        // Get visible position range
+        LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+        if (layoutManager != null) {
+            int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
+            int lastVisiblePosition = layoutManager.findLastVisibleItemPosition();
+            
+            // Update only visible items to avoid unnecessary work
+            for (int i = firstVisiblePosition; i <= lastVisiblePosition; i++) {
+                RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(i);
+                if (holder instanceof CommentViewHolder) {
+                    ((CommentViewHolder) holder).updateDateDisplay();
+                }
+            }
+        }
+    }
+    
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        // Stop the timer when the view is detached to prevent memory leaks
+        stopDateUpdateTimer();
     }
 }
