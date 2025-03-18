@@ -29,6 +29,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 
 public class CommentViewHolder extends RecyclerView.ViewHolder {
 
@@ -49,19 +50,19 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private final View standardVoteContainer; // Container for standard up/down vote buttons
     private final View heartVoteContainer; // Container for heart vote button
     private final TextView heartVoteCountTextView; // Count for heart votes
-    private final CommentsTree commentsTree;
-    
+    private final FastCommentsSDK sdk;
+
     // Child comments pagination
     private View childPaginationControls;
     private Button btnLoadMoreReplies;
     private ProgressBar childPaginationProgressBar;
     private RenderableComment currentComment;
 
-    public CommentViewHolder(Context context, CommentsTree commentsTree, @NonNull View itemView) {
+    public CommentViewHolder(Context context, FastCommentsSDK sdk, @NonNull View itemView) {
         super(itemView);
-        this.commentsTree = commentsTree;
+        this.sdk = sdk;
         this.context = context;
-        
+
         // Basic comment view elements
         avatarImageView = itemView.findViewById(R.id.commentAvatar);
         nameTextView = itemView.findViewById(R.id.commentName);
@@ -76,12 +77,12 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         downVoteCountTextView = itemView.findViewById(R.id.downVoteCount);
         pinIcon = itemView.findViewById(R.id.pinIcon);
         heartButton = itemView.findViewById(R.id.heartButton);
-        
+
         // Get references to vote containers
         standardVoteContainer = itemView.findViewById(R.id.standardVoteContainer);
         heartVoteContainer = itemView.findViewById(R.id.heartVoteContainer);
         heartVoteCountTextView = itemView.findViewById(R.id.heartVoteCount);
-        
+
         // Child pagination controls
         childPaginationControls = itemView.findViewById(R.id.childPaginationControls);
         btnLoadMoreReplies = itemView.findViewById(R.id.btnLoadMoreReplies);
@@ -101,7 +102,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         } else {
             AvatarFetcher.fetchTransformInto(context, R.drawable.default_avatar, avatarImageView);
         }
-        
+
         // Handle unverified label
         Boolean isVerified = comment.getComment().getVerified();
         if (!disableUnverifiedLabel && (isVerified == null || !isVerified)) {
@@ -109,26 +110,26 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         } else {
             unverifiedLabel.setVisibility(View.GONE);
         }
-        
+
         // Handle pinned comment icon
         Boolean isPinned = comment.getComment().getIsPinned();
         pinIcon.setVisibility(isPinned != null && isPinned ? View.VISIBLE : View.GONE);
 
         // Store current comment reference first, so updateDateDisplay has the correct reference
         this.currentComment = comment;
-        
+
         // Format and display the date
         updateDateDisplay();
 
         ViewGroup.LayoutParams textViewLayout = contentTextView.getLayoutParams();
         textViewLayout.height = ViewGroup.LayoutParams.WRAP_CONTENT;
         contentTextView.setLayoutParams(textViewLayout);
-        
+
         // Make links clickable
         contentTextView.setClickable(true);
         contentTextView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
         contentTextView.setLinksClickable(true);
-        
+
         // Display the comment content with clickable links
         String htmlContent = comment.getComment().getCommentHTML();
         contentTextView.setText(HtmlLinkHandler.parseHtml(context, htmlContent, contentTextView));
@@ -136,11 +137,11 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         // Indent child comments to reflect hierarchy
         ViewGroup.MarginLayoutParams itemViewLayoutParams = (ViewGroup.MarginLayoutParams) itemView.getLayoutParams();
         if (itemViewLayoutParams != null) {
-            final int nestingLevel = comment.determineNestingLevel(commentsTree.commentsById);
+            final int nestingLevel = comment.determineNestingLevel(sdk.commentsTree.commentsById);
             itemViewLayoutParams.leftMargin = nestingLevel > 0 ? nestingLevel * 30 : 0;
             itemView.setLayoutParams(itemViewLayoutParams);
         }
-        
+
         // Display vote counts and set button states
         Integer upVotes = comment.getComment().getVotesUp();
         if (upVotes != null && upVotes > 0) {
@@ -152,7 +153,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             upVoteCountTextView.setTypeface(null, android.graphics.Typeface.NORMAL);
             upVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_zero_color));
         }
-        
+
         Integer downVotes = comment.getComment().getVotesDown();
         if (downVotes != null && downVotes > 0) {
             downVoteCountTextView.setText(String.valueOf(downVotes));
@@ -163,17 +164,17 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             downVoteCountTextView.setTypeface(null, android.graphics.Typeface.NORMAL);
             downVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_zero_color));
         }
-        
+
         // Set button selected states based on user's votes
         Boolean isVotedUp = comment.getComment().getIsVotedUp();
         upVoteButton.setSelected(isVotedUp != null && isVotedUp);
-        
+
         Boolean isVotedDown = comment.getComment().getIsVotedDown();
         downVoteButton.setSelected(isVotedDown != null && isVotedDown);
-        
+
         // Heart button state is based on upvote state (heart vote is equivalent to upvote)
         heartButton.setSelected(isVotedUp != null && isVotedUp);
-        
+
         // Set heart vote count (same as upvote count)
         if (upVotes != null && upVotes > 0) {
             heartVoteCountTextView.setText(String.valueOf(upVotes));
@@ -184,11 +185,10 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             heartVoteCountTextView.setTypeface(null, android.graphics.Typeface.NORMAL);
             heartVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_zero_color));
         }
-        
+
         // Show the appropriate vote style based on configuration
-        boolean useHeartStyle = commentsTree.getSdk().getConfig().voteStyle != null && 
-                                commentsTree.getSdk().getConfig().voteStyle == VoteStyle.Heart;
-        
+        boolean useHeartStyle = Objects.equals(sdk.getConfig().voteStyle, VoteStyle.Heart);
+
         standardVoteContainer.setVisibility(useHeartStyle ? View.GONE : View.VISIBLE);
         heartVoteContainer.setVisibility(useHeartStyle ? View.VISIBLE : View.GONE);
 
@@ -214,43 +214,47 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             toggleRepliesButton.setVisibility(View.GONE);
             childPaginationControls.setVisibility(View.GONE);
         }
-        
+
         // Store current comment reference
         this.currentComment = comment;
     }
-    
+
     /**
      * Set the click listener for the reply button
+     *
      * @param clickListener The click listener to set
      */
     public void setReplyClickListener(View.OnClickListener clickListener) {
         replyButton.setOnClickListener(clickListener);
     }
-    
+
     /**
      * Set the click listener for the up vote button
+     *
      * @param clickListener The click listener to set
      */
     public void setUpVoteClickListener(View.OnClickListener clickListener) {
         upVoteButton.setOnClickListener(clickListener);
     }
-    
+
     /**
      * Set the click listener for the down vote button
+     *
      * @param clickListener The click listener to set
      */
     public void setDownVoteClickListener(View.OnClickListener clickListener) {
         downVoteButton.setOnClickListener(clickListener);
     }
-    
+
     /**
      * Set the click listener for the heart vote button
+     *
      * @param clickListener The click listener to set
      */
     public void setHeartClickListener(View.OnClickListener clickListener) {
         heartButton.setOnClickListener(clickListener);
     }
-    
+
     /**
      * Updates the visibility and text of the child pagination controls
      */
@@ -259,12 +263,12 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             childPaginationControls.setVisibility(View.GONE);
             return;
         }
-        
+
         // Check if we need to show pagination controls
         if (comment.hasMoreChildren) {
             childPaginationControls.setVisibility(View.VISIBLE);
             int remainingCount = comment.getRemainingChildCount();
-            
+
             if (comment.isLoadingChildren) {
                 btnLoadMoreReplies.setVisibility(View.GONE);
                 childPaginationProgressBar.setVisibility(View.VISIBLE);
@@ -277,14 +281,14 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             childPaginationControls.setVisibility(View.GONE);
         }
     }
-    
+
     /**
      * Set click listener for the "Load More" button for child comments pagination
      */
     public void setLoadMoreChildrenClickListener(View.OnClickListener clickListener) {
         btnLoadMoreReplies.setOnClickListener(clickListener);
     }
-    
+
     /**
      * Updates the date display based on the current comment and configuration
      */
@@ -293,29 +297,23 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             dateTextView.setText("");
             return;
         }
-        
+
         OffsetDateTime date = currentComment.getComment().getDate();
         if (date == null) {
             dateTextView.setText("");
             return;
         }
-        
+
         // Check if we should use absolute dates based on config
-        boolean useAbsoluteDates = false;
-        
-        // Get config from the FastCommentsSDK instance in the CommentsTree
-        if (commentsTree != null && commentsTree.getSdk() != null) {
-            useAbsoluteDates = commentsTree.getSdk().getConfig().absoluteDates != null && 
-                               commentsTree.getSdk().getConfig().absoluteDates;
-        }
-        
+        final boolean useAbsoluteDates = Boolean.TRUE.equals(sdk.getConfig().absoluteDates);
+
         if (useAbsoluteDates) {
             // Use system's locale-aware date formatting
             Locale currentLocale = context.getResources().getConfiguration().getLocales().get(0);
             DateTimeFormatter formatter = DateTimeFormatter
                     .ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
                     .withLocale(currentLocale);
-            
+
             dateTextView.setText(date.format(formatter));
         } else {
             // Format as relative date: 2 minutes ago, 1 hour ago, etc.
@@ -326,16 +324,15 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             );
             dateTextView.setText(relativeTime);
         }
-        
+
         // Also update vote buttons and counts if necessary
         // This is needed for the heart button to stay in sync when vote counts update
         Boolean isVotedUp = currentComment.getComment().getIsVotedUp();
         heartButton.setSelected(isVotedUp != null && isVotedUp);
-        
+
         // Show the appropriate vote style based on configuration
-        boolean useHeartStyle = commentsTree.getSdk().getConfig().voteStyle != null && 
-                                commentsTree.getSdk().getConfig().voteStyle == com.fastcomments.core.VoteStyle.HEART;
-        
+        boolean useHeartStyle = Objects.equals(sdk.getConfig().voteStyle, VoteStyle.Heart);
+
         standardVoteContainer.setVisibility(useHeartStyle ? View.GONE : View.VISIBLE);
         heartVoteContainer.setVisibility(useHeartStyle ? View.VISIBLE : View.GONE);
     }

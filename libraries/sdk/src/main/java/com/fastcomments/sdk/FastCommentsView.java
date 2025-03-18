@@ -11,6 +11,8 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+
+import com.fastcomments.core.VoteStyle;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
@@ -27,6 +29,8 @@ import com.fastcomments.model.GetCommentsResponseWithPresencePublicComment;
 import com.fastcomments.model.VoteResponse;
 import com.fastcomments.model.VoteDeleteResponse;
 import com.fastcomments.model.ImportedAPIStatusFAILED;
+
+import java.util.Objects;
 
 public class FastCommentsView extends FrameLayout {
 
@@ -199,8 +203,7 @@ public class FastCommentsView extends FrameLayout {
             String toastMessage;
             
             // Check vote style for appropriate message
-            boolean isHeartStyle = sdk.getConfig().voteStyle != null && 
-                                   sdk.getConfig().voteStyle == com.fastcomments.core.VoteStyle.HEART;
+            final boolean isHeartStyle = Objects.equals(sdk.getConfig().voteStyle, VoteStyle.Heart);
             
             // Toggle the vote state
             boolean needToDelete = false;
@@ -560,9 +563,6 @@ public class FastCommentsView extends FrameLayout {
         });
 
         this.sdk = sdk;
-        
-        // Set SDK reference in CommentsTree for config access
-        this.sdk.commentsTree.setSdk(sdk);
     }
 
     public void load() {

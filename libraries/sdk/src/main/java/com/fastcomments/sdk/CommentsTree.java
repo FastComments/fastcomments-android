@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.lang.ref.WeakReference;
 
 
 /**
@@ -23,7 +22,6 @@ public class CommentsTree {
     public List<RenderableComment> allComments; // in any order
     public List<RenderableComment> visibleComments; // in view order
     private CommentsAdapter adapter;
-    private WeakReference<FastCommentsSDK> sdkRef; // Reference to SDK instance for config access
 
     public CommentsTree() {
         this.commentsById = new HashMap<>(30);
@@ -32,14 +30,6 @@ public class CommentsTree {
 
     public void setAdapter(CommentsAdapter adapter) {
         this.adapter = adapter;
-    }
-    
-    public void setSdk(FastCommentsSDK sdk) {
-        this.sdkRef = new WeakReference<>(sdk);
-    }
-    
-    public FastCommentsSDK getSdk() {
-        return sdkRef != null ? sdkRef.get() : null;
     }
 
     public void build(List<PublicComment> comments) {

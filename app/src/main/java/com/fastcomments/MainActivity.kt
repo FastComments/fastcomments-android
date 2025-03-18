@@ -3,6 +3,7 @@ package com.fastcomments
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.fastcomments.core.CommentWidgetConfig
+import com.fastcomments.core.VoteStyle
 import com.fastcomments.sdk.FastCommentsSDK
 import com.fastcomments.sdk.FastCommentsView
 
@@ -25,6 +26,7 @@ class MainActivity : AppCompatActivity() {
             "fastcomments.com",
             "Demo"
         )
+        config.voteStyle = VoteStyle.Heart;
         val sdk = FastCommentsSDK(config)
 
         val container = findViewById<android.widget.FrameLayout>(R.id.commentsContainer)
