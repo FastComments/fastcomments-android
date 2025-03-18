@@ -420,16 +420,53 @@ public class FastCommentsView extends FrameLayout {
         adapter.setGetChildrenProducer((request, sendResults) -> {
             String parentId = request.getParentId();
             Button toggleButton = request.getToggleButton();
+            Integer skip = request.getSkip();
+            Integer limit = request.getLimit();
+            boolean isLoadMore = request.isLoadMore();
+            
+            // Get the parent comment
+            RenderableComment parentComment = sdk.commentsTree.commentsById.get(parentId);
+            
+            // If this is a pagination request, use the comment's pagination state
+            if (parentComment != null) {
+                if (skip == null) {
+                    skip = isLoadMore ? parentComment.childSkip : 0;
+                }
+                
+                if (limit == null) {
+                    limit = parentComment.childPageSize;
+                }
+                
+                // Update the skip value for subsequent requests
+                if (isLoadMore) {
+                    parentComment.childPage++;
+                    parentComment.childSkip += parentComment.childPageSize;
+                }
+                
+                // Mark as loading to update UI
+                parentComment.isLoadingChildren = true;
+            }
 
             // Set the button text to "Loading..." when starting to load
-            if (toggleButton != null) {
+            if (toggleButton != null && !isLoadMore) {
                 getHandler().post(() -> toggleButton.setText(R.string.loading_replies));
             }
 
-            sdk.getCommentsForParent(null, null, 0, parentId, new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
+            sdk.getCommentsForParent(skip, limit, 0, parentId, new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
                 @Override
                 public boolean onFailure(APIError error) {
                     getHandler().post(() -> {
+                        // If we have a parent comment, update its loading state
+                        if (parentComment != null) {
+                            parentComment.isLoadingChildren = false;
+                            
+                            // Revert pagination state on failure
+                            if (isLoadMore) {
+                                parentComment.childPage--;
+                                parentComment.childSkip -= parentComment.childPageSize;
+                            }
+                        }
+                        
                         // Show toast with error message
                         android.widget.Toast.makeText(
                                 getContext(),
@@ -438,7 +475,7 @@ public class FastCommentsView extends FrameLayout {
                         ).show();
 
                         // Reset button text if the toggle button is available
-                        if (toggleButton != null) {
+                        if (toggleButton != null && !isLoadMore) {
                             // Get the comment to retrieve the child count
                             RenderableComment comment = sdk.commentsTree.commentsById.get(parentId);
                             if (comment != null && comment.getComment().getChildCount() != null) {
@@ -454,7 +491,15 @@ public class FastCommentsView extends FrameLayout {
 
                 @Override
                 public boolean onSuccess(GetCommentsResponseWithPresencePublicComment response) {
-                    getHandler().post(() -> sendResults.call(response.getComments()));
+                    getHandler().post(() -> {
+                        // If we have a parent comment, update its state
+                        if (parentComment != null) {
+                            parentComment.isLoadingChildren = false;
+                            parentComment.hasMoreChildren = response.getHasMore() != null ? response.getHasMore() : false;
+                        }
+                        
+                        sendResults.call(response.getComments());
+                    });
                     return CONSUME;
                 }
             });

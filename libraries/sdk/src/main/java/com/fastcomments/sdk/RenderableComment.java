@@ -6,9 +6,15 @@ import java.util.Map;
 
 public class RenderableComment {
 
-
     private final PublicComment comment;
-    private boolean isRepliesShown = false;
+    public boolean isRepliesShown = false;
+    
+    // Pagination state for child comments
+    public int childSkip = 0;
+    public int childPage = 0;
+    public int childPageSize = 5; // Smaller page size for replies
+    public boolean hasMoreChildren = false;
+    public boolean isLoadingChildren = false;
 
     public PublicComment getComment() {
         return comment;
@@ -34,13 +40,34 @@ public class RenderableComment {
         }
         return 1 + parent.determineNestingLevel(commentMap);
     }
-
-
-    public boolean isRepliesShown() {
-        return isRepliesShown;
+    
+    /**
+     * Reset child pagination state, typically called when hiding replies
+     */
+    public void resetChildPagination() {
+        this.childSkip = 0;
+        this.childPage = 0;
+        this.hasMoreChildren = false;
+        this.isLoadingChildren = false;
     }
-
-    public void setRepliesShown(boolean repliesShown) {
-        this.isRepliesShown = repliesShown;
+    
+    /**
+     * Get the remaining child count that can be loaded in the next page
+     *
+     * @return The count of remaining children to load
+     */
+    public int getRemainingChildCount() {
+        Integer childCount = getComment().getChildCount();
+        if (childCount == null) {
+            return 0;
+        }
+        
+        int loadedCount = 0;
+        if (getComment().getChildren() != null) {
+            loadedCount = getComment().getChildren().size();
+        }
+        
+        int remaining = childCount - loadedCount;
+        return Math.min(Math.max(remaining, 0), childPageSize);
     }
 }

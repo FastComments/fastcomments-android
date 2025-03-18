@@ -185,6 +185,36 @@
                 android:textSize="12sp" />
 
         </LinearLayout>
+        
+        <!-- Child Comments Pagination -->
+        <LinearLayout
+            android:id="@+id/childPaginationControls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="4dp"
+            android:visibility="gone">
+            
+            <Button
+                android:id="@+id/btnLoadMoreReplies"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="24dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingTop="0dp"
+                android:paddingBottom="0dp"
+                android:text="@string/next_comments"
+                android:textSize="12sp"
+                android:textColor="@color/fastcomments_toggle_replies_button_color" />
+                
+            <ProgressBar
+                android:id="@+id/childPaginationProgressBar"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:visibility="gone" />
+        </LinearLayout>
 
     </LinearLayout>
 

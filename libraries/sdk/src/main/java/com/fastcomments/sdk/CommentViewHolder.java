@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -38,9 +39,19 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private final TextView upVoteCountTextView;
     private final TextView downVoteCountTextView;
     private final CommentsTree commentsTree;
+    
+    // Child comments pagination
+    private View childPaginationControls;
+    private Button btnLoadMoreReplies;
+    private ProgressBar childPaginationProgressBar;
+    private RenderableComment currentComment;
 
     public CommentViewHolder(Context context, CommentsTree commentsTree, @NonNull View itemView) {
         super(itemView);
+        this.commentsTree = commentsTree;
+        this.context = context;
+        
+        // Basic comment view elements
         avatarImageView = itemView.findViewById(R.id.commentAvatar);
         nameTextView = itemView.findViewById(R.id.commentName);
         dateTextView = itemView.findViewById(R.id.commentDate);
@@ -51,8 +62,11 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         downVoteButton = itemView.findViewById(R.id.downVoteButton);
         upVoteCountTextView = itemView.findViewById(R.id.upVoteCount);
         downVoteCountTextView = itemView.findViewById(R.id.downVoteCount);
-        this.commentsTree = commentsTree;
-        this.context = context;
+        
+        // Child pagination controls
+        childPaginationControls = itemView.findViewById(R.id.childPaginationControls);
+        btnLoadMoreReplies = itemView.findViewById(R.id.btnLoadMoreReplies);
+        childPaginationProgressBar = itemView.findViewById(R.id.childPaginationProgressBar);
     }
 
     public void setComment(final RenderableComment comment, final CommentsAdapter.OnToggleRepliesListener listener) {
@@ -137,10 +151,13 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         final Integer childCount = comment.getComment().getChildCount();
         if (childCount != null && childCount > 0) {
             toggleRepliesButton.setVisibility(View.VISIBLE);
-            if (comment.isRepliesShown()) {
+            if (comment.isRepliesShown) {
                 toggleRepliesButton.setText(R.string.hide_replies);
+                // Update pagination controls
+                updateChildPaginationControls(comment);
             } else {
                 toggleRepliesButton.setText(context.getString(R.string.show_replies, childCount));
+                childPaginationControls.setVisibility(View.GONE);
             }
             toggleRepliesButton.setOnClickListener(v -> {
                 if (listener != null) {
@@ -150,7 +167,11 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             });
         } else {
             toggleRepliesButton.setVisibility(View.GONE);
+            childPaginationControls.setVisibility(View.GONE);
         }
+        
+        // Store current comment reference
+        this.currentComment = comment;
     }
     
     /**
@@ -175,5 +196,39 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
      */
     public void setDownVoteClickListener(View.OnClickListener clickListener) {
         downVoteButton.setOnClickListener(clickListener);
+    }
+    
+    /**
+     * Updates the visibility and text of the child pagination controls
+     */
+    private void updateChildPaginationControls(RenderableComment comment) {
+        if (!comment.isRepliesShown) {
+            childPaginationControls.setVisibility(View.GONE);
+            return;
+        }
+        
+        // Check if we need to show pagination controls
+        if (comment.hasMoreChildren) {
+            childPaginationControls.setVisibility(View.VISIBLE);
+            int remainingCount = comment.getRemainingChildCount();
+            
+            if (comment.isLoadingChildren) {
+                btnLoadMoreReplies.setVisibility(View.GONE);
+                childPaginationProgressBar.setVisibility(View.VISIBLE);
+            } else {
+                btnLoadMoreReplies.setVisibility(View.VISIBLE);
+                childPaginationProgressBar.setVisibility(View.GONE);
+                btnLoadMoreReplies.setText(context.getString(R.string.next_comments, remainingCount));
+            }
+        } else {
+            childPaginationControls.setVisibility(View.GONE);
+        }
+    }
+    
+    /**
+     * Set click listener for the "Load More" button for child comments pagination
+     */
+    public void setLoadMoreChildrenClickListener(View.OnClickListener clickListener) {
+        btnLoadMoreReplies.setOnClickListener(clickListener);
     }
 }

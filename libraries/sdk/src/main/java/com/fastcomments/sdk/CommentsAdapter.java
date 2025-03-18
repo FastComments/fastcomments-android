@@ -66,7 +66,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
             return;
         }
         holder.setComment(comment, (updatedComment, toggleButton) -> {
-            commentsTree.setRepliesVisible(updatedComment, !updatedComment.isRepliesShown(), (request, producer) -> {
+            commentsTree.setRepliesVisible(updatedComment, !updatedComment.isRepliesShown, (request, producer) -> {
                 // Create a new request with the button
                 GetChildrenRequest requestWithButton = new GetChildrenRequest(request.getParentId(), toggleButton);
                 getChildren.get(requestWithButton, producer);
@@ -92,6 +92,36 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
                 downVoteListener.call(comment);
             }
         });
+        
+        // Set up load more children click listener
+        holder.setLoadMoreChildrenClickListener(v -> {
+            if (getChildren != null && comment.isRepliesShown && comment.hasMoreChildren) {
+                // Mark as loading to update UI
+                comment.isLoadingChildren = true;
+                notifyItemChanged(position);
+                
+                // Create a request for the next page of child comments
+                GetChildrenRequest paginationRequest = new GetChildrenRequest(
+                        comment.getComment().getId(),
+                        null,
+                        comment.childSkip,
+                        comment.childPageSize,
+                        true
+                );
+                
+                getChildren.get(paginationRequest, childComments -> {
+                    // Update has more flag based on response
+                    getHandler().post(() -> {
+                        comment.isLoadingChildren = false;
+                        notifyItemChanged(position);
+                    });
+                });
+            }
+        });
+    }
+    
+    private android.os.Handler getHandler() {
+        return new android.os.Handler(android.os.Looper.getMainLooper());
     }
 
     // Helper method to determine which comment corresponds to a given adapter position

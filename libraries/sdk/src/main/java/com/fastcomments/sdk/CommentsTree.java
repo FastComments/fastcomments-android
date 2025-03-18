@@ -47,7 +47,7 @@ public class CommentsTree {
             allComments.add(renderableComment);
             visibleComments.add(renderableComment);
             if (comment.getChildren() != null) {
-                handleChildren(allComments, visibleComments, comment.getChildren(), renderableComment.isRepliesShown());
+                handleChildren(allComments, visibleComments, comment.getChildren(), renderableComment.isRepliesShown);
             }
         }
 
@@ -75,7 +75,7 @@ public class CommentsTree {
                 allComments.add(renderableComment);
                 visibleComments.add(renderableComment);
                 if (comment.getChildren() != null) {
-                    handleChildren(allComments, visibleComments, comment.getChildren(), renderableComment.isRepliesShown());
+                    handleChildren(allComments, visibleComments, comment.getChildren(), renderableComment.isRepliesShown);
                 }
             }
         }
@@ -90,10 +90,27 @@ public class CommentsTree {
         // this is structured this way to limit pointer indirection/hashmap lookups.
         final RenderableComment parent = parentId != null ? commentsById.get(parentId) : null;
         List<PublicComment> children = parent != null ? parent.getComment().getChildren() : null;
-        if (parent != null && children == null) {
-            children = new ArrayList<>(comments.size());
-            parent.getComment().setChildren(children);
+        
+        // For pagination, we need to either create a new list or append to the existing one
+        if (parent != null) {
+            boolean isPagination = parent.childPage > 0;
+            
+            if (children == null) {
+                children = new ArrayList<>(comments.size());
+                parent.getComment().setChildren(children);
+            } else if (isPagination) {
+                // If this is a pagination request, we don't want to replace, just add to existing list
+                // No need to do anything with the list reference, as it's already set in the parent
+            }
+            
+            // Update the hasMoreChildren flag to reflect whether there are more replies to load
+            if (parent.getComment().getChildCount() != null) {
+                int totalChildCount = parent.getComment().getChildCount();
+                int loadedChildCount = (children.size() + comments.size());
+                parent.hasMoreChildren = (loadedChildCount < totalChildCount);
+            }
         }
+        
         for (PublicComment comment : comments) {
             final RenderableComment childRenderable = new RenderableComment(comment);
             commentsById.put(comment.getId(), childRenderable);
@@ -109,7 +126,7 @@ public class CommentsTree {
             final RenderableComment childRenderable = new RenderableComment(child);
             commentsById.put(child.getId(), childRenderable);
             allComments.add(childRenderable);
-            final boolean childrenVisible = visible && childRenderable.isRepliesShown();
+            final boolean childrenVisible = visible && childRenderable.isRepliesShown;
             if (childrenVisible) {
                 visibleComments.add(childRenderable);
             }
@@ -140,21 +157,48 @@ public class CommentsTree {
     }
 
     public void setRepliesVisible(RenderableComment renderableComment, boolean areRepliesVisible, Producer<GetChildrenRequest, List<PublicComment>> getChildren) {
-        final boolean wasRepliesVisible = renderableComment.isRepliesShown();
+        final boolean wasRepliesVisible = renderableComment.isRepliesShown;
         if (wasRepliesVisible == areRepliesVisible) {
             return;
         }
-        renderableComment.setRepliesShown(areRepliesVisible);
+        renderableComment.isRepliesShown = areRepliesVisible;
         final List<PublicComment> children = renderableComment.getComment().getChildren();
         if (areRepliesVisible) {
             if (children != null && !children.isEmpty()) {
                 insertChildrenAfter(renderableComment, children);
+                // Set hasMoreChildren based on child count vs. loaded children count
+                if (renderableComment.getComment().getChildCount() != null) {
+                    int totalChildCount = renderableComment.getComment().getChildCount();
+                    int loadedChildCount = children.size();
+                    renderableComment.hasMoreChildren = (loadedChildCount < totalChildCount);
+                }
             } else if (Boolean.TRUE.equals(renderableComment.getComment().getHasChildren())) {
+                // Reset pagination state when showing replies
+                renderableComment.childPage = 0;
+                renderableComment.childSkip = 0;
+                renderableComment.isLoadingChildren = true;
+                
                 // Create GetChildrenRequest with the comment ID and the toggle button
                 // Note: We can't directly get the button here, so we'll handle button reference via the adapter
-                GetChildrenRequest request = new GetChildrenRequest(renderableComment.getComment().getId(), null);
+                GetChildrenRequest request = new GetChildrenRequest(
+                        renderableComment.getComment().getId(), 
+                        null, 
+                        0, 
+                        renderableComment.childPageSize, 
+                        false
+                );
+                
                 getChildren.get(request, (asyncFetchedChildren) -> {
+                    renderableComment.isLoadingChildren = false;
                     insertChildrenAfter(renderableComment, asyncFetchedChildren);
+                    
+                    // Set hasMoreChildren based on child count vs. loaded children count
+                    if (renderableComment.getComment().getChildCount() != null) {
+                        int totalChildCount = renderableComment.getComment().getChildCount();
+                        int loadedChildCount = renderableComment.getComment().getChildren() != null ? 
+                                renderableComment.getComment().getChildren().size() : 0;
+                        renderableComment.hasMoreChildren = (loadedChildCount < totalChildCount);
+                    }
                 });
             }
         } else {
@@ -162,6 +206,9 @@ public class CommentsTree {
                 int myIndex = visibleComments.indexOf(renderableComment);
                 removeChildren(children);
                 adapter.notifyItemRangeChanged(myIndex, totalSize() - myIndex); // everything after me has changed/moved since it's a flat list
+                
+                // Reset pagination state when hiding replies
+                renderableComment.resetChildPagination();
             }
         }
     }
