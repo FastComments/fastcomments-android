@@ -18,9 +18,9 @@ import java.util.Map;
  */
 public class CommentsTree {
 
-    public Map<String, RenderableComment> commentsById;
-    public List<RenderableComment> allComments;
-    public List<RenderableComment> visibleComments;
+    public Map<String, RenderableComment> commentsById; // all data including invisible
+    public List<RenderableComment> allComments; // in any order
+    public List<RenderableComment> visibleComments; // in view order
     private CommentsAdapter adapter;
 
     public CommentsTree() {
@@ -53,6 +53,14 @@ public class CommentsTree {
 
         this.allComments = allComments;
         this.visibleComments = visibleComments;
+    }
+
+    public void add(List<PublicComment> comments) {
+        for (PublicComment comment : comments) {
+            final RenderableComment childRenderable = new RenderableComment(comment);
+            commentsById.put(comment.getId(), childRenderable);
+            allComments.add(childRenderable);
+        }
     }
 
     private void handleChildren(List<RenderableComment> allComments, List<RenderableComment> visibleComments, List<PublicComment> comments, boolean visible) {
@@ -90,7 +98,7 @@ public class CommentsTree {
         }
     }
 
-    public void setRepliesVisible(RenderableComment renderableComment, boolean areRepliesVisible) {
+    public void setRepliesVisible(RenderableComment renderableComment, boolean areRepliesVisible, Producer<String, List<PublicComment>> getChildren) {
         final boolean wasRepliesVisible = renderableComment.isRepliesShown();
         if (wasRepliesVisible == areRepliesVisible) {
             return;
@@ -98,16 +106,12 @@ public class CommentsTree {
         renderableComment.setRepliesShown(areRepliesVisible);
         final List<PublicComment> children = renderableComment.getComment().getChildren();
         if (areRepliesVisible) {
-            if (children != null) {
-                int myIndex = visibleComments.indexOf(renderableComment);
-                int indexer = myIndex + 1;
-                for (int i = children.size() - 1; i >= 0; i--) {
-                    final PublicComment child = children.get(i);
-                    final RenderableComment childRenderable = commentsById.get(child.getId());
-                    // see explanation at top of class
-                    visibleComments.add(indexer, childRenderable);
-                }
-                adapter.notifyItemRangeChanged(myIndex, totalSize() - myIndex); // everything after me has changed/moved since it's a flat list
+            if (children != null && !children.isEmpty()) {
+                insertChildrenAfter(renderableComment, children);
+            } else if (Boolean.TRUE.equals(renderableComment.getComment().getHasChildren())) {
+                getChildren.get(renderableComment.getComment().getId(), (asyncFetchedChildren) -> {
+                    insertChildrenAfter(renderableComment, asyncFetchedChildren);
+                });
             }
         } else {
             if (children != null) {
@@ -116,5 +120,17 @@ public class CommentsTree {
                 adapter.notifyItemRangeChanged(myIndex, totalSize() - myIndex); // everything after me has changed/moved since it's a flat list
             }
         }
+    }
+
+    public void insertChildrenAfter(RenderableComment renderableComment, List<PublicComment> children) {
+        int myIndex = visibleComments.indexOf(renderableComment);
+        int indexer = myIndex + 1;
+        for (int i = children.size() - 1; i >= 0; i--) {
+            final PublicComment child = children.get(i);
+            final RenderableComment childRenderable = commentsById.get(child.getId());
+            // see explanation at top of class
+            visibleComments.add(indexer, childRenderable);
+        }
+        adapter.notifyItemRangeChanged(myIndex, totalSize() - myIndex); // everything after me has changed/moved since it's a flat list
     }
 }

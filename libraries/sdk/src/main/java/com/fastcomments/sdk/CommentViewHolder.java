@@ -85,7 +85,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         contentTextView.setText(Html.fromHtml(comment.getComment().getCommentHTML(), Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {
             @Override
             public Drawable getDrawable(String source) {
-                System.out.println("Getting image " + source);
+//                System.out.println("Getting image " + source);
                 final URLDrawable urlDrawable = new URLDrawable();
                 urlDrawable.setBounds(0, 0, contentTextView.getWidth(), 100);
 

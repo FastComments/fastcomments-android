@@ -9,9 +9,7 @@ import com.fastcomments.invoker.ApiCallback;
 import com.fastcomments.invoker.ApiException;
 import com.fastcomments.model.*;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -88,7 +86,7 @@ public class FastCommentsSDK {
      * setup any other required state.
      */
     public void load(FCCallback<GetCommentsResponseWithPresencePublicComment> callback) {
-        getComments(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
+        getCommentsAndRelatedData(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
             @Override
             public boolean onFailure(APIError error) {
                 callback.onFailure(error);
@@ -113,14 +111,81 @@ public class FastCommentsSDK {
      *
      * @param callback Callback to receive the response
      */
-    public void getComments(FCCallback<GetCommentsResponseWithPresencePublicComment> callback) {
-        getComments(null, null, 1, null, callback);
+    public void getCommentsAndRelatedData(FCCallback<GetCommentsResponseWithPresencePublicComment> callback) {
+        getCommentsAndRelatedData(null, null, 1, callback);
     }
 
     /**
      * Load comments asynchronously with pagination and threading options.
      */
-    public void getComments(
+    public void getCommentsAndRelatedData(
+            Integer skip,
+            Integer limit,
+            Integer maxTreeDepth,
+            final FCCallback<GetCommentsResponseWithPresencePublicComment> callback) {
+
+        SortDirections direction = config.defaultSortDirection;
+
+        try {
+            // Make the API call asynchronously
+            api.getComments(config.tenantId, config.urlId)
+                    .direction(direction)
+                    .sso(config.getSSOToken())
+                    .asTree(true)
+                    .maxTreeDepth(maxTreeDepth)
+                    .skip(skip)
+                    .skipChildren(skip)
+                    .limit(limit)
+                    .limitChildren(limit)
+                    .lastGenDate(lastGenDate)
+                    .includeConfig(true)
+                    .countAll(Boolean.TRUE.equals(config.countAll))
+                    .countChildren(true)
+                    .locale(config.locale)
+                    .includeNotificationCount(true)
+                    .executeAsync(new ApiCallback<GetComments200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                        }
+
+                        @Override
+                        public void onSuccess(GetComments200Response response, int i, Map<String, List<String>> map) {
+                            if (response.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) response.getActualInstance());
+                            } else {
+                                final GetCommentsResponseWithPresencePublicComment commentsResponse = response.getGetCommentsResponseWithPresencePublicComment();
+
+                                if (commentsResponse.getUrlIdClean() != null) {
+                                    config.urlId = commentsResponse.getUrlIdClean();
+                                }
+                                // TODO tenantIdWS
+                                // TODO urlIdWS
+                                // TODO userIdWS
+
+                                callback.onSuccess(commentsResponse);
+                            }
+                        }
+
+                        @Override
+                        public void onUploadProgress(long l, long l1, boolean b) {
+
+                        }
+
+                        @Override
+                        public void onDownloadProgress(long l, long l1, boolean b) {
+
+                        }
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+
+    /**
+     * Load comments asynchronously with pagination and threading options. Doesn't include other info (notification counts, page config, etc).
+     */
+    public void getCommentsForParent(
             Integer skip,
             Integer limit,
             Integer maxTreeDepth,
@@ -142,11 +207,8 @@ public class FastCommentsSDK {
                     .limit(limit)
                     .limitChildren(limit)
                     .lastGenDate(lastGenDate)
-                    .includeConfig(true)
-                    .countAll(Boolean.TRUE.equals(config.countAll))
                     .countChildren(true)
                     .locale(config.locale)
-                    .includeNotificationCount(true)
                     .executeAsync(new ApiCallback<GetComments200Response>() {
                         @Override
                         public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
@@ -154,12 +216,12 @@ public class FastCommentsSDK {
                         }
 
                         @Override
-                        public void onSuccess(GetComments200Response getComments200Response, int i, Map<String, List<String>> map) {
-                            if (getComments200Response.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) getComments200Response.getActualInstance());
+                        public void onSuccess(GetComments200Response response, int i, Map<String, List<String>> map) {
+                            if (response.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) response.getActualInstance());
                             } else {
-                                final GetCommentsResponseWithPresencePublicComment commentsResponse = getComments200Response.getGetCommentsResponseWithPresencePublicComment();
-
+                                final GetCommentsResponseWithPresencePublicComment commentsResponse = response.getGetCommentsResponseWithPresencePublicComment();
+                                commentsTree.add(commentsResponse.getComments());
                                 callback.onSuccess(commentsResponse);
                             }
                         }

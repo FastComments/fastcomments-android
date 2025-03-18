@@ -8,20 +8,31 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.fastcomments.model.PublicComment;
+
+import java.util.List;
+
 public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
 
     private final Context context;
     private final CommentsTree commentsTree;
+    private final FastCommentsSDK sdk;
     private Callback<RenderableComment> replyListener;
+    private Producer<String, List<PublicComment>> getChildren;
 
-    public CommentsAdapter(Context context, CommentsTree commentsTree) {
+    public CommentsAdapter(Context context, FastCommentsSDK sdk) {
         this.context = context;
-        this.commentsTree = commentsTree;
+        this.commentsTree = sdk.commentsTree;
+        this.sdk = sdk;
         commentsTree.setAdapter(this);
     }
 
     public void setRequestingReplyListener(Callback<RenderableComment> listener) {
         this.replyListener = listener;
+    }
+
+    public void setGetChildrenProducer(Producer<String, List<PublicComment>> getChildren) {
+        this.getChildren = getChildren;
     }
 
     @Override
@@ -44,7 +55,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
             return;
         }
         holder.setComment(comment, updatedComment -> {
-            commentsTree.setRepliesVisible(updatedComment, !updatedComment.isRepliesShown());
+            commentsTree.setRepliesVisible(updatedComment, !updatedComment.isRepliesShown(), (id, producer) -> getChildren.get(id, producer));
         });
 
         // Set up reply button click listener
@@ -62,9 +73,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
         }
         return commentsTree.visibleComments.get(position);
     }
-    
+
     /**
      * Get the position for a specific comment in the adapter
+     *
      * @param comment The comment to find
      * @return The position or 0 if not found
      */
@@ -72,7 +84,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
         if (comment == null || commentsTree.visibleComments.isEmpty()) {
             return 0;
         }
-        
+
         String commentId = comment.getComment().getId();
         for (int i = 0; i < commentsTree.visibleComments.size(); i++) {
             RenderableComment renderableComment = commentsTree.visibleComments.get(i);
@@ -80,7 +92,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
                 return i;
             }
         }
-        
+
         return 0;
     }
 
