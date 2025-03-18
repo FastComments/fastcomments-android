@@ -60,7 +60,7 @@ public class FastCommentsView extends FrameLayout {
         progressBar = findViewById(R.id.commentsProgressBar);
         emptyStateView = findViewById(R.id.emptyStateView);
         this.newCommentButton = findViewById(R.id.newCommentButton);
-        
+
         // Initialize pagination controls
         this.paginationControls = findViewById(R.id.paginationControls);
         this.btnNextComments = paginationControls.findViewById(R.id.btnNextComments);
@@ -115,12 +115,12 @@ public class FastCommentsView extends FrameLayout {
             // Hide the form when canceling a reply with animation
             hideCommentForm();
         });
-        
+
         // Setup pagination button listeners
         btnNextComments.setOnClickListener(v -> {
             loadMoreComments();
         });
-        
+
         btnLoadAll.setOnClickListener(v -> {
             loadAllComments();
         });
@@ -138,31 +138,31 @@ public class FastCommentsView extends FrameLayout {
         adapter.setGetChildrenProducer((request, sendResults) -> {
             String parentId = request.getParentId();
             Button toggleButton = request.getToggleButton();
-            
+
             // Set the button text to "Loading..." when starting to load
             if (toggleButton != null) {
                 getHandler().post(() -> toggleButton.setText(R.string.loading_replies));
             }
-            
+
             sdk.getCommentsForParent(null, null, 0, parentId, new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
                 @Override
                 public boolean onFailure(APIError error) {
                     getHandler().post(() -> {
                         // Show toast with error message
                         android.widget.Toast.makeText(
-                            getContext(), 
-                            R.string.error_loading_replies, 
-                            android.widget.Toast.LENGTH_SHORT
+                                getContext(),
+                                R.string.error_loading_replies,
+                                android.widget.Toast.LENGTH_SHORT
                         ).show();
-                        
+
                         // Reset button text if the toggle button is available
                         if (toggleButton != null) {
                             // Get the comment to retrieve the child count
                             RenderableComment comment = sdk.commentsTree.commentsById.get(parentId);
                             if (comment != null && comment.getComment().getChildCount() != null) {
                                 toggleButton.setText(getContext().getString(
-                                    R.string.show_replies, 
-                                    comment.getComment().getChildCount())
+                                        R.string.show_replies,
+                                        comment.getComment().getChildCount())
                                 );
                             }
                         }
@@ -207,7 +207,7 @@ public class FastCommentsView extends FrameLayout {
                     } else {
                         setIsEmpty(false);
                         adapter.notifyDataSetChanged();
-                        
+
                         // Update pagination controls
                         updatePaginationControls();
                     }
@@ -323,18 +323,23 @@ public class FastCommentsView extends FrameLayout {
     public void refresh() {
         load();
     }
-    
+
     /**
      * Update the pagination controls based on current state
      */
     private void updatePaginationControls() {
         if (sdk.hasMore) {
             paginationControls.setVisibility(View.VISIBLE);
-            
+
             // Update "Next" button text with count
             int countToShow = sdk.getCountRemainingToShow();
-            btnNextComments.setText(getContext().getString(R.string.next_comments, countToShow));
-            
+            if (countToShow > 0) {
+                btnNextComments.setText(getContext().getString(R.string.next_comments, countToShow));
+                btnNextComments.setVisibility(View.VISIBLE);
+            } else {
+                btnNextComments.setVisibility(View.GONE);
+            }
+
             // Show/hide "Load All" button based on total comment count
             if (sdk.shouldShowLoadAll()) {
                 btnLoadAll.setVisibility(View.VISIBLE);
@@ -346,7 +351,7 @@ public class FastCommentsView extends FrameLayout {
             paginationControls.setVisibility(View.GONE);
         }
     }
-    
+
     /**
      * Load more comments (next page)
      */
@@ -355,7 +360,7 @@ public class FastCommentsView extends FrameLayout {
         btnNextComments.setVisibility(View.GONE);
         btnLoadAll.setVisibility(View.GONE);
         paginationProgressBar.setVisibility(View.VISIBLE);
-        
+
         sdk.loadMore(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
             @Override
             public boolean onFailure(APIError error) {
@@ -363,16 +368,16 @@ public class FastCommentsView extends FrameLayout {
                     // Hide loading indicator
                     paginationProgressBar.setVisibility(View.GONE);
                     btnNextComments.setVisibility(View.VISIBLE);
-                    
+
                     if (sdk.shouldShowLoadAll()) {
                         btnLoadAll.setVisibility(View.VISIBLE);
                     }
-                    
+
                     // Show error toast
                     android.widget.Toast.makeText(
-                        getContext(),
-                        R.string.error_loading_comments,
-                        android.widget.Toast.LENGTH_SHORT
+                            getContext(),
+                            R.string.error_loading_comments,
+                            android.widget.Toast.LENGTH_SHORT
                     ).show();
                 });
                 return CONSUME;
@@ -383,7 +388,7 @@ public class FastCommentsView extends FrameLayout {
                 getHandler().post(() -> {
                     // Hide loading indicator
                     paginationProgressBar.setVisibility(View.GONE);
-                    
+
                     // Update pagination controls
                     updatePaginationControls();
                 });
@@ -391,7 +396,7 @@ public class FastCommentsView extends FrameLayout {
             }
         });
     }
-    
+
     /**
      * Load all comments at once
      */
@@ -400,7 +405,7 @@ public class FastCommentsView extends FrameLayout {
         btnNextComments.setVisibility(View.GONE);
         btnLoadAll.setVisibility(View.GONE);
         paginationProgressBar.setVisibility(View.VISIBLE);
-        
+
         sdk.loadAll(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
             @Override
             public boolean onFailure(APIError error) {
@@ -408,16 +413,16 @@ public class FastCommentsView extends FrameLayout {
                     // Hide loading indicator
                     paginationProgressBar.setVisibility(View.GONE);
                     btnNextComments.setVisibility(View.VISIBLE);
-                    
+
                     if (sdk.shouldShowLoadAll()) {
                         btnLoadAll.setVisibility(View.VISIBLE);
                     }
-                    
+
                     // Show error toast
                     android.widget.Toast.makeText(
-                        getContext(),
-                        R.string.error_loading_comments,
-                        android.widget.Toast.LENGTH_SHORT
+                            getContext(),
+                            R.string.error_loading_comments,
+                            android.widget.Toast.LENGTH_SHORT
                     ).show();
                 });
                 return CONSUME;
