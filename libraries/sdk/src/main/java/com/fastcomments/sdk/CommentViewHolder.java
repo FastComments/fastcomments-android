@@ -39,6 +39,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private final TextView dateTextView;
     private final TextView contentTextView;
     private final TextView unverifiedLabel;
+    private final TextView displayLabelTextView; // Display label above username
     private final Button toggleRepliesButton;
     private final Button replyButton;
     private final ImageButton upVoteButton;
@@ -69,6 +70,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         dateTextView = itemView.findViewById(R.id.commentDate);
         contentTextView = itemView.findViewById(R.id.commentContent);
         unverifiedLabel = itemView.findViewById(R.id.unverifiedLabel);
+        displayLabelTextView = itemView.findViewById(R.id.displayLabel);
         toggleRepliesButton = itemView.findViewById(R.id.toggleReplies);
         replyButton = itemView.findViewById(R.id.replyButton);
         upVoteButton = itemView.findViewById(R.id.upVoteButton);
@@ -101,6 +103,15 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             AvatarFetcher.fetchTransformInto(context, comment.getComment().getAvatarSrc(), avatarImageView);
         } else {
             AvatarFetcher.fetchTransformInto(context, R.drawable.default_avatar, avatarImageView);
+        }
+
+        // Handle display label if present
+        String displayLabel = comment.getComment().getDisplayLabel();
+        if (displayLabel != null && !displayLabel.isEmpty()) {
+            displayLabelTextView.setText(displayLabel);
+            displayLabelTextView.setVisibility(View.VISIBLE);
+        } else {
+            displayLabelTextView.setVisibility(View.GONE);
         }
 
         // Handle unverified label

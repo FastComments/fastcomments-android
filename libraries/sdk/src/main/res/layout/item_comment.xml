@@ -47,6 +47,15 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
+                
+                <!-- Display Label above username -->
+                <TextView
+                    android:id="@+id/displayLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="#757575"
+                    android:visibility="gone" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
