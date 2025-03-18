@@ -9,6 +9,8 @@
     <string name="submit_comment">Submit</string>
     <string name="reply">Reply</string>
     <string name="show_replies">Show Replies (%1$d)</string>
+    <string name="loading_replies">Loading...</string>
+    <string name="error_loading_replies">Failed to load replies</string>
     <string name="hide_replies">Hide Replies</string>
     <string name="user_avatar">User Avatar</string>
     <string name="empty_comment_error">Comment cannot be empty</string>

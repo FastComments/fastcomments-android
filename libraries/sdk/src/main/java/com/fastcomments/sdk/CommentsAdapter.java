@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,7 +19,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
     private final CommentsTree commentsTree;
     private final FastCommentsSDK sdk;
     private Callback<RenderableComment> replyListener;
-    private Producer<String, List<PublicComment>> getChildren;
+    private Producer<GetChildrenRequest, List<PublicComment>> getChildren;
 
     public CommentsAdapter(Context context, FastCommentsSDK sdk) {
         this.context = context;
@@ -31,7 +32,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
         this.replyListener = listener;
     }
 
-    public void setGetChildrenProducer(Producer<String, List<PublicComment>> getChildren) {
+    public void setGetChildrenProducer(Producer<GetChildrenRequest, List<PublicComment>> getChildren) {
         this.getChildren = getChildren;
     }
 
@@ -54,8 +55,12 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
         if (comment == null) {
             return;
         }
-        holder.setComment(comment, updatedComment -> {
-            commentsTree.setRepliesVisible(updatedComment, !updatedComment.isRepliesShown(), (id, producer) -> getChildren.get(id, producer));
+        holder.setComment(comment, (updatedComment, toggleButton) -> {
+            commentsTree.setRepliesVisible(updatedComment, !updatedComment.isRepliesShown(), (request, producer) -> {
+                // Create a new request with the button
+                GetChildrenRequest requestWithButton = new GetChildrenRequest(request.getParentId(), toggleButton);
+                getChildren.get(requestWithButton, producer);
+            });
         });
 
         // Set up reply button click listener
@@ -97,6 +102,6 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
     }
 
     public interface OnToggleRepliesListener {
-        void onToggle(RenderableComment comment);
+        void onToggle(RenderableComment comment, Button toggleButton);
     }
 }

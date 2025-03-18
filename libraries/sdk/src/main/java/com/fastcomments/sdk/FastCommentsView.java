@@ -120,10 +120,38 @@ public class FastCommentsView extends FrameLayout {
             recyclerView.smoothScrollToPosition(adapter.getPositionForComment(commentToReplyTo));
         });
 
-        adapter.setGetChildrenProducer((parentId, sendResults) -> {
+        adapter.setGetChildrenProducer((request, sendResults) -> {
+            String parentId = request.getParentId();
+            Button toggleButton = request.getToggleButton();
+            
+            // Set the button text to "Loading..." when starting to load
+            if (toggleButton != null) {
+                getHandler().post(() -> toggleButton.setText(R.string.loading_replies));
+            }
+            
             sdk.getCommentsForParent(null, null, 0, parentId, new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
                 @Override
                 public boolean onFailure(APIError error) {
+                    getHandler().post(() -> {
+                        // Show toast with error message
+                        android.widget.Toast.makeText(
+                            getContext(), 
+                            R.string.error_loading_replies, 
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show();
+                        
+                        // Reset button text if the toggle button is available
+                        if (toggleButton != null) {
+                            // Get the comment to retrieve the child count
+                            RenderableComment comment = sdk.commentsTree.commentsById.get(parentId);
+                            if (comment != null && comment.getComment().getChildCount() != null) {
+                                toggleButton.setText(getContext().getString(
+                                    R.string.show_replies, 
+                                    comment.getComment().getChildCount())
+                                );
+                            }
+                        }
+                    });
                     return CONSUME;
                 }
 

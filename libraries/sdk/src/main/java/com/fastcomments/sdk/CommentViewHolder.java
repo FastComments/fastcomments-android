@@ -141,7 +141,8 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             }
             toggleRepliesButton.setOnClickListener(v -> {
                 if (listener != null) {
-                    listener.onToggle(comment);
+                    // Pass both the comment and the toggle button for UI updates
+                    listener.onToggle(comment, toggleRepliesButton);
                 }
             });
         } else {

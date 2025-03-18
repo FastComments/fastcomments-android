@@ -221,7 +221,7 @@ public class FastCommentsSDK {
                                 callback.onFailure((APIError) response.getActualInstance());
                             } else {
                                 final GetCommentsResponseWithPresencePublicComment commentsResponse = response.getGetCommentsResponseWithPresencePublicComment();
-                                commentsTree.add(commentsResponse.getComments());
+                                commentsTree.addForParent(parentId, commentsResponse.getComments());
                                 callback.onSuccess(commentsResponse);
                             }
                         }
