@@ -35,7 +35,7 @@ public class FastCommentsSDK {
     public boolean hasMore;
     public int currentPage;
     public int currentSkip;
-    public int pageSize = 30; // Default page size for pagination
+    public int pageSize = 30;
     public long lastGenDate;
     public Set<String> broadcastIdsSent;
     public String blockingErrorMessage;
@@ -110,6 +110,12 @@ public class FastCommentsSDK {
                 if (response.getUser() != null) {
                     currentUser = response.getUser();
                 }
+                if (response.getUrlIdClean() != null) {
+                    config.urlId = response.getUrlIdClean();
+                }
+                // TODO tenantIdWS
+                // TODO urlIdWS
+                // TODO userIdWS
 
                 // Update the total server count
                 commentCountOnServer = response.getCommentCount() != null ? response.getCommentCount() : 0;
@@ -130,7 +136,7 @@ public class FastCommentsSDK {
      * @param callback Callback to receive the response
      */
     public void getCommentsAndRelatedData(FCCallback<GetCommentsResponseWithPresencePublicComment> callback) {
-        getCommentsAndRelatedData(currentSkip, pageSize, 1, callback);
+        getCommentsAndRelatedData(currentSkip, pageSize, 1, true, true, callback);
     }
 
     /**
@@ -140,6 +146,8 @@ public class FastCommentsSDK {
             Integer skip,
             Integer limit,
             Integer maxTreeDepth,
+            boolean includeConfig,
+            boolean includeNotificationCount,
             final FCCallback<GetCommentsResponseWithPresencePublicComment> callback) {
 
         SortDirections direction = config.defaultSortDirection;
@@ -156,11 +164,11 @@ public class FastCommentsSDK {
                     .limit(limit)
                     .limitChildren(limit)
                     .lastGenDate(lastGenDate)
-                    .includeConfig(true)
+                    .includeConfig(includeConfig)
                     .countAll(Boolean.TRUE.equals(config.countAll))
                     .countChildren(true)
                     .locale(config.locale)
-                    .includeNotificationCount(true)
+                    .includeNotificationCount(includeNotificationCount)
                     .executeAsync(new ApiCallback<GetComments200Response>() {
                         @Override
                         public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
@@ -173,13 +181,6 @@ public class FastCommentsSDK {
                                 callback.onFailure((APIError) response.getActualInstance());
                             } else {
                                 final GetCommentsResponseWithPresencePublicComment commentsResponse = response.getGetCommentsResponseWithPresencePublicComment();
-
-                                if (commentsResponse.getUrlIdClean() != null) {
-                                    config.urlId = commentsResponse.getUrlIdClean();
-                                }
-                                // TODO tenantIdWS
-                                // TODO urlIdWS
-                                // TODO userIdWS
 
                                 callback.onSuccess(commentsResponse);
                             }
@@ -312,7 +313,7 @@ public class FastCommentsSDK {
         currentSkip += pageSize;
         currentPage++;
 
-        getCommentsAndRelatedData(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
+        getCommentsAndRelatedData(currentSkip, pageSize, 0, false, false, new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
             @Override
             public boolean onFailure(APIError error) {
                 // If there's a failure, reset the pagination values to the previous state
