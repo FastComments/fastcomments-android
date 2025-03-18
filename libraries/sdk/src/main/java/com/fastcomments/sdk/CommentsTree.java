@@ -55,11 +55,21 @@ public class CommentsTree {
         this.visibleComments = visibleComments;
     }
 
-    public void add(List<PublicComment> comments) {
+    public void addForParent(String parentId, List<PublicComment> comments) {
+        // this is structured this way to limit pointer indirection/hashmap lookups.
+        final RenderableComment parent = parentId != null ? commentsById.get(parentId) : null;
+        List<PublicComment> children = parent != null ? parent.getComment().getChildren() : null;
+        if (parent != null && children == null) {
+            children = new ArrayList<>(comments.size());
+            parent.getComment().setChildren(children);
+        }
         for (PublicComment comment : comments) {
             final RenderableComment childRenderable = new RenderableComment(comment);
             commentsById.put(comment.getId(), childRenderable);
             allComments.add(childRenderable);
+            if (children != null) {
+                children.add(comment);
+            }
         }
     }
 
@@ -98,7 +108,7 @@ public class CommentsTree {
         }
     }
 
-    public void setRepliesVisible(RenderableComment renderableComment, boolean areRepliesVisible, Producer<String, List<PublicComment>> getChildren) {
+    public void setRepliesVisible(RenderableComment renderableComment, boolean areRepliesVisible, Producer<GetChildrenRequest, List<PublicComment>> getChildren) {
         final boolean wasRepliesVisible = renderableComment.isRepliesShown();
         if (wasRepliesVisible == areRepliesVisible) {
             return;
@@ -109,7 +119,10 @@ public class CommentsTree {
             if (children != null && !children.isEmpty()) {
                 insertChildrenAfter(renderableComment, children);
             } else if (Boolean.TRUE.equals(renderableComment.getComment().getHasChildren())) {
-                getChildren.get(renderableComment.getComment().getId(), (asyncFetchedChildren) -> {
+                // Create GetChildrenRequest with the comment ID and the toggle button
+                // Note: We can't directly get the button here, so we'll handle button reference via the adapter
+                GetChildrenRequest request = new GetChildrenRequest(renderableComment.getComment().getId(), null);
+                getChildren.get(request, (asyncFetchedChildren) -> {
                     insertChildrenAfter(renderableComment, asyncFetchedChildren);
                 });
             }
