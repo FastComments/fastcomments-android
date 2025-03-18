@@ -55,7 +55,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:textColorLink="@color/fastcomments_link_color"
+            android:autoLink="web"
+            style="@style/LinkText" 
+            android:textColor="@color/black" />
 
         <LinearLayout
             android:layout_width="match_parent"

@@ -76,47 +76,15 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         ViewGroup.LayoutParams textViewLayout = contentTextView.getLayoutParams();
         textViewLayout.height = ViewGroup.LayoutParams.WRAP_CONTENT;
         contentTextView.setLayoutParams(textViewLayout);
-
-        // Display the comment content
-        contentTextView.setText(Html.fromHtml(comment.getComment().getCommentHTML(), Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {
-            @Override
-            public Drawable getDrawable(String source) {
-//                System.out.println("Getting image " + source);
-                final URLDrawable urlDrawable = new URLDrawable();
-                urlDrawable.setBounds(0, 0, contentTextView.getWidth(), 100);
-
-                // Use Glide to asynchronously load the image from the URL.
-                Glide.with(context)
-                        .asBitmap()
-                        .load(source)
-                        .into(new CustomTarget<Bitmap>() {
-                            @Override
-                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                                // Create a BitmapDrawable from the loaded Bitmap
-                                BitmapDrawable drawable = new BitmapDrawable(context.getResources(), resource);
-                                drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-                                ViewGroup.LayoutParams textViewLayout = contentTextView.getLayoutParams();
-                                textViewLayout.height = drawable.getIntrinsicHeight();
-                                contentTextView.setLayoutParams(textViewLayout);
-                                urlDrawable.setDrawable(drawable);
-
-                                // Refresh the TextView so that the new image is displayed
-                                contentTextView.setText(contentTextView.getText());
-                                // these do not seem to be required, so we can omit them for performance!
-//                                contentTextView.requestLayout();
-//                                contentTextView.invalidate();
-                            }
-
-                            @Override
-                            public void onLoadCleared(@Nullable Drawable placeholder) {
-                                // Handle cleanup if needed
-                            }
-                        });
-
-                // Return the URLDrawable (which will be updated asynchronously)
-                return urlDrawable;
-            }
-        }, null));
+        
+        // Make links clickable
+        contentTextView.setClickable(true);
+        contentTextView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
+        contentTextView.setLinksClickable(true);
+        
+        // Display the comment content with clickable links
+        String htmlContent = comment.getComment().getCommentHTML();
+        contentTextView.setText(HtmlLinkHandler.parseHtml(context, htmlContent, contentTextView));
 
         // Indent child comments to reflect hierarchy
         ViewGroup.MarginLayoutParams itemViewLayoutParams = (ViewGroup.MarginLayoutParams) itemView.getLayoutParams();
