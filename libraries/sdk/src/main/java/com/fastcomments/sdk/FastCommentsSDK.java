@@ -112,7 +112,7 @@ public class FastCommentsSDK {
                 }
                 
                 // Update the total server count
-                commentCountOnServer = response.getCount() != null ? response.getCount().intValue() : 0;
+                commentCountOnServer = response.getCommentCount() != null ? response.getCommentCount() : 0;
                 
                 // Determine if we have more comments to load from the response
                 hasMore = response.getHasMore() != null ? response.getHasMore() : false;
@@ -325,7 +325,7 @@ public class FastCommentsSDK {
             @Override
             public boolean onSuccess(GetCommentsResponseWithPresencePublicComment response) {
                 // Update the total server count
-                commentCountOnServer = response.getCount() != null ? response.getCount().intValue() : commentCountOnServer;
+                commentCountOnServer = response.getCommentCount() != null ? response.getCommentCount() : commentCountOnServer;
                 
                 // Determine if we have more comments to load
                 hasMore = response.getHasMore() != null ? response.getHasMore() : false;
@@ -366,7 +366,7 @@ public class FastCommentsSDK {
                 pageSize = originalPageSize;
                 
                 // Update the total server count
-                commentCountOnServer = response.getCount() != null ? response.getCount().intValue() : 0;
+                commentCountOnServer = response.getCommentCount() != null ? response.getCommentCount() : 0;
                 
                 // We loaded all comments, so there are no more
                 hasMore = false;
@@ -396,18 +396,4 @@ public class FastCommentsSDK {
         return Math.min(Math.max(remaining, 0), pageSize);
     }
 
-    /**
-     * Create a CommentWidgetConfig with the specified tenant ID and URL ID.
-     * This is just to help discover the d
-     *
-     * @param tenantId Your FastComments tenant ID
-     * @param urlId    URL ID for the comment thread
-     * @return CommentWidgetConfig object
-     */
-    public static CommentWidgetConfig createConfig(String tenantId, String urlId) {
-        CommentWidgetConfig config = new CommentWidgetConfig();
-        config.tenantId = tenantId;
-        config.urlId = urlId;
-        return config;
-    }
 }
