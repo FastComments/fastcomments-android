@@ -49,4 +49,5 @@
     <string name="email_required">Email is required</string>
     <string name="submit">Submit</string>
     <string name="unverified">Unverified</string>
+    <string name="pinned_comment">Pinned Comment</string>
 </resources>

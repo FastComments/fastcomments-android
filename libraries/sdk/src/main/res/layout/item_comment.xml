@@ -7,11 +7,27 @@
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="8dp">
+        android:layout_height="wrap_content">
+        
+        <!-- Pin Icon in top right corner -->
+        <ImageView
+            android:id="@+id/pinIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/pin"
+            android:visibility="gone"
+            android:contentDescription="@string/pinned_comment" />
+            
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -236,6 +252,7 @@
                 android:visibility="gone" />
         </LinearLayout>
 
-    </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
 
 </androidx.cardview.widget.CardView>

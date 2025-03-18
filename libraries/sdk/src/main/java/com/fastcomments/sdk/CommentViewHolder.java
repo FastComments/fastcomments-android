@@ -43,6 +43,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private final ImageButton downVoteButton;
     private final TextView upVoteCountTextView;
     private final TextView downVoteCountTextView;
+    private final ImageView pinIcon;
     private final CommentsTree commentsTree;
     
     // Child comments pagination
@@ -68,6 +69,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         downVoteButton = itemView.findViewById(R.id.downVoteButton);
         upVoteCountTextView = itemView.findViewById(R.id.upVoteCount);
         downVoteCountTextView = itemView.findViewById(R.id.downVoteCount);
+        pinIcon = itemView.findViewById(R.id.pinIcon);
         
         // Child pagination controls
         childPaginationControls = itemView.findViewById(R.id.childPaginationControls);
@@ -96,6 +98,10 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         } else {
             unverifiedLabel.setVisibility(View.GONE);
         }
+        
+        // Handle pinned comment icon
+        Boolean isPinned = comment.getComment().getIsPinned();
+        pinIcon.setVisibility(isPinned != null && isPinned ? View.VISIBLE : View.GONE);
 
         // Store current comment reference first, so updateDateDisplay has the correct reference
         this.currentComment = comment;
