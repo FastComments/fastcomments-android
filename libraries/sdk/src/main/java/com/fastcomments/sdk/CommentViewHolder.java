@@ -105,17 +105,25 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         
         // Display vote counts and set button states
         Integer upVotes = comment.getComment().getVotesUp();
-        if (upVotes != null) {
+        if (upVotes != null && upVotes > 0) {
             upVoteCountTextView.setText(String.valueOf(upVotes));
+            upVoteCountTextView.setTypeface(null, android.graphics.Typeface.BOLD);
+            upVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_color));
         } else {
             upVoteCountTextView.setText(R.string.vote_count_zero);
+            upVoteCountTextView.setTypeface(null, android.graphics.Typeface.NORMAL);
+            upVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_zero_color));
         }
         
         Integer downVotes = comment.getComment().getVotesDown();
-        if (downVotes != null) {
+        if (downVotes != null && downVotes > 0) {
             downVoteCountTextView.setText(String.valueOf(downVotes));
+            downVoteCountTextView.setTypeface(null, android.graphics.Typeface.BOLD);
+            downVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_color));
         } else {
             downVoteCountTextView.setText(R.string.vote_count_zero);
+            downVoteCountTextView.setTypeface(null, android.graphics.Typeface.NORMAL);
+            downVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_zero_color));
         }
         
         // Set button selected states based on user's votes
