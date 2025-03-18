@@ -103,7 +103,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             itemView.setLayoutParams(itemViewLayoutParams);
         }
         
-        // Display vote counts
+        // Display vote counts and set button states
         Integer upVotes = comment.getComment().getVotesUp();
         if (upVotes != null) {
             upVoteCountTextView.setText(String.valueOf(upVotes));
@@ -117,6 +117,13 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         } else {
             downVoteCountTextView.setText(R.string.vote_count_zero);
         }
+        
+        // Set button selected states based on user's votes
+        Boolean isVotedUp = comment.getComment().getIsVotedUp();
+        upVoteButton.setSelected(isVotedUp != null && isVotedUp);
+        
+        Boolean isVotedDown = comment.getComment().getIsVotedDown();
+        downVoteButton.setSelected(isVotedDown != null && isVotedDown);
 
         // Show the toggle replies button only if there are replies
         final Integer childCount = comment.getComment().getChildCount();

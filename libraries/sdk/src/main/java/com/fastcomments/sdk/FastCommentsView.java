@@ -154,15 +154,55 @@ public class FastCommentsView extends FrameLayout {
                 commenterName = getContext().getString(R.string.anonymous);
             }
             
-            // For now, just show a toast message until API implementation
+            // Check if the user has already voted
+            Boolean isVotedUp = commentToVote.getComment().getIsVotedUp();
+            String toastMessage;
+            
+            // Toggle the vote state
+            if (isVotedUp != null && isVotedUp) {
+                // User already upvoted, so remove the vote
+                commentToVote.getComment().setIsVotedUp(false);
+                // Update vote count
+                Integer votesUp = commentToVote.getComment().getVotesUp();
+                if (votesUp != null && votesUp > 0) {
+                    commentToVote.getComment().setVotesUp(votesUp - 1);
+                }
+                toastMessage = getContext().getString(R.string.you_removed_upvote, commenterName);
+            } else {
+                // User hasn't upvoted, so add the vote
+                commentToVote.getComment().setIsVotedUp(true);
+                // Also remove downvote if exists
+                if (commentToVote.getComment().getIsVotedDown() != null && 
+                    commentToVote.getComment().getIsVotedDown()) {
+                    commentToVote.getComment().setIsVotedDown(false);
+                    // Update downvote count
+                    Integer votesDown = commentToVote.getComment().getVotesDown();
+                    if (votesDown != null && votesDown > 0) {
+                        commentToVote.getComment().setVotesDown(votesDown - 1);
+                    }
+                }
+                // Update upvote count
+                Integer votesUp = commentToVote.getComment().getVotesUp();
+                if (votesUp != null) {
+                    commentToVote.getComment().setVotesUp(votesUp + 1);
+                } else {
+                    commentToVote.getComment().setVotesUp(1);
+                }
+                toastMessage = getContext().getString(R.string.you_upvoted, commenterName);
+            }
+            
+            // Notify adapter to update UI
+            adapter.notifyDataSetChanged();
+            
+            // Show toast message
             android.widget.Toast.makeText(
                     getContext(),
-                    getContext().getString(R.string.you_upvoted, commenterName),
+                    toastMessage,
                     android.widget.Toast.LENGTH_SHORT
             ).show();
             
             // TODO: Implement the actual upvote API call here
-            // sdk.voteComment(commentToVote.getComment().getId(), true, new FCCallback<VoteResponse>() {...
+            // sdk.voteComment(commentToVote.getComment().getId(), isVotedUp != null && isVotedUp, new FCCallback<VoteResponse>() {...
         });
         
         // Handle downvote requests
@@ -183,10 +223,50 @@ public class FastCommentsView extends FrameLayout {
                 commenterName = getContext().getString(R.string.anonymous);
             }
             
-            // For now, just show a toast message until API implementation
+            // Check if the user has already voted
+            Boolean isVotedDown = commentToVote.getComment().getIsVotedDown();
+            String toastMessage;
+            
+            // Toggle the vote state
+            if (isVotedDown != null && isVotedDown) {
+                // User already downvoted, so remove the vote
+                commentToVote.getComment().setIsVotedDown(false);
+                // Update vote count
+                Integer votesDown = commentToVote.getComment().getVotesDown();
+                if (votesDown != null && votesDown > 0) {
+                    commentToVote.getComment().setVotesDown(votesDown - 1);
+                }
+                toastMessage = getContext().getString(R.string.you_removed_downvote, commenterName);
+            } else {
+                // User hasn't downvoted, so add the vote
+                commentToVote.getComment().setIsVotedDown(true);
+                // Also remove upvote if exists
+                if (commentToVote.getComment().getIsVotedUp() != null && 
+                    commentToVote.getComment().getIsVotedUp()) {
+                    commentToVote.getComment().setIsVotedUp(false);
+                    // Update upvote count
+                    Integer votesUp = commentToVote.getComment().getVotesUp();
+                    if (votesUp != null && votesUp > 0) {
+                        commentToVote.getComment().setVotesUp(votesUp - 1);
+                    }
+                }
+                // Update downvote count
+                Integer votesDown = commentToVote.getComment().getVotesDown();
+                if (votesDown != null) {
+                    commentToVote.getComment().setVotesDown(votesDown + 1);
+                } else {
+                    commentToVote.getComment().setVotesDown(1);
+                }
+                toastMessage = getContext().getString(R.string.you_downvoted, commenterName);
+            }
+            
+            // Notify adapter to update UI
+            adapter.notifyDataSetChanged();
+            
+            // Show toast message
             android.widget.Toast.makeText(
                     getContext(),
-                    getContext().getString(R.string.you_downvoted, commenterName),
+                    toastMessage,
                     android.widget.Toast.LENGTH_SHORT
             ).show();
             
