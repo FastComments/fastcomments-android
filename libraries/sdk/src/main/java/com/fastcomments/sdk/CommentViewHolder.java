@@ -55,13 +55,9 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         }
 
         if (comment.getComment().getAvatarSrc() != null) {
-            Glide.with(context).load(comment.getComment().getAvatarSrc())
-                    .apply(RequestOptions.circleCropTransform())
-                    .into(avatarImageView);
+            AvatarFetcher.fetchTransformInto(context, comment.getComment().getAvatarSrc(), avatarImageView);
         } else {
-            Glide.with(context).load(R.drawable.default_avatar)
-                    .apply(RequestOptions.circleCropTransform())
-                    .into(avatarImageView);
+            AvatarFetcher.fetchTransformInto(context, R.drawable.default_avatar, avatarImageView);
         }
 
         // Format and display the date

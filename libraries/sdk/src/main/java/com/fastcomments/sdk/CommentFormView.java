@@ -12,6 +12,8 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 import com.fastcomments.sdk.R;
 import com.fastcomments.model.PublicComment;
 import com.fastcomments.model.UserSessionInfo;
@@ -56,7 +58,7 @@ public class CommentFormView extends LinearLayout {
     private void init(Context context) {
         setOrientation(VERTICAL);
         LayoutInflater.from(context).inflate(R.layout.comment_form_view, this, true);
-        
+
         avatarImageView = findViewById(R.id.formAvatar);
         userNameTextView = findViewById(R.id.formUserName);
         commentEditText = findViewById(R.id.formEditText);
@@ -65,11 +67,11 @@ public class CommentFormView extends LinearLayout {
         errorTextView = findViewById(R.id.formErrorText);
         replyingToTextView = findViewById(R.id.replyingToText);
         cancelButton = findViewById(R.id.cancelReplyButton);
-        
+
         // Hide error text initially
         errorTextView.setVisibility(View.GONE);
         replyingToTextView.setVisibility(View.GONE);
-        
+
         // Set up the submit button
         submitButton.setOnClickListener(v -> {
             String commentText = commentEditText.getText().toString().trim();
@@ -78,13 +80,13 @@ public class CommentFormView extends LinearLayout {
                 errorTextView.setVisibility(View.VISIBLE);
                 return;
             }
-            
+
             errorTextView.setVisibility(View.GONE);
             if (submitListener != null) {
                 submitListener.onCommentSubmit(commentText, parentId);
             }
         });
-        
+
         // Set up cancel button
         cancelButton.setOnClickListener(v -> {
             if (cancelListener != null) {
@@ -92,45 +94,46 @@ public class CommentFormView extends LinearLayout {
             }
             resetReplyState();
         });
-        
+
         // Initially hide cancel button until replying
         cancelButton.setVisibility(View.GONE);
     }
-    
+
     /**
      * Set the listener for comment submission
+     *
      * @param listener OnCommentSubmitListener
      */
     public void setOnCommentSubmitListener(OnCommentSubmitListener listener) {
         this.submitListener = listener;
     }
-    
+
     /**
      * Set the listener for canceling a reply
+     *
      * @param listener OnCancelReplyListener
      */
     public void setOnCancelReplyListener(OnCancelReplyListener listener) {
         this.cancelListener = listener;
     }
-    
+
     /**
      * Set the current user info in the form
+     *
      * @param userInfo UserSessionInfo
      */
-    public void setCurrentUser(UserSessionInfo userInfo) {
-        if (userInfo != null) {
-            userNameTextView.setText(userInfo.getDisplayName());
-            // Load avatar image if available
-            // For now, use the default avatar
-            avatarImageView.setImageResource(R.drawable.default_avatar);
+    public void setCurrentUser(@NonNull UserSessionInfo userInfo) {
+        userNameTextView.setText(userInfo.getDisplayName());
+        if (userInfo.getAvatarSrc() != null) {
+            AvatarFetcher.fetchTransformInto(getContext(), userInfo.getAvatarSrc(), avatarImageView);
         } else {
-            userNameTextView.setText(R.string.anonymous);
-            avatarImageView.setImageResource(R.drawable.default_avatar);
+            AvatarFetcher.fetchTransformInto(getContext(), R.drawable.default_avatar, avatarImageView);
         }
     }
-    
+
     /**
      * Show loading state during comment submission
+     *
      * @param submitting true to show loading, false to hide
      */
     public void setSubmitting(boolean submitting) {
@@ -139,23 +142,24 @@ public class CommentFormView extends LinearLayout {
         commentEditText.setEnabled(!submitting);
         cancelButton.setEnabled(!submitting);
     }
-    
+
     /**
      * Clear the comment text input
      */
     public void clearText() {
         commentEditText.setText("");
     }
-    
+
     /**
      * Show an error message
+     *
      * @param errorMessage Error message to display
      */
     public void showError(String errorMessage) {
         errorTextView.setText(errorMessage);
         errorTextView.setVisibility(View.VISIBLE);
     }
-    
+
     /**
      * Set up the form for replying to a comment.
      */
@@ -163,22 +167,22 @@ public class CommentFormView extends LinearLayout {
         if (renderableComment != null) {
             final PublicComment comment = renderableComment.getComment();
             this.parentId = comment.getId();
-            String commenterName = comment.getCommenterName() != null 
-                ? comment.getCommenterName() 
-                : getContext().getString(R.string.anonymous);
-            
+            String commenterName = comment.getCommenterName() != null
+                    ? comment.getCommenterName()
+                    : getContext().getString(R.string.anonymous);
+
             replyingToTextView.setText(getContext().getString(R.string.replying_to, commenterName));
             replyingToTextView.setVisibility(View.VISIBLE);
             cancelButton.setVisibility(View.VISIBLE);
-            
+
             // Set hint to indicate replying
             commentEditText.setHint(R.string.reply_hint);
-            
+
             // Focus the comment box
             commentEditText.requestFocus();
         }
     }
-    
+
     /**
      * Reset to top-level comment state (not replying)
      */

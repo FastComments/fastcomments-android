@@ -106,10 +106,6 @@ public class FastCommentsView extends FrameLayout {
             hideCommentForm();
         });
 
-        if (sdk.getCurrentUser() != null) {
-            commentForm.setCurrentUser(sdk.getCurrentUser());
-        }
-
         // Handle reply requests from comments
         adapter.setRequestingReplyListener((commentToReplyTo) -> {
             // Show form in reply mode
@@ -248,6 +244,7 @@ public class FastCommentsView extends FrameLayout {
      * Shows the comment form with animation
      */
     private void showCommentForm() {
+        commentForm.setCurrentUser(sdk.getCurrentUser());
         // Load and start the animation
         Animation slideUpAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.slide_up);
         commentFormContainer.startAnimation(slideUpAnimation);

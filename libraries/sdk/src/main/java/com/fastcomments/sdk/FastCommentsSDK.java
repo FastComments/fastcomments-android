@@ -99,6 +99,9 @@ public class FastCommentsSDK {
                 if (response.getCustomConfig() != null) {
                     config.mergeWith(response.getCustomConfig());
                 }
+                if (response.getUser() != null) {
+                    currentUser = response.getUser();
+                }
                 commentsTree.build(response.getComments());
                 callback.onSuccess(response);
                 return CONSUME;
