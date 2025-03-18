@@ -32,6 +32,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private final TextView nameTextView;
     private final TextView dateTextView;
     private final TextView contentTextView;
+    private final TextView unverifiedLabel;
     private final Button toggleRepliesButton;
     private final Button replyButton;
     private final ImageButton upVoteButton;
@@ -56,6 +57,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         nameTextView = itemView.findViewById(R.id.commentName);
         dateTextView = itemView.findViewById(R.id.commentDate);
         contentTextView = itemView.findViewById(R.id.commentContent);
+        unverifiedLabel = itemView.findViewById(R.id.unverifiedLabel);
         toggleRepliesButton = itemView.findViewById(R.id.toggleReplies);
         replyButton = itemView.findViewById(R.id.replyButton);
         upVoteButton = itemView.findViewById(R.id.upVoteButton);
@@ -69,7 +71,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         childPaginationProgressBar = itemView.findViewById(R.id.childPaginationProgressBar);
     }
 
-    public void setComment(final RenderableComment comment, final CommentsAdapter.OnToggleRepliesListener listener) {
+    public void setComment(final RenderableComment comment, boolean disableUnverifiedLabel, final CommentsAdapter.OnToggleRepliesListener listener) {
         //noinspection ConstantValue
         if (comment.getComment().getCommenterName() != null) {
             nameTextView.setText(comment.getComment().getCommenterName());
@@ -81,6 +83,14 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             AvatarFetcher.fetchTransformInto(context, comment.getComment().getAvatarSrc(), avatarImageView);
         } else {
             AvatarFetcher.fetchTransformInto(context, R.drawable.default_avatar, avatarImageView);
+        }
+        
+        // Handle unverified label
+        Boolean isVerified = comment.getComment().getVerified();
+        if (!disableUnverifiedLabel && (isVerified == null || !isVerified)) {
+            unverifiedLabel.setVisibility(View.VISIBLE);
+        } else {
+            unverifiedLabel.setVisibility(View.GONE);
         }
 
         // Format and display the date

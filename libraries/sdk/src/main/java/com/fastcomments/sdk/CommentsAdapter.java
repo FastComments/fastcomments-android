@@ -65,7 +65,11 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
         if (comment == null) {
             return;
         }
-        holder.setComment(comment, (updatedComment, toggleButton) -> {
+        
+        // Pass config setting for unverified label
+        boolean disableUnverifiedLabel = Boolean.TRUE.equals(sdk.getConfig().disableUnverifiedLabel);
+                
+        holder.setComment(comment, disableUnverifiedLabel, (updatedComment, toggleButton) -> {
             commentsTree.setRepliesVisible(updatedComment, !updatedComment.isRepliesShown, (request, producer) -> {
                 // Create a new request with the button
                 GetChildrenRequest requestWithButton = new GetChildrenRequest(request.getParentId(), toggleButton);
