@@ -707,16 +707,18 @@ public class FastCommentsSDK {
             return;
         }
 
-        boolean isUpvote = direction > 0;
+        final boolean isUpvote = direction > 0;
 
         // Find and update the comment's vote count
-        PublicComment comment = commentsTree.getPublicComment(commentId);
-        if (comment != null) {
+        final RenderableComment renderableComment = commentsTree.commentsById.get(commentId);
+        if (renderableComment != null) {
+            final PublicComment comment = renderableComment.getComment();
             if (isUpvote) {
                 comment.setVotesUp((comment.getVotesUp() != null ? comment.getVotesUp() : 0) + 1);
             } else {
                 comment.setVotesDown((comment.getVotesDown() != null ? comment.getVotesDown() : 0) + 1);
             }
+            commentsTree.notifyItemChanged(renderableComment);
         }
     }
 
@@ -737,16 +739,18 @@ public class FastCommentsSDK {
             return;
         }
 
-        boolean isUpvote = direction > 0;
+        final boolean isUpvote = direction > 0;
 
         // Find and update the comment's vote count
-        PublicComment comment = commentsTree.getPublicComment(commentId);
-        if (comment != null) {
+        final RenderableComment renderableComment = commentsTree.commentsById.get(commentId);
+        if (renderableComment != null) {
+            final PublicComment comment = renderableComment.getComment();
             if (isUpvote && comment.getVotesUp() != null && comment.getVotesUp() > 0) {
                 comment.setVotesUp(comment.getVotesUp() - 1);
             } else if (!isUpvote && comment.getVotesDown() != null && comment.getVotesDown() > 0) {
                 comment.setVotesDown(comment.getVotesDown() - 1);
             }
+            commentsTree.notifyItemChanged(renderableComment);
         }
     }
 

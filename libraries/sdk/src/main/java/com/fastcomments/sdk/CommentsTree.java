@@ -34,6 +34,13 @@ public class CommentsTree {
         this.adapter = adapter;
     }
 
+    public void notifyItemChanged(RenderableComment comment) {
+        final int index = this.visibleComments.indexOf(comment);
+        if (index >= 0) {
+            adapter.notifyItemChanged(index);
+        }
+    }
+
     public void build(List<PublicComment> comments) {
         List<RenderableComment> allComments = new ArrayList<>(commentsById.size());
         List<RenderableComment> visibleComments = new ArrayList<>(commentsById.size());
