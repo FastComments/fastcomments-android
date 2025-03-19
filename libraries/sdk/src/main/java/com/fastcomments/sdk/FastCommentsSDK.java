@@ -587,6 +587,9 @@ public class FastCommentsSDK {
                     case THREAD_STATE_CHANGE:
                         handleThreadStateChange(eventData);
                         break;
+                    case P_U:
+                        handlePresenceChange(eventData);
+                        break;
                     default:
                         // Ignore other event types for now
                         break;
@@ -756,6 +759,27 @@ public class FastCommentsSDK {
     private void handleThreadStateChange(LiveEvent eventData) {
         if (eventData.getIsClosed() != null) {
             this.isClosed = eventData.getIsClosed();
+        }
+    }
+    
+    /**
+     * Handle a presence change event (users coming online or going offline)
+     */
+    private void handlePresenceChange(LiveEvent eventData) {
+        // Process users who joined (came online)
+        List<String> usersJoined = eventData.getUj();
+        if (usersJoined != null && !usersJoined.isEmpty()) {
+            for (String userId : usersJoined) {
+                commentsTree.updateUserPresence(userId, true);
+            }
+        }
+        
+        // Process users who left (went offline)
+        List<String> usersLeft = eventData.getUl();
+        if (usersLeft != null && !usersLeft.isEmpty()) {
+            for (String userId : usersLeft) {
+                commentsTree.updateUserPresence(userId, false);
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 package com.fastcomments.sdk;
 
+import android.util.Log;
 import com.fastcomments.model.PublicComment;
 
 import java.util.ArrayList;
@@ -562,6 +563,37 @@ public class CommentsTree {
     public PublicComment getPublicComment(String commentId) {
         RenderableComment renderableComment = commentsById.get(commentId);
         return renderableComment != null ? renderableComment.getComment() : null;
+    }
+    
+    /**
+     * Update the online status for all comments by a specific user
+     *
+     * @param userId The user ID
+     * @param isOnline Whether the user is online or offline
+     */
+    public void updateUserPresence(String userId, boolean isOnline) {
+        // Track which comments were updated to minimize UI updates
+        List<RenderableComment> updatedComments = new ArrayList<>();
+        
+        // Update all comments by this user
+        for (RenderableComment comment : commentsById.values()) {
+            if (comment.getComment() != null && 
+                    userId.equals(comment.getComment().getUserId())) {
+                
+                // Check if status actually changed to avoid unnecessary updates
+                Boolean currentStatus = comment.getComment().getIsOnline();
+                if (currentStatus == null || currentStatus != isOnline) {
+                    // Update status
+                    comment.getComment().setIsOnline(isOnline);
+                    updatedComments.add(comment);
+                }
+            }
+        }
+        
+        // Update UI for visible comments only
+        for (RenderableComment comment : updatedComments) {
+            notifyItemChanged(comment);
+        }
     }
 
     /**

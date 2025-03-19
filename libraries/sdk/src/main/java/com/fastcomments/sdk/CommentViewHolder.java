@@ -35,6 +35,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
 
     private final Context context;
     private final ImageView avatarImageView;
+    private final ImageView onlineIndicator; // Online status indicator
     private final TextView nameTextView;
     private final TextView dateTextView;
     private final TextView contentTextView;
@@ -66,6 +67,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
 
         // Basic comment view elements
         avatarImageView = itemView.findViewById(R.id.commentAvatar);
+        onlineIndicator = itemView.findViewById(R.id.onlineIndicator);
         nameTextView = itemView.findViewById(R.id.commentName);
         dateTextView = itemView.findViewById(R.id.commentDate);
         contentTextView = itemView.findViewById(R.id.commentContent);
@@ -125,6 +127,10 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         // Handle pinned comment icon
         Boolean isPinned = comment.getComment().getIsPinned();
         pinIcon.setVisibility(isPinned != null && isPinned ? View.VISIBLE : View.GONE);
+        
+        // Handle online status indicator
+        Boolean isOnline = comment.getComment().getIsOnline();
+        onlineIndicator.setVisibility(isOnline != null && isOnline ? View.VISIBLE : View.GONE);
 
         // Store current comment reference first, so updateDateDisplay has the correct reference
         this.currentComment = comment;
