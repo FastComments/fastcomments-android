@@ -496,8 +496,8 @@ public class CommentsTree {
             adapter.notifyItemRemoved(buttonIndex);
         }
         
-        // Add all buffered comments at the top of the list
-        for (int i = newRootComments.size() - 1; i >= 0; i--) {
+        // Add all buffered comments at the top of the list in chronological order (oldest first)
+        for (int i = 0; i < newRootComments.size(); i++) {
             PublicComment comment = newRootComments.get(i);
             RenderableComment renderableComment = commentsById.get(comment.getId());
             if (renderableComment != null) {
@@ -541,17 +541,22 @@ public class CommentsTree {
         // Find the insertion point (after the last visible child of this parent)
         int insertionIndex = findLastChildIndex(parent) + 1;
         
-        // Add all the new child comments
-        for (int i = newChildComments.size() - 1; i >= 0; i--) {
+        // Add all the new child comments in chronological order (oldest first)
+        for (int i = 0; i < newChildComments.size(); i++) {
             PublicComment childComment = newChildComments.get(i);
             RenderableComment childRenderable = commentsById.get(childComment.getId());
             if (childRenderable != null) {
                 visibleNodes.add(insertionIndex, childRenderable);
+                // Increment insertion index to maintain correct order
+                insertionIndex++;
             }
         }
         
         // Notify adapter of the insertions
-        adapter.notifyItemRangeInserted(insertionIndex, newChildComments.size());
+        // insertionIndex is now at the position after the last inserted item, so we need to calculate
+        // the starting position by subtracting the number of inserted items
+        int startPosition = insertionIndex - newChildComments.size();
+        adapter.notifyItemRangeInserted(startPosition, newChildComments.size());
     }
 
     public PublicComment getPublicComment(String commentId) {
