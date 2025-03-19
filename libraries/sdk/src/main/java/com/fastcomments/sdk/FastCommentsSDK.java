@@ -630,14 +630,26 @@ public class FastCommentsSDK {
         comment.setId(pubSubComment.getId());
         comment.setCommentHTML(pubSubComment.getCommentHTML());
         comment.setCommenterName(pubSubComment.getCommenterName());
-        comment.setDate(pubSubComment.getDate());
+        
+        // Handle date conversion to OffsetDateTime
+        try {
+            // Get the ISO-8601 date string from pubSubComment
+            String dateString = pubSubComment.getDate();
+            if (dateString != null && !dateString.isEmpty()) {
+                // Parse ISO-8601 string to OffsetDateTime
+                java.time.OffsetDateTime offsetDateTime = java.time.OffsetDateTime.parse(dateString);
+                comment.setDate(offsetDateTime);
+            }
+        } catch (Exception e) {
+            System.err.println("FastComments: Error converting date: " + e.getMessage());
+        }
+        
         comment.setUserId(pubSubComment.getUserId());
         comment.setParentId(pubSubComment.getParentId());
         comment.setVotesUp(pubSubComment.getVotesUp());
         comment.setVotesDown(pubSubComment.getVotesDown());
         comment.setAvatarSrc(pubSubComment.getAvatarSrc());
         comment.setVerified(pubSubComment.getVerified());
-        comment.setCommentHTML(pubSubComment.getCommentHTML());
     }
     
     /**
