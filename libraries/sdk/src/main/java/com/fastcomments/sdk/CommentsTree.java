@@ -179,6 +179,7 @@ public class CommentsTree {
         if (wasRepliesVisible == areRepliesVisible) {
             return;
         }
+        final int myIndex = visibleComments.indexOf(renderableComment);
         renderableComment.isRepliesShown = areRepliesVisible;
         final List<PublicComment> children = renderableComment.getComment().getChildren();
         if (areRepliesVisible) {
@@ -221,14 +222,15 @@ public class CommentsTree {
             }
         } else {
             if (children != null) {
-                int myIndex = visibleComments.indexOf(renderableComment);
                 hideChildren(children);
-                adapter.notifyItemRangeRemoved(myIndex, totalSize() - myIndex); // everything after me has changed/moved since it's a flat list
+                adapter.notifyItemRangeRemoved(myIndex + 1, children.size());
 
                 // Reset pagination state when hiding replies
                 renderableComment.resetChildPagination();
+                adapter.notifyItemChanged(myIndex);
             }
         }
+        adapter.notifyItemChanged(myIndex);
     }
 
     public void insertChildrenAfter(RenderableComment renderableComment, List<PublicComment> children) {
@@ -240,7 +242,7 @@ public class CommentsTree {
             // see explanation at top of class
             visibleComments.add(indexer, childRenderable);
         }
-        adapter.notifyItemRangeInserted(myIndex, children.size()); // everything after me has changed/moved since it's a flat list
+        adapter.notifyItemRangeInserted(myIndex + 1, children.size()); // everything after me has changed/moved since it's a flat list
     }
 
     /**

@@ -43,7 +43,7 @@ public class FastCommentsSDK {
     public long lastGenDate;
     public Set<String> broadcastIdsSent;
     public String blockingErrorMessage;
-    
+
     private SubscribeToChangesResult liveEventSubscription;
     private final LiveEventSubscriber liveEventSubscriber;
     private String tenantIdWS;
@@ -124,7 +124,7 @@ public class FastCommentsSDK {
                 if (response.getUrlIdClean() != null) {
                     config.urlId = response.getUrlIdClean();
                 }
-                
+
                 // Extract WebSocket parameters for live events
                 if (response.getTenantIdWS() != null) {
                     tenantIdWS = response.getTenantIdWS();
@@ -143,12 +143,12 @@ public class FastCommentsSDK {
                 hasMore = response.getHasMore() != null ? response.getHasMore() : false;
 
                 commentsTree.build(response.getComments());
-                
+
                 // Subscribe to live events if we have all required parameters
                 if (tenantIdWS != null && urlIdWS != null && userIdWS != null) {
                     subscribeToLiveEvents();
                 }
-                
+
                 callback.onSuccess(response);
                 return CONSUME;
             }
@@ -425,44 +425,44 @@ public class FastCommentsSDK {
         int remaining = commentCountOnServer - commentsTree.totalSize();
         return Math.min(Math.max(remaining, 0), pageSize);
     }
-    
+
     /**
      * Delete a vote from a comment
      *
      * @param commentId The ID of the comment
-     * @param voteId The ID of the vote to delete
-     * @param callback Callback to receive the response
+     * @param voteId    The ID of the vote to delete
+     * @param callback  Callback to receive the response
      */
     public void deleteCommentVote(String commentId, String voteId, final FCCallback<VoteDeleteResponse> callback) {
         deleteCommentVote(commentId, voteId, null, null, callback);
     }
-    
+
     /**
      * Delete a vote from a comment with anonymous user credentials
      *
-     * @param commentId The ID of the comment
-     * @param voteId The ID of the vote to delete
-     * @param commenterName Name for anonymous user (optional, can be null if user is authenticated)
+     * @param commentId      The ID of the comment
+     * @param voteId         The ID of the vote to delete
+     * @param commenterName  Name for anonymous user (optional, can be null if user is authenticated)
      * @param commenterEmail Email for anonymous user (optional, can be null if user is authenticated)
-     * @param callback Callback to receive the response
+     * @param callback       Callback to receive the response
      */
     public void deleteCommentVote(String commentId, String voteId, String commenterName, String commenterEmail, final FCCallback<VoteDeleteResponse> callback) {
         if (commentId == null || commentId.isEmpty()) {
             callback.onFailure(new APIError().status(ImportedAPIStatusFAILED.FAILED).reason("Comment ID is required").code("invalid_comment_id"));
             return;
         }
-        
+
         if (voteId == null || voteId.isEmpty()) {
             callback.onFailure(new APIError().status(ImportedAPIStatusFAILED.FAILED).reason("Vote ID is required").code("invalid_vote_id"));
             return;
         }
-        
+
         // Create a unique broadcast ID
         String broadcastId = UUID.randomUUID().toString();
-        
+
         // Track broadcast ID before sending
         broadcastIdsSent.add(broadcastId);
-        
+
         try {
             // Make the API call - for delete votes, we don't actually need to pass commenter info
             // because the vote is identified by its ID, but we'll keep the method signature consistent
@@ -503,13 +503,13 @@ public class FastCommentsSDK {
      * Vote on a comment (upvote or downvote)
      *
      * @param commentId The ID of the comment to vote on
-     * @param isUpvote True for upvote, false for downvote
-     * @param callback Callback to receive the response
+     * @param isUpvote  True for upvote, false for downvote
+     * @param callback  Callback to receive the response
      */
     public void voteComment(String commentId, boolean isUpvote, final FCCallback<VoteResponse> callback) {
         voteComment(commentId, isUpvote, null, null, callback);
     }
-    
+
     /**
      * Subscribe to FastComments live events using WebSockets
      */
@@ -519,16 +519,16 @@ public class FastCommentsSDK {
             liveEventSubscription.close();
             liveEventSubscription = null;
         }
-        
+
         if (config == null || Boolean.TRUE.equals(config.disableLiveCommenting)) {
             return;
         }
-        
+
         if (tenantIdWS == null || urlIdWS == null || userIdWS == null) {
             System.err.println("FastComments: Missing WebSocket parameters, live commenting disabled");
             return;
         }
-        
+
         // Subscribe to live events
         liveEventSubscription = liveEventSubscriber.subscribeToChanges(
                 config,
@@ -540,7 +540,7 @@ public class FastCommentsSDK {
                 this::handleLiveEvent
         );
     }
-    
+
     /**
      * Check if comments can be seen based on our filtering/blocking logic
      */
@@ -549,7 +549,7 @@ public class FastCommentsSDK {
         // This can be enhanced later with visibility checking logic if needed
         resultCallback.accept(null);
     }
-    
+
     /**
      * Handle a live event from the FastComments WebSocket
      */
@@ -559,14 +559,14 @@ public class FastCommentsSDK {
             broadcastIdsSent.remove(eventData.getBroadcastId());
             return;
         }
-        
+
         try {
             LiveEventType eventType = eventData.getType();
-            
+
             if (eventType == null) {
                 return;
             }
-            
+
             mainHandler.post(() -> {
                 switch (eventType) {
                     case NEW_COMMENT:
@@ -596,7 +596,7 @@ public class FastCommentsSDK {
             System.err.println("FastComments: Error handling live event: " + e.getMessage());
         }
     }
-    
+
     /**
      * Handle a new comment event
      */
@@ -604,14 +604,14 @@ public class FastCommentsSDK {
         if (eventData.getComment() == null) {
             return;
         }
-        
+
         // Get the comment from the event
         PubSubComment pubSubComment = eventData.getComment();
-        
+
         // Convert PubSubComment to PublicComment for the CommentsTree
         PublicComment newComment = new PublicComment();
         copyEventToComment(pubSubComment, newComment);
-        
+
         // Add to comments tree
         if (pubSubComment.getParentId() != null && !pubSubComment.getParentId().isEmpty()) {
             // This is a reply to an existing comment
@@ -620,17 +620,17 @@ public class FastCommentsSDK {
             // This is a new top-level comment
             // Depending on sort direction, add at beginning or end of the list
             commentsTree.addComment(newComment);
-            
-            // Increment the server comment count
-            commentCountOnServer++;
         }
+
+        // Increment the server comment count
+        commentCountOnServer++;
     }
 
     public void copyEventToComment(PubSubComment pubSubComment, PublicComment comment) {
         comment.setId(pubSubComment.getId());
         comment.setCommentHTML(pubSubComment.getCommentHTML());
         comment.setCommenterName(pubSubComment.getCommenterName());
-        
+
         // Handle date conversion to OffsetDateTime
         try {
             // Get the ISO-8601 date string from pubSubComment
@@ -643,7 +643,7 @@ public class FastCommentsSDK {
         } catch (Exception e) {
             System.err.println("FastComments: Error converting date: " + e.getMessage());
         }
-        
+
         comment.setUserId(pubSubComment.getUserId());
         comment.setParentId(pubSubComment.getParentId());
         comment.setVotesUp(pubSubComment.getVotesUp());
@@ -651,7 +651,7 @@ public class FastCommentsSDK {
         comment.setAvatarSrc(pubSubComment.getAvatarSrc());
         comment.setVerified(pubSubComment.getVerified());
     }
-    
+
     /**
      * Handle an updated comment event
      */
@@ -659,17 +659,17 @@ public class FastCommentsSDK {
         if (eventData.getComment() == null) {
             return;
         }
-        
+
         // Get the comment from the event
         PubSubComment pubSubComment = eventData.getComment();
-        
+
         // Find and update the comment in our tree
         PublicComment existingComment = commentsTree.getPublicComment(pubSubComment.getId());
         if (existingComment != null) {
             copyEventToComment(pubSubComment, existingComment);
         }
     }
-    
+
     /**
      * Handle a deleted comment event
      */
@@ -677,19 +677,19 @@ public class FastCommentsSDK {
         if (eventData.getComment() == null) {
             return;
         }
-        
+
         // Get the comment ID from the event
         String commentId = eventData.getComment().getId();
-        
+
         // Remove the comment from our tree
         boolean removed = commentsTree.removeComment(commentId);
-        
+
         // Decrement the server comment count if successfully removed
         if (removed && commentCountOnServer > 0) {
             commentCountOnServer--;
         }
     }
-    
+
     /**
      * Handle a new vote event
      */
@@ -697,18 +697,18 @@ public class FastCommentsSDK {
         if (eventData.getVote() == null) {
             return;
         }
-        
+
         // Get vote data using the appropriate type
         PubSubVote vote = eventData.getVote();
         String commentId = vote.getCommentId();
         Integer direction = vote.getDirection();
-        
+
         if (commentId == null) {
             return;
         }
-        
+
         boolean isUpvote = direction > 0;
-        
+
         // Find and update the comment's vote count
         PublicComment comment = commentsTree.getPublicComment(commentId);
         if (comment != null) {
@@ -719,7 +719,7 @@ public class FastCommentsSDK {
             }
         }
     }
-    
+
     /**
      * Handle a deleted vote event
      */
@@ -727,16 +727,16 @@ public class FastCommentsSDK {
         if (eventData.getVote() == null) {
             return;
         }
-        
+
         // Get vote data using the appropriate type
         PubSubVote vote = eventData.getVote();
         String commentId = vote.getCommentId();
         Integer direction = vote.getDirection();
-        
+
         if (commentId == null) {
             return;
         }
-        
+
         boolean isUpvote = direction > 0;
 
         // Find and update the comment's vote count
@@ -749,7 +749,7 @@ public class FastCommentsSDK {
             }
         }
     }
-    
+
     /**
      * Handle a thread state change event (e.g., thread locked)
      */
@@ -758,7 +758,7 @@ public class FastCommentsSDK {
             this.isClosed = eventData.getIsClosed();
         }
     }
-    
+
     /**
      * Cleanup resources, including WebSocket connections
      */
@@ -768,7 +768,7 @@ public class FastCommentsSDK {
             liveEventSubscription = null;
         }
     }
-    
+
     /**
      * Refresh the live events connection
      * Call this when the app returns from background or after a network reconnection
@@ -778,49 +778,49 @@ public class FastCommentsSDK {
             subscribeToLiveEvents();
         }
     }
-    
+
     /**
      * Vote on a comment (upvote or downvote) with anonymous user credentials
      *
-     * @param commentId The ID of the comment to vote on
-     * @param isUpvote True for upvote, false for downvote
-     * @param commenterName Name for anonymous user (optional, can be null if user is authenticated)
+     * @param commentId      The ID of the comment to vote on
+     * @param isUpvote       True for upvote, false for downvote
+     * @param commenterName  Name for anonymous user (optional, can be null if user is authenticated)
      * @param commenterEmail Email for anonymous user (optional, can be null if user is authenticated)
-     * @param callback Callback to receive the response
+     * @param callback       Callback to receive the response
      */
     public void voteComment(String commentId, boolean isUpvote, String commenterName, String commenterEmail, final FCCallback<VoteResponse> callback) {
         if (commentId == null || commentId.isEmpty()) {
             callback.onFailure(new APIError().status(ImportedAPIStatusFAILED.FAILED).reason("Comment ID is required").code("invalid_comment_id"));
             return;
         }
-        
+
         // Create a unique broadcast ID
         String broadcastId = UUID.randomUUID().toString();
-        
+
         // Track broadcast ID before sending
         broadcastIdsSent.add(broadcastId);
-        
+
         // Create vote parameters
         VoteBodyParams voteParams = new VoteBodyParams()
                 .voteDir(isUpvote ? VoteBodyParams.VoteDirEnum.UP : VoteBodyParams.VoteDirEnum.DOWN);
-        
+
         // Set user info based on what's available
         if (currentUser != null && currentUser.getAuthorized() != null && currentUser.getAuthorized()) {
             // User is authenticated, API will use their session info
         } else if (commenterName != null && !commenterName.isEmpty()) {
             // Using provided anonymous credentials
             voteParams.commenterName(commenterName);
-            
+
             if (commenterEmail != null && !commenterEmail.isEmpty()) {
                 voteParams.commenterEmail(commenterEmail);
             }
         }
-        
+
         // Set URL if available
         if (config.url != null && !config.url.isEmpty()) {
             voteParams.url(config.url);
         }
-        
+
         try {
             // Make the API call
             api.voteComment(config.tenantId, commentId, config.urlId, broadcastId, voteParams)

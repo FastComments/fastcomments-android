@@ -47,7 +47,6 @@ public class RenderableComment {
     public void resetChildPagination() {
         this.childSkip = 0;
         this.childPage = 0;
-        this.hasMoreChildren = false;
         this.isLoadingChildren = false;
     }
     
