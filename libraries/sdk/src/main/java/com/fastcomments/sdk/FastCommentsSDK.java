@@ -11,9 +11,7 @@ import com.fastcomments.model.*;
 import com.fastcomments.pubsub.LiveEventSubscriber;
 import com.fastcomments.pubsub.SubscribeToChangesResult;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -684,14 +682,20 @@ public class FastCommentsSDK {
      * Handle a new vote event
      */
     private void handleNewVote(LiveEvent eventData) {
-        if (eventData.getVote() == null || eventData.getVote().getCommentId() == null) {
+        if (eventData.getVote() == null) {
             return;
         }
         
-        // Get vote data
+        // Get vote data using the appropriate type
         PubSubVote vote = eventData.getVote();
         String commentId = vote.getCommentId();
-        boolean isUpvote = "up".equals(vote.getDirection());
+        Integer direction = vote.getDirection();
+        
+        if (commentId == null) {
+            return;
+        }
+        
+        boolean isUpvote = direction > 0;
         
         // Find and update the comment's vote count
         PublicComment comment = commentsTree.findComment(commentId);
@@ -708,15 +712,21 @@ public class FastCommentsSDK {
      * Handle a deleted vote event
      */
     private void handleDeletedVote(LiveEvent eventData) {
-        if (eventData.getVote() == null || eventData.getVote().getCommentId() == null) {
+        if (eventData.getVote() == null) {
             return;
         }
         
-        // Get vote data
+        // Get vote data using the appropriate type
         PubSubVote vote = eventData.getVote();
         String commentId = vote.getCommentId();
-        boolean isUpvote = "up".equals(vote.getDirection());
+        Integer direction = vote.getDirection();
         
+        if (commentId == null) {
+            return;
+        }
+        
+        boolean isUpvote = direction > 0;
+
         // Find and update the comment's vote count
         PublicComment comment = commentsTree.findComment(commentId);
         if (comment != null) {
