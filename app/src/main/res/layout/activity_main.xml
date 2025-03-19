@@ -17,40 +17,10 @@
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
         app:title="FastComments Example" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Article Title"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="This is an example article content to demonstrate the FastComments Android SDK. The commenting system below allows users to read and post comments in real-time."
-            android:textSize="16sp" />
-
-    </LinearLayout>
-
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#CCCCCC" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:text="Comments"
-        android:textSize="18sp"
-        android:textStyle="bold" />
 
     <FrameLayout
         android:id="@+id/commentsContainer"
