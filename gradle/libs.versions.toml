@@ -33,6 +33,7 @@ material = { group = "com.google.android.material", name = "material", version.r
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 fastcommentsCore = { group = "com.fastcomments", name = "core", version.ref = "fastcomments" }
 fastcommentsClient = { group = "com.fastcomments", name = "client", version.ref = "fastcomments" }
+fastcommentsPubsub = { group = "com.fastcomments", name = "pubsub", version.ref = "fastcomments" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

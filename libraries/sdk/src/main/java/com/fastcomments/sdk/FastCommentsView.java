@@ -1145,5 +1145,9 @@ public class FastCommentsView extends FrameLayout {
         super.onDetachedFromWindow();
         // Stop the timer when the view is detached to prevent memory leaks
         stopDateUpdateTimer();
+        // Clean up WebSocket connections when the view is detached
+        if (sdk != null) {
+            sdk.cleanup();
+        }
     }
 }

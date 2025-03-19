@@ -8,13 +8,18 @@ import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.invoker.ApiCallback;
 import com.fastcomments.invoker.ApiException;
 import com.fastcomments.model.*;
+import com.fastcomments.pubsub.LiveEventSubscriber;
+import com.fastcomments.pubsub.SubscribeToChangesResult;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * Main SDK class for interacting with FastComments API
@@ -40,6 +45,12 @@ public class FastCommentsSDK {
     public long lastGenDate;
     public Set<String> broadcastIdsSent;
     public String blockingErrorMessage;
+    
+    private SubscribeToChangesResult liveEventSubscription;
+    private final LiveEventSubscriber liveEventSubscriber;
+    private String tenantIdWS;
+    private String urlIdWS;
+    private String userIdWS;
 
     public FastCommentsSDK(CommentWidgetConfig config) {
         this.api = new PublicApi();
@@ -51,6 +62,7 @@ public class FastCommentsSDK {
         this.currentSkip = 0;
         this.currentPage = 0;
         this.hasMore = false;
+        this.liveEventSubscriber = new LiveEventSubscriber();
     }
 
     public FastCommentsSDK() {
@@ -114,9 +126,17 @@ public class FastCommentsSDK {
                 if (response.getUrlIdClean() != null) {
                     config.urlId = response.getUrlIdClean();
                 }
-                // TODO tenantIdWS
-                // TODO urlIdWS
-                // TODO userIdWS
+                
+                // Extract WebSocket parameters for live events
+                if (response.getTenantIdWS() != null) {
+                    tenantIdWS = response.getTenantIdWS();
+                }
+                if (response.getUrlIdWS() != null) {
+                    urlIdWS = response.getUrlIdWS();
+                }
+                if (response.getUserIdWS() != null) {
+                    userIdWS = response.getUserIdWS();
+                }
 
                 // Update the total server count
                 commentCountOnServer = response.getCommentCount() != null ? response.getCommentCount() : 0;
@@ -125,6 +145,12 @@ public class FastCommentsSDK {
                 hasMore = response.getHasMore() != null ? response.getHasMore() : false;
 
                 commentsTree.build(response.getComments());
+                
+                // Subscribe to live events if we have all required parameters
+                if (tenantIdWS != null && urlIdWS != null && userIdWS != null) {
+                    subscribeToLiveEvents();
+                }
+                
                 callback.onSuccess(response);
                 return CONSUME;
             }
@@ -484,6 +510,251 @@ public class FastCommentsSDK {
      */
     public void voteComment(String commentId, boolean isUpvote, final FCCallback<VoteResponse> callback) {
         voteComment(commentId, isUpvote, null, null, callback);
+    }
+    
+    /**
+     * Subscribe to FastComments live events using WebSockets
+     */
+    private void subscribeToLiveEvents() {
+        // Close any existing subscription first
+        if (liveEventSubscription != null) {
+            liveEventSubscription.close();
+            liveEventSubscription = null;
+        }
+        
+        if (config == null || Boolean.TRUE.equals(config.disableLiveCommenting)) {
+            return;
+        }
+        
+        if (tenantIdWS == null || urlIdWS == null || userIdWS == null) {
+            System.err.println("FastComments: Missing WebSocket parameters, live commenting disabled");
+            return;
+        }
+        
+        // Subscribe to live events
+        liveEventSubscription = liveEventSubscriber.subscribeToChanges(
+                config,
+                tenantIdWS,
+                config.urlId,
+                urlIdWS,
+                userIdWS,
+                this::checkCommentVisibility,
+                this::handleLiveEvent
+        );
+    }
+    
+    /**
+     * Check if comments can be seen based on our filtering/blocking logic
+     */
+    private void checkCommentVisibility(List<String> commentIds, Consumer<Map<String, String>> resultCallback) {
+        // For now, we'll assume all comments are visible
+        // This can be enhanced later with visibility checking logic if needed
+        resultCallback.accept(null);
+    }
+    
+    /**
+     * Handle a live event from the FastComments WebSocket
+     */
+    private void handleLiveEvent(LiveEvent eventData) {
+        // Skip events from our own broadcasts
+        if (eventData.getBroadcastId() != null && broadcastIdsSent.contains(eventData.getBroadcastId())) {
+            broadcastIdsSent.remove(eventData.getBroadcastId());
+            return;
+        }
+        
+        try {
+            LiveEventType eventType = eventData.getType();
+            
+            if (eventType == null) {
+                return;
+            }
+            
+            mainHandler.post(() -> {
+                switch (eventType) {
+                    case NEW_COMMENT:
+                        handleNewComment(eventData);
+                        break;
+                    case UPDATED_COMMENT:
+                        handleUpdatedComment(eventData);
+                        break;
+                    case DELETED_COMMENT:
+                        handleDeletedComment(eventData);
+                        break;
+                    case NEW_VOTE:
+                        handleNewVote(eventData);
+                        break;
+                    case DELETED_VOTE:
+                        handleDeletedVote(eventData);
+                        break;
+                    case THREAD_STATE_CHANGE:
+                        handleThreadStateChange(eventData);
+                        break;
+                    default:
+                        // Ignore other event types for now
+                        break;
+                }
+            });
+        } catch (Exception e) {
+            System.err.println("FastComments: Error handling live event: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Handle a new comment event
+     */
+    private void handleNewComment(LiveEvent eventData) {
+        if (eventData.getComment() == null) {
+            return;
+        }
+        
+        // Get the comment from the event
+        PubSubComment pubSubComment = eventData.getComment();
+        
+        // Convert PubSubComment to PublicComment for the CommentsTree
+        PublicComment newComment = new PublicComment();
+        copyEventToComment(pubSubComment, newComment);
+        
+        // Add to comments tree
+        if (pubSubComment.getParentId() != null && !pubSubComment.getParentId().isEmpty()) {
+            // This is a reply to an existing comment
+            commentsTree.addComment(newComment);
+        } else {
+            // This is a new top-level comment
+            // Depending on sort direction, add at beginning or end of the list
+            commentsTree.addComment(newComment);
+            
+            // Increment the server comment count
+            commentCountOnServer++;
+        }
+    }
+
+    public void copyEventToComment(PubSubComment pubSubComment, PublicComment comment) {
+        comment.setId(pubSubComment.getId());
+        comment.setCommentHTML(pubSubComment.getCommentHTML());
+        comment.setCommenterName(pubSubComment.getCommenterName());
+        comment.setDate(pubSubComment.getDate());
+        comment.setUserId(pubSubComment.getUserId());
+        comment.setParentId(pubSubComment.getParentId());
+        comment.setVotesUp(pubSubComment.getVotesUp());
+        comment.setVotesDown(pubSubComment.getVotesDown());
+        comment.setAvatarSrc(pubSubComment.getAvatarSrc());
+        comment.setVerified(pubSubComment.getVerified());
+        comment.setCommentHTML(pubSubComment.getCommentHTML());
+    }
+    
+    /**
+     * Handle an updated comment event
+     */
+    private void handleUpdatedComment(LiveEvent eventData) {
+        if (eventData.getComment() == null) {
+            return;
+        }
+        
+        // Get the comment from the event
+        PubSubComment pubSubComment = eventData.getComment();
+        
+        // Find and update the comment in our tree
+        PublicComment existingComment = commentsTree.findComment(pubSubComment.getId());
+        if (existingComment != null) {
+            copyEventToComment(pubSubComment, existingComment);
+        }
+    }
+    
+    /**
+     * Handle a deleted comment event
+     */
+    private void handleDeletedComment(LiveEvent eventData) {
+        if (eventData.getComment() == null) {
+            return;
+        }
+        
+        // Get the comment ID from the event
+        String commentId = eventData.getComment().getId();
+        
+        // Remove the comment from our tree
+        boolean removed = commentsTree.removeComment(commentId);
+        
+        // Decrement the server comment count if successfully removed
+        if (removed && commentCountOnServer > 0) {
+            commentCountOnServer--;
+        }
+    }
+    
+    /**
+     * Handle a new vote event
+     */
+    private void handleNewVote(LiveEvent eventData) {
+        if (eventData.getVote() == null || eventData.getVote().getCommentId() == null) {
+            return;
+        }
+        
+        // Get vote data
+        PubSubVote vote = eventData.getVote();
+        String commentId = vote.getCommentId();
+        boolean isUpvote = "up".equals(vote.getDirection());
+        
+        // Find and update the comment's vote count
+        PublicComment comment = commentsTree.findComment(commentId);
+        if (comment != null) {
+            if (isUpvote) {
+                comment.setVotesUp((comment.getVotesUp() != null ? comment.getVotesUp() : 0) + 1);
+            } else {
+                comment.setVotesDown((comment.getVotesDown() != null ? comment.getVotesDown() : 0) + 1);
+            }
+        }
+    }
+    
+    /**
+     * Handle a deleted vote event
+     */
+    private void handleDeletedVote(LiveEvent eventData) {
+        if (eventData.getVote() == null || eventData.getVote().getCommentId() == null) {
+            return;
+        }
+        
+        // Get vote data
+        PubSubVote vote = eventData.getVote();
+        String commentId = vote.getCommentId();
+        boolean isUpvote = "up".equals(vote.getDirection());
+        
+        // Find and update the comment's vote count
+        PublicComment comment = commentsTree.findComment(commentId);
+        if (comment != null) {
+            if (isUpvote && comment.getVotesUp() != null && comment.getVotesUp() > 0) {
+                comment.setVotesUp(comment.getVotesUp() - 1);
+            } else if (!isUpvote && comment.getVotesDown() != null && comment.getVotesDown() > 0) {
+                comment.setVotesDown(comment.getVotesDown() - 1);
+            }
+        }
+    }
+    
+    /**
+     * Handle a thread state change event (e.g., thread locked)
+     */
+    private void handleThreadStateChange(LiveEvent eventData) {
+        if (eventData.getIsClosed() != null) {
+            this.isClosed = eventData.getIsClosed();
+        }
+    }
+    
+    /**
+     * Cleanup resources, including WebSocket connections
+     */
+    public void cleanup() {
+        if (liveEventSubscription != null) {
+            liveEventSubscription.close();
+            liveEventSubscription = null;
+        }
+    }
+    
+    /**
+     * Refresh the live events connection
+     * Call this when the app returns from background or after a network reconnection
+     */
+    public void refreshLiveEvents() {
+        if (tenantIdWS != null && urlIdWS != null && userIdWS != null) {
+            subscribeToLiveEvents();
+        }
     }
     
     /**
