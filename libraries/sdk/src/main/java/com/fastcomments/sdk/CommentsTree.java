@@ -21,14 +21,14 @@ public class CommentsTree {
     public Map<String, RenderableComment> commentsById; // all data including invisible
     // Note that lots of operations have to do N-time lookups in these lists. We may want to replace these
     // with some sort of ordered map.
-    public List<RenderableComment> allComments; // in any order
-    public List<RenderableNode> visibleNodes; // in view order - can include comments and buttons
+    public List<RenderableComment> allComments = new ArrayList<>(0); // in any order
+    public List<RenderableNode> visibleNodes = new ArrayList<>(0); // in view order - can include comments and buttons
     private CommentsAdapter adapter;
     
     // Separate collections for easier lookup
     private RenderableButton newRootCommentsButton; // Only one of these at most
-    private Map<String, RenderableButton> newChildCommentsButtons; // Keyed by parent comment ID
-    private List<PublicComment> newRootComments; // Buffer for new root comments when showLiveRightAway is false
+    private final Map<String, RenderableButton> newChildCommentsButtons; // Keyed by parent comment ID
+    private final List<PublicComment> newRootComments; // Buffer for new root comments when showLiveRightAway is false
 
     public CommentsTree() {
         this.commentsById = new HashMap<>(30);
