@@ -561,6 +561,12 @@ public class FastCommentsView extends FrameLayout {
                 }
             });
         });
+        
+        // Set up listener for new child comments button clicks
+        adapter.setNewChildCommentsListener(parentId -> {
+            // This method is called when a "Show New Replies" button is clicked
+            // scrolling is handled by the CommentsTree
+        });
 
         this.sdk = sdk;
     }

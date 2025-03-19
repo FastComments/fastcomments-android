@@ -13,7 +13,10 @@ import com.fastcomments.model.PublicComment;
 
 import java.util.List;
 
-public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
+public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private static final int VIEW_TYPE_COMMENT = 0;
+    private static final int VIEW_TYPE_BUTTON = 1;
 
     private final Context context;
     private final CommentsTree commentsTree;
@@ -22,6 +25,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
     private Callback<RenderableComment> upVoteListener;
     private Callback<RenderableComment> downVoteListener;
     private Producer<GetChildrenRequest, List<PublicComment>> getChildren;
+    private Callback<String> newChildCommentsListener; // Triggered when clicking "Show new replies" button
 
     public CommentsAdapter(Context context, FastCommentsSDK sdk) {
         this.context = context;
@@ -41,6 +45,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
     public void setDownVoteListener(Callback<RenderableComment> listener) {
         this.downVoteListener = listener;
     }
+    
+    public void setNewChildCommentsListener(Callback<String> listener) {
+        this.newChildCommentsListener = listener;
+    }
 
     public void setGetChildrenProducer(Producer<GetChildrenRequest, List<PublicComment>> getChildren) {
         this.getChildren = getChildren;
@@ -50,21 +58,40 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
     public int getItemCount() {
         return commentsTree.visibleSize();
     }
+    
+    @Override
+    public int getItemViewType(int position) {
+        RenderableNode node = commentsTree.visibleNodes.get(position);
+        if (node instanceof RenderableComment) {
+            return VIEW_TYPE_COMMENT;
+        } else {
+            return VIEW_TYPE_BUTTON;
+        }
+    }
 
     @NonNull
     @Override
-    public CommentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_comment, parent, false);
-        return new CommentViewHolder(context, sdk, view);
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (viewType == VIEW_TYPE_COMMENT) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_comment, parent, false);
+            return new CommentViewHolder(context, sdk, view);
+        } else {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_button, parent, false);
+            return new ButtonViewHolder(view);
+        }
     }
 
     @Override
-    public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
-        final RenderableComment comment = findCommentForPosition(position);
-
-        if (comment == null) {
-            return;
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if (holder instanceof CommentViewHolder) {
+            bindCommentViewHolder((CommentViewHolder) holder, position);
+        } else if (holder instanceof ButtonViewHolder) {
+            bindButtonViewHolder((ButtonViewHolder) holder, position);
         }
+    }
+    
+    private void bindCommentViewHolder(CommentViewHolder holder, int position) {
+        final RenderableComment comment = (RenderableComment) commentsTree.visibleNodes.get(position);
         
         // Pass config setting for unverified label
         boolean disableUnverifiedLabel = Boolean.TRUE.equals(sdk.getConfig().disableUnverifiedLabel);
@@ -131,16 +158,32 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
         });
     }
     
+    private void bindButtonViewHolder(ButtonViewHolder holder, int position) {
+        final RenderableButton button = (RenderableButton) commentsTree.visibleNodes.get(position);
+        
+        if (button.getButtonType() == RenderableButton.TYPE_NEW_ROOT_COMMENTS) {
+            // New root comments button
+            holder.setButtonText(context.getString(R.string.show_new_comments, button.getCommentCount()));
+            holder.setButtonClickListener(v -> {
+                commentsTree.showNewRootComments();
+            });
+        } else if (button.getButtonType() == RenderableButton.TYPE_NEW_CHILD_COMMENTS) {
+            // New child comments button for a specific parent
+            holder.setButtonText(context.getString(R.string.show_new_replies, button.getCommentCount()));
+            holder.setButtonClickListener(v -> {
+                String parentId = button.getParentId();
+                if (parentId != null) {
+                    commentsTree.showNewChildComments(parentId);
+                    if (newChildCommentsListener != null) {
+                        newChildCommentsListener.call(parentId);
+                    }
+                }
+            });
+        }
+    }
+    
     private android.os.Handler getHandler() {
         return new android.os.Handler(android.os.Looper.getMainLooper());
-    }
-
-    // Helper method to determine which comment corresponds to a given adapter position
-    private RenderableComment findCommentForPosition(int position) {
-        if (position < 0 || position >= commentsTree.visibleComments.size()) {
-            return null;
-        }
-        return commentsTree.visibleComments.get(position);
     }
 
     /**
@@ -150,22 +193,34 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentViewHolder> {
      * @return The position or 0 if not found
      */
     public int getPositionForComment(RenderableComment comment) {
-        if (comment == null || commentsTree.visibleComments.isEmpty()) {
+        if (comment == null || commentsTree.visibleNodes.isEmpty()) {
             return 0;
         }
 
-        String commentId = comment.getComment().getId();
-        for (int i = 0; i < commentsTree.visibleComments.size(); i++) {
-            RenderableComment renderableComment = commentsTree.visibleComments.get(i);
-            if (renderableComment.getComment().getId().equals(commentId)) {
-                return i;
-            }
-        }
-
-        return 0;
+        return commentsTree.visibleNodes.indexOf(comment);
     }
 
     public interface OnToggleRepliesListener {
         void onToggle(RenderableComment comment, Button toggleButton);
+    }
+    
+    /**
+     * ViewHolder for button items that prompt the user to load new comments
+     */
+    static class ButtonViewHolder extends RecyclerView.ViewHolder {
+        private final Button button;
+        
+        public ButtonViewHolder(@NonNull View itemView) {
+            super(itemView);
+            button = itemView.findViewById(R.id.btnNewComments);
+        }
+        
+        public void setButtonText(String text) {
+            button.setText(text);
+        }
+        
+        public void setButtonClickListener(View.OnClickListener listener) {
+            button.setOnClickListener(listener);
+        }
     }
 }

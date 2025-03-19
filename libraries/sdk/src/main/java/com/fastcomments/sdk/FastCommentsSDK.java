@@ -612,15 +612,11 @@ public class FastCommentsSDK {
         PublicComment newComment = new PublicComment();
         copyEventToComment(pubSubComment, newComment);
 
+        // Determine if we should show comments immediately based on config
+        boolean showLiveRightAway = config.showLiveRightAway != null && config.showLiveRightAway;
+        
         // Add to comments tree
-        if (pubSubComment.getParentId() != null && !pubSubComment.getParentId().isEmpty()) {
-            // This is a reply to an existing comment
-            commentsTree.addComment(newComment);
-        } else {
-            // This is a new top-level comment
-            // Depending on sort direction, add at beginning or end of the list
-            commentsTree.addComment(newComment);
-        }
+        commentsTree.addComment(newComment, showLiveRightAway);
 
         // Increment the server comment count
         commentCountOnServer++;

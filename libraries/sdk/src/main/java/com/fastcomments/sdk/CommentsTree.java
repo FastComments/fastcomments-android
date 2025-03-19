@@ -22,20 +22,27 @@ public class CommentsTree {
     // Note that lots of operations have to do N-time lookups in these lists. We may want to replace these
     // with some sort of ordered map.
     public List<RenderableComment> allComments; // in any order
-    public List<RenderableComment> visibleComments; // in view order
+    public List<RenderableNode> visibleNodes; // in view order - can include comments and buttons
     private CommentsAdapter adapter;
+    
+    // Separate collections for easier lookup
+    private RenderableButton newRootCommentsButton; // Only one of these at most
+    private Map<String, RenderableButton> newChildCommentsButtons; // Keyed by parent comment ID
+    private List<PublicComment> newRootComments; // Buffer for new root comments when showLiveRightAway is false
 
     public CommentsTree() {
         this.commentsById = new HashMap<>(30);
-        this.visibleComments = new ArrayList<>(30);
+        this.visibleNodes = new ArrayList<>(30);
+        this.newChildCommentsButtons = new HashMap<>();
+        this.newRootComments = new ArrayList<>();
     }
 
     public void setAdapter(CommentsAdapter adapter) {
         this.adapter = adapter;
     }
 
-    public void notifyItemChanged(RenderableComment comment) {
-        final int index = this.visibleComments.indexOf(comment);
+    public void notifyItemChanged(RenderableNode node) {
+        final int index = this.visibleNodes.indexOf(node);
         if (index >= 0) {
             adapter.notifyItemChanged(index);
         }
@@ -43,9 +50,9 @@ public class CommentsTree {
 
     public void build(List<PublicComment> comments) {
         List<RenderableComment> allComments = new ArrayList<>(commentsById.size());
-        List<RenderableComment> visibleComments = new ArrayList<>(commentsById.size());
+        List<RenderableNode> visibleNodes = new ArrayList<>(commentsById.size());
         if (comments == null || comments.isEmpty()) {
-            this.visibleComments = visibleComments;
+            this.visibleNodes = visibleNodes;
             return;
         }
 
@@ -54,14 +61,17 @@ public class CommentsTree {
             final RenderableComment renderableComment = new RenderableComment(comment);
             commentsById.put(comment.getId(), renderableComment);
             allComments.add(renderableComment);
-            visibleComments.add(renderableComment);
+            visibleNodes.add(renderableComment);
             if (comment.getChildren() != null) {
-                handleChildren(allComments, visibleComments, comment.getChildren(), renderableComment.isRepliesShown);
+                handleChildren(allComments, visibleNodes, comment.getChildren(), renderableComment.isRepliesShown);
             }
         }
 
         this.allComments = allComments;
-        this.visibleComments = visibleComments;
+        this.visibleNodes = visibleNodes;
+        this.newRootCommentsButton = null;
+        this.newChildCommentsButtons.clear();
+        this.newRootComments.clear();
     }
 
     /**
@@ -74,7 +84,7 @@ public class CommentsTree {
             return;
         }
 
-        int initialSize = visibleComments.size();
+        int initialSize = visibleNodes.size();
 
         // Process all comments and create RenderableComment objects
         for (PublicComment comment : comments) {
@@ -82,15 +92,15 @@ public class CommentsTree {
                 final RenderableComment renderableComment = new RenderableComment(comment);
                 commentsById.put(comment.getId(), renderableComment);
                 allComments.add(renderableComment);
-                visibleComments.add(renderableComment);
+                visibleNodes.add(renderableComment);
                 if (comment.getChildren() != null) {
-                    handleChildren(allComments, visibleComments, comment.getChildren(), renderableComment.isRepliesShown);
+                    handleChildren(allComments, visibleNodes, comment.getChildren(), renderableComment.isRepliesShown);
                 }
             }
         }
 
         // Notify the adapter of exactly what changed (the newly added comments) TODO doesn't work right
-//        int itemCount = visibleComments.size() - initialSize;
+//        int itemCount = visibleNodes.size() - initialSize;
 //        adapter.notifyItemRangeInserted(initialSize, itemCount);
         adapter.notifyDataSetChanged();
     }
@@ -130,18 +140,18 @@ public class CommentsTree {
         }
     }
 
-    private void handleChildren(List<RenderableComment> allComments, List<RenderableComment> visibleComments, List<PublicComment> comments, boolean visible) {
+    private void handleChildren(List<RenderableComment> allComments, List<RenderableNode> visibleNodes, List<PublicComment> comments, boolean visible) {
         for (PublicComment child : comments) {
             final RenderableComment childRenderable = new RenderableComment(child);
             commentsById.put(child.getId(), childRenderable);
             allComments.add(childRenderable);
             final boolean childrenVisible = visible && childRenderable.isRepliesShown;
             if (childrenVisible) {
-                visibleComments.add(childRenderable);
+                visibleNodes.add(childRenderable);
             }
             final List<PublicComment> children = child.getChildren();
             if (children != null) {
-                handleChildren(allComments, visibleComments, children, childrenVisible);
+                handleChildren(allComments, visibleNodes, children, childrenVisible);
             }
         }
     }
@@ -151,14 +161,14 @@ public class CommentsTree {
     }
 
     public int visibleSize() {
-        return visibleComments.size();
+        return visibleNodes.size();
     }
 
     public void hideChildren(List<PublicComment> publicComments) {
         for (PublicComment child : publicComments) {
             final RenderableComment childRenderable = commentsById.get(child.getId());
             // see explanation at top of class
-            visibleComments.remove(childRenderable);
+            visibleNodes.remove(childRenderable);
             if (child.getChildren() != null) {
                 hideChildren(child.getChildren());
             }
@@ -170,10 +180,10 @@ public class CommentsTree {
             final RenderableComment childRenderable = commentsById.get(child.getId());
             // see explanation at top of class
             allComments.remove(childRenderable);
-            int index = visibleComments.indexOf(childRenderable); // TODO optimize away lookup if parent does not have children visible
+            int index = visibleNodes.indexOf(childRenderable); // TODO optimize away lookup if parent does not have children visible
             if (index >= 0) {
                 indexesRemoved.add(index);
-                visibleComments.remove(index);
+                visibleNodes.remove(index);
             }
             if (child.getChildren() != null) {
                 removeChildren(child.getChildren(), indexesRemoved);
@@ -186,9 +196,10 @@ public class CommentsTree {
         if (wasRepliesVisible == areRepliesVisible) {
             return;
         }
-        final int myIndex = visibleComments.indexOf(renderableComment);
+        final int myIndex = visibleNodes.indexOf(renderableComment);
         renderableComment.isRepliesShown = areRepliesVisible;
         final List<PublicComment> children = renderableComment.getComment().getChildren();
+        
         if (areRepliesVisible) {
             if (children != null && !children.isEmpty()) {
                 insertChildrenAfter(renderableComment, children);
@@ -197,6 +208,25 @@ public class CommentsTree {
                     int totalChildCount = renderableComment.getComment().getChildCount();
                     int loadedChildCount = children.size();
                     renderableComment.hasMoreChildren = (loadedChildCount < totalChildCount);
+                }
+                
+                // Check for new child comments and add a button if needed
+                if (renderableComment.getNewChildCommentsCount() > 0) {
+                    // Find the last visible child of this comment
+                    int lastChildIndex = findLastChildIndex(renderableComment);
+                    
+                    // Create a button to show new replies
+                    RenderableButton newRepliesButton = new RenderableButton(
+                            RenderableButton.TYPE_NEW_CHILD_COMMENTS,
+                            renderableComment.getNewChildCommentsCount(),
+                            renderableComment.getComment().getId()
+                    );
+                    
+                    // Add the button after the last child and track it
+                    String parentId = renderableComment.getComment().getId();
+                    visibleNodes.add(lastChildIndex + 1, newRepliesButton);
+                    newChildCommentsButtons.put(parentId, newRepliesButton);
+                    adapter.notifyItemInserted(lastChildIndex + 1);
                 }
             } else if (Boolean.TRUE.equals(renderableComment.getComment().getHasChildren())) {
                 // Reset pagination state when showing replies
@@ -214,6 +244,7 @@ public class CommentsTree {
                         false
                 );
 
+                final String parentId = renderableComment.getComment().getId();
                 getChildren.get(request, (asyncFetchedChildren) -> {
                     renderableComment.isLoadingChildren = false;
                     insertChildrenAfter(renderableComment, asyncFetchedChildren);
@@ -225,9 +256,39 @@ public class CommentsTree {
                                 renderableComment.getComment().getChildren().size() : 0;
                         renderableComment.hasMoreChildren = (loadedChildCount < totalChildCount);
                     }
+                    
+                    // Check for new child comments and add a button if needed
+                    if (renderableComment.getNewChildCommentsCount() > 0) {
+                        // Find the last visible child of this comment
+                        int lastChildIndex = findLastChildIndex(renderableComment);
+                        
+                        // Create a button to show new replies
+                        RenderableButton newRepliesButton = new RenderableButton(
+                                RenderableButton.TYPE_NEW_CHILD_COMMENTS,
+                                renderableComment.getNewChildCommentsCount(),
+                                parentId
+                        );
+                        
+                        // Add the button after the last child and track it
+                        visibleNodes.add(lastChildIndex + 1, newRepliesButton);
+                        newChildCommentsButtons.put(parentId, newRepliesButton);
+                        adapter.notifyItemInserted(lastChildIndex + 1);
+                    }
                 });
             }
         } else {
+            // Remove any "new child comments" button for this parent
+            String parentId = renderableComment.getComment().getId();
+            RenderableButton button = newChildCommentsButtons.remove(parentId);
+            if (button != null) {
+                int buttonIndex = visibleNodes.indexOf(button);
+                if (buttonIndex >= 0) {
+                    visibleNodes.remove(buttonIndex);
+                    adapter.notifyItemRemoved(buttonIndex);
+                }
+            }
+            
+            // Hide children
             if (children != null) {
                 hideChildren(children);
                 adapter.notifyItemRangeRemoved(myIndex + 1, children.size());
@@ -239,15 +300,55 @@ public class CommentsTree {
         }
         adapter.notifyItemChanged(myIndex);
     }
+    
+    /**
+     * Find the last visible child index for a parent comment
+     *
+     * @param parentComment The parent comment
+     * @return The index of the last visible child, or the parent's index if no children are visible
+     */
+    private int findLastChildIndex(RenderableComment parentComment) {
+        int parentIndex = visibleNodes.indexOf(parentComment);
+        if (parentIndex < 0 || parentIndex >= visibleNodes.size() - 1) {
+            return parentIndex;
+        }
+        
+        String parentId = parentComment.getComment().getId();
+        int lastChildIndex = parentIndex;
+        
+        // Scan forward from parent until we find a node that isn't a child
+        for (int i = parentIndex + 1; i < visibleNodes.size(); i++) {
+            RenderableNode node = visibleNodes.get(i);
+            if (node instanceof RenderableComment) {
+                RenderableComment comment = (RenderableComment) node;
+                if (!parentId.equals(comment.getComment().getParentId())) {
+                    break;
+                }
+                lastChildIndex = i;
+            } else if (node instanceof RenderableButton) {
+                RenderableButton button = (RenderableButton) node;
+                if (button.getButtonType() == RenderableButton.TYPE_NEW_CHILD_COMMENTS && 
+                        parentId.equals(button.getParentId())) {
+                    lastChildIndex = i;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        
+        return lastChildIndex;
+    }
 
     public void insertChildrenAfter(RenderableComment renderableComment, List<PublicComment> children) {
-        int myIndex = visibleComments.indexOf(renderableComment);
+        int myIndex = visibleNodes.indexOf(renderableComment);
         int indexer = myIndex + 1;
         for (int i = children.size() - 1; i >= 0; i--) {
             final PublicComment child = children.get(i);
             final RenderableComment childRenderable = commentsById.get(child.getId());
             // see explanation at top of class
-            visibleComments.add(indexer, childRenderable);
+            visibleNodes.add(indexer, childRenderable);
         }
         adapter.notifyItemRangeInserted(myIndex + 1, children.size()); // everything after me has changed/moved since it's a flat list
     }
@@ -256,19 +357,51 @@ public class CommentsTree {
      * Add a new comment to the tree (from live events)
      *
      * @param comment The comment to add
+     * @param showLiveRightAway Whether to show the comment immediately
      */
-    public void addComment(PublicComment comment) {
+    public void addComment(PublicComment comment, boolean showLiveRightAway) {
         if (comment == null || commentsById.containsKey(comment.getId())) {
             return;
         }
-
+        
         // Create a new renderable comment
         RenderableComment renderableComment = new RenderableComment(comment);
         commentsById.put(comment.getId(), renderableComment);
+        
         if (comment.getParentId() == null) {
+            // This is a root comment
             allComments.add(0, renderableComment);
-            visibleComments.add(0, renderableComment);
-            adapter.notifyItemInserted(0);
+            
+            if (showLiveRightAway) {
+                // Show the comment right away at the top of the list
+                visibleNodes.add(0, renderableComment);
+                adapter.notifyItemInserted(0);
+            } else {
+                // Buffer the comment and show a notice instead
+                newRootComments.add(comment);
+                
+                // If this is the first new comment, add a "New Comments" button at the top
+                if (newRootCommentsButton == null) {
+                    newRootCommentsButton = new RenderableButton(
+                            RenderableButton.TYPE_NEW_ROOT_COMMENTS,
+                            newRootComments.size()
+                    );
+                    visibleNodes.add(0, newRootCommentsButton);
+                    adapter.notifyItemInserted(0);
+                } else {
+                    // Update the existing button count
+                    int buttonIndex = visibleNodes.indexOf(newRootCommentsButton);
+                    if (buttonIndex >= 0) {
+                        // Replace with updated button
+                        newRootCommentsButton = new RenderableButton(
+                                RenderableButton.TYPE_NEW_ROOT_COMMENTS,
+                                newRootComments.size()
+                        );
+                        visibleNodes.set(buttonIndex, newRootCommentsButton);
+                        adapter.notifyItemChanged(buttonIndex);
+                    }
+                }
+            }
         } else {
             // This is a reply to an existing comment
             RenderableComment parent = commentsById.get(comment.getParentId());
@@ -292,20 +425,133 @@ public class CommentsTree {
                     publicComment.setHasChildren(true);
                 }
 
-                // If the parent's replies are shown, add this comment to the visible list
-                final int parentIndex = visibleComments.indexOf(parent);
+                // Handle visibility based on showLiveRightAway and parent state
+                final int parentIndex = visibleNodes.indexOf(parent);
                 if (parentIndex >= 0) {
                     adapter.notifyItemChanged(parentIndex); // re-render reply count
-                    if (parent.isRepliesShown) {
-                        // Find the right position to insert based on the hierarchical structure
-                        visibleComments.add(parentIndex + 1, renderableComment);
-
-                        // Notify adapter about the insertion
-                        adapter.notifyItemInserted(parentIndex + 1);
+                    
+                    if (parent.isRepliesShown && showLiveRightAway) {
+                        // Parent's replies are shown and we should show the new reply immediately
+                        int insertionIndex = findLastChildIndex(parent) + 1;
+                        visibleNodes.add(insertionIndex, renderableComment);
+                        adapter.notifyItemInserted(insertionIndex);
+                    } else if (parent.isRepliesShown) {
+                        // Parent's replies are shown but we should not show the new reply immediately
+                        // Add to parent's buffered new comments
+                        parent.addNewChildComment(comment);
+                        
+                        // Find any existing "new child comments" button for this parent
+                        String parentId = parent.getComment().getId();
+                        RenderableButton existingButton = newChildCommentsButtons.get(parentId);
+                        
+                        if (existingButton != null) {
+                            // Update the existing button
+                            int buttonIndex = visibleNodes.indexOf(existingButton);
+                            if (buttonIndex >= 0) {
+                                RenderableButton updatedButton = new RenderableButton(
+                                        RenderableButton.TYPE_NEW_CHILD_COMMENTS,
+                                        parent.getNewChildCommentsCount(),
+                                        parentId
+                                );
+                                visibleNodes.set(buttonIndex, updatedButton);
+                                newChildCommentsButtons.put(parentId, updatedButton);
+                                adapter.notifyItemChanged(buttonIndex);
+                            }
+                        } else {
+                            // Create a new button
+                            int insertionIndex = findLastChildIndex(parent) + 1;
+                            RenderableButton newRepliesButton = new RenderableButton(
+                                    RenderableButton.TYPE_NEW_CHILD_COMMENTS,
+                                    parent.getNewChildCommentsCount(),
+                                    parentId
+                            );
+                            visibleNodes.add(insertionIndex, newRepliesButton);
+                            newChildCommentsButtons.put(parentId, newRepliesButton);
+                            adapter.notifyItemInserted(insertionIndex);
+                        }
+                    } else {
+                        // Parent's replies are not shown, just buffer the comment
+                        parent.addNewChildComment(comment);
                     }
+                } else {
+                    // Parent is not visible, just buffer the comment
+                    parent.addNewChildComment(comment);
                 }
             }
         }
+    }
+    
+    /**
+     * Show all new root comments that were buffered
+     */
+    public void showNewRootComments() {
+        if (newRootComments.isEmpty() || newRootCommentsButton == null) {
+            return;
+        }
+        
+        // Remove the "New Comments" button
+        int buttonIndex = visibleNodes.indexOf(newRootCommentsButton);
+        if (buttonIndex >= 0) {
+            visibleNodes.remove(buttonIndex);
+            adapter.notifyItemRemoved(buttonIndex);
+        }
+        
+        // Add all buffered comments at the top of the list
+        for (int i = newRootComments.size() - 1; i >= 0; i--) {
+            PublicComment comment = newRootComments.get(i);
+            RenderableComment renderableComment = commentsById.get(comment.getId());
+            if (renderableComment != null) {
+                visibleNodes.add(0, renderableComment);
+                adapter.notifyItemInserted(0);
+            }
+        }
+        
+        // Clear the buffer and button reference
+        newRootComments.clear();
+        newRootCommentsButton = null;
+    }
+    
+    /**
+     * Show all new child comments for a specific parent
+     *
+     * @param parentId The parent comment ID
+     */
+    public void showNewChildComments(String parentId) {
+        RenderableComment parent = commentsById.get(parentId);
+        if (parent == null || parent.getNewChildCommentsCount() == 0) {
+            return;
+        }
+        
+        // Get and clear the buffered comments
+        List<PublicComment> newChildComments = parent.getAndClearNewChildComments();
+        if (newChildComments == null) {
+            return;
+        }
+        
+        // Remove the "New Child Comments" button
+        RenderableButton button = newChildCommentsButtons.remove(parentId);
+        if (button != null) {
+            int buttonIndex = visibleNodes.indexOf(button);
+            if (buttonIndex >= 0) {
+                visibleNodes.remove(buttonIndex);
+                adapter.notifyItemRemoved(buttonIndex);
+            }
+        }
+        
+        // Find the insertion point (after the last visible child of this parent)
+        int insertionIndex = findLastChildIndex(parent) + 1;
+        
+        // Add all the new child comments
+        for (int i = newChildComments.size() - 1; i >= 0; i--) {
+            PublicComment childComment = newChildComments.get(i);
+            RenderableComment childRenderable = commentsById.get(childComment.getId());
+            if (childRenderable != null) {
+                visibleNodes.add(insertionIndex, childRenderable);
+            }
+        }
+        
+        // Notify adapter of the insertions
+        adapter.notifyItemRangeInserted(insertionIndex, newChildComments.size());
     }
 
     public PublicComment getPublicComment(String commentId) {
@@ -326,7 +572,7 @@ public class CommentsTree {
         }
 
         // Find the comment's index in the visible list
-        final int visibleIndex = visibleComments.indexOf(comment);
+        final int visibleIndex = visibleNodes.indexOf(comment);
 
         // Remove from main collections
         commentsById.remove(commentId);
@@ -357,7 +603,7 @@ public class CommentsTree {
                     parent.getComment().setHasChildren(false);
                 }
             }
-            final int parentVisibleIndex = visibleComments.indexOf(parent);
+            final int parentVisibleIndex = visibleNodes.indexOf(parent);
             if (parentVisibleIndex >= 0) {
                 adapter.notifyItemChanged(parentVisibleIndex);
             }
@@ -365,7 +611,7 @@ public class CommentsTree {
 
         // If comment was visible, remove it and its children from visible list
         if (visibleIndex >= 0) {
-            visibleComments.remove(visibleIndex);
+            visibleNodes.remove(visibleIndex);
             adapter.notifyItemRemoved(visibleIndex);
 
             if (comment.isRepliesShown && comment.getComment().getChildren() != null) {

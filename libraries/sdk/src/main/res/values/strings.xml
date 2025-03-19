@@ -21,6 +21,10 @@
     <string name="load_all">Load All (%1$d)</string>
     <string name="loading_more">Loading...</string>
     
+    <!-- Live commenting strings -->
+    <string name="show_new_comments">Show %1$d New Comments</string>
+    <string name="show_new_replies">Show %1$d New Replies</string>
+    
     <!-- Voting strings -->
     <string name="upvote">Upvote</string>
     <string name="downvote">Downvote</string>
