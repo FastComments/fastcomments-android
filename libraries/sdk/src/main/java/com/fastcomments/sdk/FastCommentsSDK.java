@@ -664,7 +664,7 @@ public class FastCommentsSDK {
         PubSubComment pubSubComment = eventData.getComment();
         
         // Find and update the comment in our tree
-        PublicComment existingComment = commentsTree.findComment(pubSubComment.getId());
+        PublicComment existingComment = commentsTree.getPublicComment(pubSubComment.getId());
         if (existingComment != null) {
             copyEventToComment(pubSubComment, existingComment);
         }
@@ -710,7 +710,7 @@ public class FastCommentsSDK {
         boolean isUpvote = direction > 0;
         
         // Find and update the comment's vote count
-        PublicComment comment = commentsTree.findComment(commentId);
+        PublicComment comment = commentsTree.getPublicComment(commentId);
         if (comment != null) {
             if (isUpvote) {
                 comment.setVotesUp((comment.getVotesUp() != null ? comment.getVotesUp() : 0) + 1);
@@ -740,7 +740,7 @@ public class FastCommentsSDK {
         boolean isUpvote = direction > 0;
 
         // Find and update the comment's vote count
-        PublicComment comment = commentsTree.findComment(commentId);
+        PublicComment comment = commentsTree.getPublicComment(commentId);
         if (comment != null) {
             if (isUpvote && comment.getVotesUp() != null && comment.getVotesUp() > 0) {
                 comment.setVotesUp(comment.getVotesUp() - 1);
