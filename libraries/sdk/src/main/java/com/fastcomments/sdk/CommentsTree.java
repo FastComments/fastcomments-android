@@ -266,35 +266,35 @@ public class CommentsTree {
             // This is a reply to an existing comment
             RenderableComment parent = commentsById.get(comment.getParentId());
             if (parent != null) {
+                final PublicComment publicComment = parent.getComment();
                 // Add this comment as a child of its parent
-                if (parent.getComment().getChildren() == null) {
-                    parent.getComment().setChildren(new ArrayList<>());
+                if (publicComment.getChildren() == null) {
+                    publicComment.setChildren(new ArrayList<>());
                 }
-                parent.getComment().getChildren().add(comment);
+                publicComment.getChildren().add(comment);
 
                 // Increment the parent's child count if it exists
-                if (parent.getComment().getChildCount() != null) {
-                    parent.getComment().setChildCount(parent.getComment().getChildCount() + 1);
+                if (publicComment.getChildCount() != null) {
+                    publicComment.setChildCount(publicComment.getChildCount() + 1);
                 } else {
-                    parent.getComment().setChildCount(1);
+                    publicComment.setChildCount(1);
                 }
 
                 // Set hasChildren flag if needed
-                if (Boolean.FALSE.equals(parent.getComment().getHasChildren())) {
-                    parent.getComment().setHasChildren(true);
+                if (Boolean.FALSE.equals(publicComment.getHasChildren())) {
+                    publicComment.setHasChildren(true);
                 }
 
                 // If the parent's replies are shown, add this comment to the visible list
-                if (parent.isRepliesShown) {
-                    int parentIndex = visibleComments.indexOf(parent);
-                    if (parentIndex >= 0) {
+                final int parentIndex = visibleComments.indexOf(parent);
+                if (parentIndex >= 0) {
+                    adapter.notifyItemChanged(parentIndex); // re-render reply count
+                    if (parent.isRepliesShown) {
                         // Find the right position to insert based on the hierarchical structure
-                        visibleComments.add(parentIndex, renderableComment);
+                        visibleComments.add(parentIndex + 1, renderableComment);
 
                         // Notify adapter about the insertion
-                        if (adapter != null) {
-                            adapter.notifyItemInserted(parentIndex);
-                        }
+                        adapter.notifyItemInserted(parentIndex + 1);
                     }
                 }
             }
@@ -349,6 +349,10 @@ public class CommentsTree {
                 if (childCount != null && childCount == 0) {
                     parent.getComment().setHasChildren(false);
                 }
+            }
+            final int parentVisibleIndex = visibleComments.indexOf(parent);
+            if (parentVisibleIndex >= 0) {
+                adapter.notifyItemChanged(parentVisibleIndex);
             }
         }
 
