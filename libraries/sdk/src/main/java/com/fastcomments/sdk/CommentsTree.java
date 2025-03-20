@@ -6,8 +6,10 @@ import com.fastcomments.model.PublicComment;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -361,9 +363,6 @@ public class CommentsTree {
             visibleNodes.add(indexer, childRenderable);
         }
         adapter.notifyItemRangeInserted(myIndex + 1, children.size()); // everything after me has changed/moved since it's a flat list
-        
-        // Check if we need to fetch presence status for newly visible comments
-        checkAndRequestUserPresenceStatuses();
     }
 
     private void addToMapAndRelated(RenderableComment renderableComment) {
