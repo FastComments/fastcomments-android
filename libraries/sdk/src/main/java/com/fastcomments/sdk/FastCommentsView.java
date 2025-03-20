@@ -13,6 +13,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.Button;
 
 import com.fastcomments.core.VoteStyle;
+import com.fastcomments.model.PublicComment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
