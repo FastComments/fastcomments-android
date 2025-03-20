@@ -551,10 +551,8 @@ public class FastCommentsSDK {
     
     /**
      * Handle WebSocket connection status changes
-     * 
-     * @param isConnected Whether the WebSocket is now connected
      */
-    private void handleConnectionStatusChange(boolean isConnected) {
+    private void handleConnectionStatusChange(boolean isConnected, Long lastEventTime) {
         if (isConnected) {
             // WebSocket is connected, fetch initial presence status
             fetchUserPresenceStatuses();
