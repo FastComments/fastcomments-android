@@ -572,10 +572,10 @@ public class FastCommentsSDK {
                 String userId = comment.getComment().getUserId();
                 String anonUserId = comment.getComment().getAnonUserId();
                 
-                if (userId != null && !userId.isEmpty()) {
+                if (userId != null) {
                     userIds.add(userId);
                 }
-                if (anonUserId != null && !anonUserId.isEmpty()) {
+                if (anonUserId != null) {
                     userIds.add(anonUserId);
                 }
             }
@@ -610,7 +610,7 @@ public class FastCommentsSDK {
         
         // Call the API to get presence statuses
         try {
-            api.getUserPresenceStatuses(config.tenantId, userIdsCSV)
+            api.getUserPresenceStatuses(config.tenantId, urlIdWS, userIdsCSV)
                 .executeAsync(new ApiCallback<GetUserPresenceStatuses200Response>() {
                     @Override
                     public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
@@ -628,16 +628,14 @@ public class FastCommentsSDK {
                         }
                         
                         // Process presence statuses
-                        Map<String, Boolean> statuses = result.getUserPresenceStatusesResponse().getStatuses();
-                        if (statuses != null) {
-                            mainHandler.post(() -> {
-                                for (Map.Entry<String, Boolean> entry : statuses.entrySet()) {
-                                    String userId = entry.getKey();
-                                    boolean isOnline = entry.getValue();
-                                    commentsTree.updateUserPresence(userId, isOnline);
-                                }
-                            });
-                        }
+                        final Map<String, Boolean> statuses = result.getGetUserPresenceStatusesResponse().getUserIdsOnline();
+                        mainHandler.post(() -> {
+                            for (Map.Entry<String, Boolean> entry : statuses.entrySet()) {
+                                String userId = entry.getKey();
+                                boolean isOnline = entry.getValue();
+                                commentsTree.updateUserPresence(userId, isOnline);
+                            }
+                        });
                     }
 
                     @Override
