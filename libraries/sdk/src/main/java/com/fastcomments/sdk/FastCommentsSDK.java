@@ -305,19 +305,29 @@ public class FastCommentsSDK {
             commentData.setParentId(parentId);
         }
 
-        // Set user info
+        // Set user info based on currentUser
         if (currentUser != null) {
-//            if (currentUser.getActualInstance() instanceof AuthenticatedUserDetails) {
-//                AuthenticatedUserDetails authenticatedUser = currentUser.getAuthenticatedUserDetails();
-//                commentData.setUserId(authenticatedUser.getId());
-//                commentData.setCommenterName(authenticatedUser.getUsername());
-//                commentData.setAvatarSrc(authenticatedUser.getAvatarSrc());
-//                commentData.setCommenterEmail(authenticatedUser.getEmail());
-//            } else if (currentUser.getActualInstance() instanceof AnonUserDetails) {
-//                AnonUserDetails anonUser = currentUser.getAnonUserDetails();
-//                commentData.setCommenterName(anonUser.getUsername());
-//                commentData.setCommenterEmail(anonUser.getEmail());
-//            }
+            if (currentUser.getAuthorized() != null && currentUser.getAuthorized()) {
+                // User is already authenticated, set userId if available
+                if (currentUser.getId() != null) {
+                    commentData.setUserId(currentUser.getId());
+                }
+            }
+            
+            // Always set username and email even if authenticated
+            // The API will use the authenticated user info if available
+            if (currentUser.getUsername() != null) {
+                commentData.setCommenterName(currentUser.getUsername());
+            }
+            
+            if (currentUser.getEmail() != null) {
+                commentData.setCommenterEmail(currentUser.getEmail());
+            }
+            
+            // Set avatar source if available
+            if (currentUser.getAvatarSrc() != null) {
+                commentData.setAvatarSrc(currentUser.getAvatarSrc());
+            }
         }
 
         // Set page title if available
@@ -331,6 +341,69 @@ public class FastCommentsSDK {
         }
 
         return commentData;
+    }
+    
+    /**
+     * Posts a new comment or reply to the FastComments API
+     *
+     * @param commentText The text of the comment to post
+     * @param parentId The ID of the parent comment (for replies), or null for top-level comments
+     * @param callback Callback to receive the response
+     */
+    public void postComment(String commentText, String parentId, final FCCallback<PublicComment> callback) {
+        if (commentText == null || commentText.trim().isEmpty()) {
+            callback.onFailure(new APIError()
+                .status(ImportedAPIStatusFAILED.FAILED)
+                .reason("Comment text is required")
+                .code("empty_comment"));
+            return;
+        }
+        
+        // Create a unique broadcast ID to identify this comment in live events
+        String broadcastId = UUID.randomUUID().toString();
+        
+        // Track broadcast ID before sending
+        broadcastIdsSent.add(broadcastId);
+
+        // Create comment data
+        CommentData commentData = createCommentData(commentText, parentId);
+        
+        try {
+            // Make the API call
+            api.createComment(config.tenantId, config.urlId, broadcastId, commentData)
+                .sso(config.getSSOToken())
+                .executeAsync(new ApiCallback<CreateComment200Response>() {
+                    @Override
+                    public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                        callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                    }
+
+                    @Override
+                    public void onSuccess(CreateComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                        if (result.getActualInstance() instanceof APIError) {
+                            callback.onFailure((APIError) result.getActualInstance());
+                        } else {
+                            CreateCommentResponse response = result.getCreateCommentResponse();
+                            
+                            // The API should return the complete comment
+                            PublicComment createdComment = response.getComment();
+                            callback.onSuccess(createdComment);
+                        }
+                    }
+
+                    @Override
+                    public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                        // Not used
+                    }
+
+                    @Override
+                    public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                        // Not used
+                    }
+                });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
     }
 
     /**

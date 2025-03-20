@@ -619,29 +619,48 @@ public class FastCommentsView extends FrameLayout {
     public void postComment(String commentText, String parentId) {
         commentForm.setSubmitting(true);
 
-//        sdk.postComment(commentText, parentId, new FCCallback<PublicComment>() {
-//            @Override
-//            public boolean onFailure(APIError error) {
-//                getHandler().post(() -> {
-//                    commentForm.setSubmitting(false);
-//                    commentForm.showError(error.getMessage());
-//                });
-//                return CONSUME;
-//            }
-//
-//            @Override
-//            public boolean onSuccess(PublicComment comment) {
-//                getHandler().post(() -> {
-//                    commentForm.setSubmitting(false);
-//                    commentForm.clearText();
-//                    commentForm.resetReplyState();
-//
-//                    // Refresh comments to include the new one
-//                    refresh();
-//                });
-//                return CONSUME;
-//            }
-//        });
+        sdk.postComment(commentText, parentId, new FCCallback<PublicComment>() {
+            @Override
+            public boolean onFailure(APIError error) {
+                getHandler().post(() -> {
+                    commentForm.setSubmitting(false);
+                    
+                    // Check for translated error message
+                    String errorMessage;
+                    if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                        errorMessage = error.getTranslatedError();
+                    } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                        errorMessage = error.getReason();
+                    } else {
+                        errorMessage = getContext().getString(R.string.error_posting_comment);
+                    }
+                    
+                    commentForm.showError(errorMessage);
+                });
+                return CONSUME;
+            }
+
+            @Override
+            public boolean onSuccess(PublicComment comment) {
+                getHandler().post(() -> {
+                    commentForm.setSubmitting(false);
+                    commentForm.clearText();
+                    commentForm.resetReplyState();
+
+                    // Show a toast message to confirm successful posting
+                    android.widget.Toast.makeText(
+                            getContext(),
+                            R.string.comment_posted_successfully,
+                            android.widget.Toast.LENGTH_SHORT
+                    ).show();
+                    
+                    // The comment should appear through the live event system,
+                    // but we'll refresh comments to ensure it shows up
+                    refresh();
+                });
+                return CONSUME;
+            }
+        });
     }
 
     private void showLoading(boolean isLoading) {
