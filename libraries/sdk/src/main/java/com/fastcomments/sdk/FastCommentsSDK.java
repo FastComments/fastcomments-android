@@ -111,9 +111,20 @@ public class FastCommentsSDK {
         currentSkip = 0;
         currentPage = 0;
 
+        // Reset any existing error message
+        blockingErrorMessage = null;
+        
         getCommentsAndRelatedData(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
             @Override
             public boolean onFailure(APIError error) {
+                // Set blockingErrorMessage from translatedError or reason
+                if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                    blockingErrorMessage = error.getTranslatedError();
+                } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                    blockingErrorMessage = error.getReason();
+                }
+                // Note: No fallback string here - the UI will handle this with R.string.generic_loading_error
+                
                 callback.onFailure(error);
                 return CONSUME;
             }
@@ -217,7 +228,16 @@ public class FastCommentsSDK {
                         @Override
                         public void onSuccess(GetComments200Response response, int i, Map<String, List<String>> map) {
                             if (response.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) response.getActualInstance());
+                                APIError error = (APIError) response.getActualInstance();
+                                
+                                // Set blockingErrorMessage from translatedError or reason
+                                if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                                    blockingErrorMessage = error.getTranslatedError();
+                                } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                                    blockingErrorMessage = error.getReason();
+                                }
+                                
+                                callback.onFailure(error);
                             } else {
                                 final GetCommentsResponseWithPresencePublicComment commentsResponse = response.getGetCommentsResponseWithPresencePublicComment();
 

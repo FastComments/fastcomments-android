@@ -581,8 +581,14 @@ public class FastCommentsView extends FrameLayout {
                 Log.e("FastCommentsView", error.toString());
                 getHandler().post(() -> {
                     showLoading(false);
-                    setIsEmpty(true);
-                    emptyStateView.setText(R.string.error_loading_comments);
+                    
+                    // Use blockingErrorMessage if available, otherwise fallback to a generic message
+                    if (sdk.blockingErrorMessage != null && !sdk.blockingErrorMessage.isEmpty()) {
+                        setBlockingError(sdk.blockingErrorMessage);
+                    } else {
+                        // Show standard error as blocking error
+                        setBlockingError(getContext().getString(R.string.generic_loading_error));
+                    }
                 });
                 return CONSUME;
             }
@@ -591,6 +597,9 @@ public class FastCommentsView extends FrameLayout {
             public boolean onSuccess(GetCommentsResponseWithPresencePublicComment response) {
                 getHandler().post(() -> {
                     showLoading(false);
+                    
+                    // Clear any blocking error
+                    setBlockingError(null);
 
                     if (response.getComments().isEmpty()) {
                         setIsEmpty(true);
@@ -674,6 +683,36 @@ public class FastCommentsView extends FrameLayout {
     private void setIsEmpty(boolean isEmpty) {
         emptyStateView.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+    }
+    
+    /**
+     * Set the view to display a blocking error message
+     * 
+     * @param errorMessage The error message to display, or null to hide the error
+     */
+    private void setBlockingError(String errorMessage) {
+        if (errorMessage != null && !errorMessage.isEmpty()) {
+            // Show the error message
+            emptyStateView.setText(errorMessage);
+            emptyStateView.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+            paginationControls.setVisibility(View.GONE);
+            newCommentButton.setVisibility(View.GONE);
+        } else {
+            // No error, restore normal visibility based on comments count
+            boolean isEmpty = adapter.getItemCount() == 0;
+            setIsEmpty(isEmpty);
+            
+            // Show or hide pagination controls based on hasMore
+            if (sdk.hasMore && !isEmpty) {
+                updatePaginationControls();
+            } else {
+                paginationControls.setVisibility(View.GONE);
+            }
+            
+            // Show the new comment button
+            newCommentButton.setVisibility(View.VISIBLE);
+        }
     }
 
     /**
