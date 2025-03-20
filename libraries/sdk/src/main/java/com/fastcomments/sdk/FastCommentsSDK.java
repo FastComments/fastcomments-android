@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -63,7 +64,7 @@ public class FastCommentsSDK {
         this.currentPage = 0;
         this.hasMore = false;
         this.liveEventSubscriber = new LiveEventSubscriber();
-        
+
         // Set up the presence status listener on the comments tree
         this.commentsTree.setPresenceStatusListener(this::fetchPresenceForUsers);
     }
@@ -313,17 +314,17 @@ public class FastCommentsSDK {
                     commentData.setUserId(currentUser.getId());
                 }
             }
-            
+
             // Always set username and email even if authenticated
             // The API will use the authenticated user info if available
             if (currentUser.getUsername() != null) {
                 commentData.setCommenterName(currentUser.getUsername());
             }
-            
+
             if (currentUser.getEmail() != null) {
                 commentData.setCommenterEmail(currentUser.getEmail());
             }
-            
+
             // Set avatar source if available
             if (currentUser.getAvatarSrc() != null) {
                 commentData.setAvatarSrc(currentUser.getAvatarSrc());
@@ -342,65 +343,70 @@ public class FastCommentsSDK {
 
         return commentData;
     }
-    
+
     /**
      * Posts a new comment or reply to the FastComments API
      *
      * @param commentText The text of the comment to post
-     * @param parentId The ID of the parent comment (for replies), or null for top-level comments
-     * @param callback Callback to receive the response
+     * @param parentId    The ID of the parent comment (for replies), or null for top-level comments
+     * @param callback    Callback to receive the response
      */
     public void postComment(String commentText, String parentId, final FCCallback<PublicComment> callback) {
         if (commentText == null || commentText.trim().isEmpty()) {
             callback.onFailure(new APIError()
-                .status(ImportedAPIStatusFAILED.FAILED)
-                .reason("Comment text is required")
-                .code("empty_comment"));
+                    .status(ImportedAPIStatusFAILED.FAILED)
+                    .reason("Comment text is required")
+                    .code("empty_comment"));
             return;
         }
-        
+
         // Create a unique broadcast ID to identify this comment in live events
         String broadcastId = UUID.randomUUID().toString();
-        
+
         // Track broadcast ID before sending
         broadcastIdsSent.add(broadcastId);
 
         // Create comment data
         CommentData commentData = createCommentData(commentText, parentId);
-        
+
         try {
             // Make the API call
             api.createComment(config.tenantId, config.urlId, broadcastId, commentData)
-                .sso(config.getSSOToken())
-                .executeAsync(new ApiCallback<CreateComment200Response>() {
-                    @Override
-                    public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
-                        callback.onFailure(CallbackWrapper.createErrorFromException(e));
-                    }
-
-                    @Override
-                    public void onSuccess(CreateComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                        if (result.getActualInstance() instanceof APIError) {
-                            callback.onFailure((APIError) result.getActualInstance());
-                        } else {
-                            CreateCommentResponse response = result.getCreateCommentResponse();
-                            
-                            // The API should return the complete comment
-                            PublicComment createdComment = response.getComment();
-                            callback.onSuccess(createdComment);
+                    .sso(config.getSSOToken())
+                    .executeAsync(new ApiCallback<CreateComment200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
-                    }
 
-                    @Override
-                    public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
-                        // Not used
-                    }
+                        @Override
+                        public void onSuccess(CreateComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                            } else {
+                                SaveCommentsResponseWithPresence response = result.getSaveCommentsResponseWithPresence();
+                                if (response.getUser() != null) {
+                                    currentUser = response.getUser();
+                                }
+                                if (response.getUserIdWS() != null && !Objects.equals(response.getUserIdWS(), userIdWS)) {
+                                    userIdWS = response.getUserIdWS();
+                                }
+                                // The API should return the complete comment
+                                PublicComment createdComment = response.getComment();
+                                callback.onSuccess(createdComment);
+                            }
+                        }
 
-                    @Override
-                    public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
-                        // Not used
-                    }
-                });
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                            // Not used
+                        }
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                            // Not used
+                        }
+                    });
         } catch (ApiException e) {
             CallbackWrapper.handleAPIException(mainHandler, callback, e);
         }
@@ -621,7 +627,7 @@ public class FastCommentsSDK {
                 this::handleLiveEvent
         );
     }
-    
+
     /**
      * Handle WebSocket connection status changes
      */
@@ -631,20 +637,20 @@ public class FastCommentsSDK {
             fetchUserPresenceStatuses();
         }
     }
-    
+
     /**
      * Fetch presence statuses for users in visible comments
      */
     private void fetchUserPresenceStatuses() {
         // Extract user IDs from visible comments
         Set<String> userIds = new HashSet<>();
-        
+
         for (RenderableNode node : commentsTree.visibleNodes) {
             if (node instanceof RenderableComment) {
                 RenderableComment comment = (RenderableComment) node;
                 String userId = comment.getComment().getUserId();
                 String anonUserId = comment.getComment().getAnonUserId();
-                
+
                 if (userId != null) {
                     userIds.add(userId);
                 }
@@ -653,12 +659,12 @@ public class FastCommentsSDK {
                 }
             }
         }
-        
+
         // If no users found, no need to proceed
         if (userIds.isEmpty()) {
             return;
         }
-        
+
         // Create a comma-separated string of user IDs
         StringBuilder userIdsCSV = new StringBuilder();
         for (String userId : userIds) {
@@ -667,60 +673,60 @@ public class FastCommentsSDK {
             }
             userIdsCSV.append(userId);
         }
-        
+
         fetchPresenceForUsers(userIdsCSV.toString());
     }
-    
+
     /**
      * Fetch presence statuses for specific user IDs
-     * 
+     *
      * @param userIdsCSV Comma-separated list of user IDs
      */
     private void fetchPresenceForUsers(String userIdsCSV) {
         if (userIdsCSV == null || userIdsCSV.isEmpty()) {
             return;
         }
-        
+
         // Call the API to get presence statuses
         try {
             api.getUserPresenceStatuses(config.tenantId, urlIdWS, userIdsCSV)
-                .executeAsync(new ApiCallback<GetUserPresenceStatuses200Response>() {
-                    @Override
-                    public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
-                        // Log error but continue - this is not critical functionality
-                        Log.e("FastCommentsSDK", "Failed to get user presence statuses: " + e.getMessage());
-                    }
-
-                    @Override
-                    public void onSuccess(GetUserPresenceStatuses200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                        if (result.getActualInstance() instanceof APIError) {
-                            // Log error but continue
-                            Log.e("FastCommentsSDK", "API error when getting user presence statuses: " + 
-                                   ((APIError)result.getActualInstance()).getReason());
-                            return;
+                    .executeAsync(new ApiCallback<GetUserPresenceStatuses200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            // Log error but continue - this is not critical functionality
+                            Log.e("FastCommentsSDK", "Failed to get user presence statuses: " + e.getMessage());
                         }
-                        
-                        // Process presence statuses
-                        final Map<String, Boolean> statuses = result.getGetUserPresenceStatusesResponse().getUserIdsOnline();
-                        mainHandler.post(() -> {
-                            for (Map.Entry<String, Boolean> entry : statuses.entrySet()) {
-                                String userId = entry.getKey();
-                                boolean isOnline = entry.getValue();
-                                commentsTree.updateUserPresence(userId, isOnline);
+
+                        @Override
+                        public void onSuccess(GetUserPresenceStatuses200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                // Log error but continue
+                                Log.e("FastCommentsSDK", "API error when getting user presence statuses: " +
+                                        ((APIError) result.getActualInstance()).getReason());
+                                return;
                             }
-                        });
-                    }
 
-                    @Override
-                    public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
-                        // Not used
-                    }
+                            // Process presence statuses
+                            final Map<String, Boolean> statuses = result.getGetUserPresenceStatusesResponse().getUserIdsOnline();
+                            mainHandler.post(() -> {
+                                for (Map.Entry<String, Boolean> entry : statuses.entrySet()) {
+                                    String userId = entry.getKey();
+                                    boolean isOnline = entry.getValue();
+                                    commentsTree.updateUserPresence(userId, isOnline);
+                                }
+                            });
+                        }
 
-                    @Override
-                    public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
-                        // Not used
-                    }
-                });
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                            // Not used
+                        }
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                            // Not used
+                        }
+                    });
         } catch (ApiException e) {
             // Log error but continue - this is not critical functionality
             Log.e("FastCommentsSDK", "Failed to get user presence statuses: " + e.getMessage());
@@ -803,7 +809,7 @@ public class FastCommentsSDK {
 
         // Determine if we should show comments immediately based on config
         boolean showLiveRightAway = config.showLiveRightAway != null && config.showLiveRightAway;
-        
+
         // Add to comments tree
         commentsTree.addComment(newComment, showLiveRightAway);
 
@@ -947,7 +953,7 @@ public class FastCommentsSDK {
             this.isClosed = eventData.getIsClosed();
         }
     }
-    
+
     /**
      * Handle a presence change event (users coming online or going offline)
      */
@@ -959,7 +965,7 @@ public class FastCommentsSDK {
                 commentsTree.updateUserPresence(userId, true);
             }
         }
-        
+
         // Process users who left (went offline)
         List<String> usersLeft = eventData.getUl();
         if (usersLeft != null && !usersLeft.isEmpty()) {
