@@ -132,6 +132,8 @@ public class FastCommentsSDK {
                 }
 
                 // Extract WebSocket parameters for live events
+                boolean needsWebsocketReconnect = false;
+                
                 if (response.getTenantIdWS() != null) {
                     tenantIdWS = response.getTenantIdWS();
                 }
@@ -139,6 +141,10 @@ public class FastCommentsSDK {
                     urlIdWS = response.getUrlIdWS();
                 }
                 if (response.getUserIdWS() != null) {
+                    // Check if userIdWS has changed, which requires WebSocket reconnection
+                    if (userIdWS != null && !Objects.equals(response.getUserIdWS(), userIdWS)) {
+                        needsWebsocketReconnect = true;
+                    }
                     userIdWS = response.getUserIdWS();
                 }
 
@@ -151,7 +157,9 @@ public class FastCommentsSDK {
                 commentsTree.build(response.getComments());
 
                 // Subscribe to live events if we have all required parameters
-                if (tenantIdWS != null && urlIdWS != null && userIdWS != null) {
+                // or if we need to reconnect due to userIdWS change
+                if ((tenantIdWS != null && urlIdWS != null && userIdWS != null) && 
+                    (liveEventSubscription == null || needsWebsocketReconnect)) {
                     subscribeToLiveEvents();
                 }
 
@@ -390,6 +398,11 @@ public class FastCommentsSDK {
                                 }
                                 if (response.getUserIdWS() != null && !Objects.equals(response.getUserIdWS(), userIdWS)) {
                                     userIdWS = response.getUserIdWS();
+                                    
+                                    // Reconnect websocket with new user ID
+                                    if (tenantIdWS != null && urlIdWS != null && userIdWS != null) {
+                                        subscribeToLiveEvents();
+                                    }
                                 }
                                 // The API should return the complete comment
                                 PublicComment createdComment = response.getComment();
