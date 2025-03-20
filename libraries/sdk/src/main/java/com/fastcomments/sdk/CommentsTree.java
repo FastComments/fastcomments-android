@@ -578,7 +578,7 @@ public class CommentsTree {
         // Update all comments by this user
         for (RenderableComment comment : commentsById.values()) {
             if (comment.getComment() != null && 
-                    userId.equals(comment.getComment().getUserId())) {
+                    userId.equals(comment.getComment().getUserId()) || userId.equals(comment.getComment().getAnonUserId())) {
                 
                 // Check if status actually changed to avoid unnecessary updates
                 if (comment.isOnline != isOnline) {
