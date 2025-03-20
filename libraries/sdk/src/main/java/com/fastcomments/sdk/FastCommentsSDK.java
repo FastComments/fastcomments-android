@@ -2,6 +2,7 @@ package com.fastcomments.sdk;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.fastcomments.api.PublicApi;
 import com.fastcomments.core.CommentWidgetConfig;
@@ -12,6 +13,7 @@ import com.fastcomments.pubsub.LiveEventSubscriber;
 import com.fastcomments.pubsub.SubscribeToChangesResult;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +63,9 @@ public class FastCommentsSDK {
         this.currentPage = 0;
         this.hasMore = false;
         this.liveEventSubscriber = new LiveEventSubscriber();
+        
+        // Set up the presence status listener on the comments tree
+        this.commentsTree.setPresenceStatusListener(this::fetchPresenceForUsers);
     }
 
     public FastCommentsSDK() {
@@ -525,9 +530,12 @@ public class FastCommentsSDK {
         }
 
         if (tenantIdWS == null || urlIdWS == null || userIdWS == null) {
-            System.err.println("FastComments: Missing WebSocket parameters, live commenting disabled");
+            Log.e("FastCommentsSDK", "Missing WebSocket parameters, live commenting disabled");
             return;
         }
+
+        // Set connection status change handler
+        liveEventSubscriber.setOnConnectionStatusChange(this::handleConnectionStatusChange);
 
         // Subscribe to live events
         liveEventSubscription = liveEventSubscriber.subscribeToChanges(
@@ -539,6 +547,115 @@ public class FastCommentsSDK {
                 this::checkCommentVisibility,
                 this::handleLiveEvent
         );
+    }
+    
+    /**
+     * Handle WebSocket connection status changes
+     * 
+     * @param isConnected Whether the WebSocket is now connected
+     */
+    private void handleConnectionStatusChange(boolean isConnected) {
+        if (isConnected) {
+            // WebSocket is connected, fetch initial presence status
+            fetchUserPresenceStatuses();
+        }
+    }
+    
+    /**
+     * Fetch presence statuses for users in visible comments
+     */
+    private void fetchUserPresenceStatuses() {
+        // Extract user IDs from visible comments
+        Set<String> userIds = new HashSet<>();
+        
+        for (RenderableNode node : commentsTree.visibleNodes) {
+            if (node instanceof RenderableComment) {
+                RenderableComment comment = (RenderableComment) node;
+                String userId = comment.getComment().getUserId();
+                String anonUserId = comment.getComment().getAnonUserId();
+                
+                if (userId != null && !userId.isEmpty()) {
+                    userIds.add(userId);
+                }
+                if (anonUserId != null && !anonUserId.isEmpty()) {
+                    userIds.add(anonUserId);
+                }
+            }
+        }
+        
+        // If no users found, no need to proceed
+        if (userIds.isEmpty()) {
+            return;
+        }
+        
+        // Create a comma-separated string of user IDs
+        StringBuilder userIdsCSV = new StringBuilder();
+        for (String userId : userIds) {
+            if (userIdsCSV.length() > 0) {
+                userIdsCSV.append(",");
+            }
+            userIdsCSV.append(userId);
+        }
+        
+        fetchPresenceForUsers(userIdsCSV.toString());
+    }
+    
+    /**
+     * Fetch presence statuses for specific user IDs
+     * 
+     * @param userIdsCSV Comma-separated list of user IDs
+     */
+    private void fetchPresenceForUsers(String userIdsCSV) {
+        if (userIdsCSV == null || userIdsCSV.isEmpty()) {
+            return;
+        }
+        
+        // Call the API to get presence statuses
+        try {
+            api.getUserPresenceStatuses(config.tenantId, userIdsCSV)
+                .executeAsync(new ApiCallback<GetUserPresenceStatuses200Response>() {
+                    @Override
+                    public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                        // Log error but continue - this is not critical functionality
+                        Log.e("FastCommentsSDK", "Failed to get user presence statuses: " + e.getMessage());
+                    }
+
+                    @Override
+                    public void onSuccess(GetUserPresenceStatuses200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                        if (result.getActualInstance() instanceof APIError) {
+                            // Log error but continue
+                            Log.e("FastCommentsSDK", "API error when getting user presence statuses: " + 
+                                   ((APIError)result.getActualInstance()).getReason());
+                            return;
+                        }
+                        
+                        // Process presence statuses
+                        Map<String, Boolean> statuses = result.getUserPresenceStatusesResponse().getStatuses();
+                        if (statuses != null) {
+                            mainHandler.post(() -> {
+                                for (Map.Entry<String, Boolean> entry : statuses.entrySet()) {
+                                    String userId = entry.getKey();
+                                    boolean isOnline = entry.getValue();
+                                    commentsTree.updateUserPresence(userId, isOnline);
+                                }
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                        // Not used
+                    }
+
+                    @Override
+                    public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                        // Not used
+                    }
+                });
+        } catch (ApiException e) {
+            // Log error but continue - this is not critical functionality
+            Log.e("FastCommentsSDK", "Failed to get user presence statuses: " + e.getMessage());
+        }
     }
 
     /**

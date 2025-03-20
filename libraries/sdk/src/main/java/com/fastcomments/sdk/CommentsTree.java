@@ -232,6 +232,9 @@ public class CommentsTree {
                     newChildCommentsButtons.put(parentId, newRepliesButton);
                     adapter.notifyItemInserted(lastChildIndex + 1);
                 }
+                
+                // After all is done, check for newly visible user IDs that need presence status
+                checkAndRequestUserPresenceStatuses();
             } else if (Boolean.TRUE.equals(renderableComment.getComment().getHasChildren())) {
                 // Reset pagination state when showing replies
                 renderableComment.childPage = 0;
@@ -278,6 +281,9 @@ public class CommentsTree {
                         newChildCommentsButtons.put(parentId, newRepliesButton);
                         adapter.notifyItemInserted(lastChildIndex + 1);
                     }
+                    
+                    // Check for newly visible user IDs that need presence status
+                    checkAndRequestUserPresenceStatuses();
                 });
             }
         } else {
@@ -355,6 +361,9 @@ public class CommentsTree {
             visibleNodes.add(indexer, childRenderable);
         }
         adapter.notifyItemRangeInserted(myIndex + 1, children.size()); // everything after me has changed/moved since it's a flat list
+        
+        // Check if we need to fetch presence status for newly visible comments
+        checkAndRequestUserPresenceStatuses();
     }
 
     private void addToMapAndRelated(RenderableComment renderableComment) {
@@ -403,6 +412,9 @@ public class CommentsTree {
                 // Show the comment right away at the top of the list
                 visibleNodes.add(0, renderableComment);
                 adapter.notifyItemInserted(0);
+                
+                // Check for new user presence
+                checkAndRequestUserPresenceStatuses();
             } else {
                 // Buffer the comment and show a notice instead
                 newRootComments.add(comment);
@@ -462,6 +474,9 @@ public class CommentsTree {
                         int insertionIndex = findLastChildIndex(parent) + 1;
                         visibleNodes.add(insertionIndex, renderableComment);
                         adapter.notifyItemInserted(insertionIndex);
+                        
+                        // Check for new user presence
+                        checkAndRequestUserPresenceStatuses();
                     } else if (parent.isRepliesShown) {
                         // Parent's replies are shown but we should not show the new reply immediately
                         // Add to parent's buffered new comments
@@ -530,6 +545,9 @@ public class CommentsTree {
                 adapter.notifyItemInserted(0);
             }
         }
+        
+        // Check for new user presence
+        checkAndRequestUserPresenceStatuses();
 
         // Clear the buffer and button reference
         newRootComments.clear();
@@ -582,6 +600,9 @@ public class CommentsTree {
         // the starting position by subtracting the number of inserted items
         int startPosition = insertionIndex - newChildComments.size();
         adapter.notifyItemRangeInserted(startPosition, newChildComments.size());
+        
+        // Check for new user presence
+        checkAndRequestUserPresenceStatuses();
     }
 
     public PublicComment getPublicComment(String commentId) {
@@ -589,6 +610,9 @@ public class CommentsTree {
         return renderableComment != null ? renderableComment.getComment() : null;
     }
 
+    // Store known user presence status to avoid unnecessary API calls
+    private Map<String, Boolean> userPresenceCache = new HashMap<>();
+    
     /**
      * Update the online status for all comments by a specific user
      *
@@ -596,6 +620,9 @@ public class CommentsTree {
      * @param isOnline Whether the user is online or offline
      */
     public void updateUserPresence(String userId, boolean isOnline) {
+        // Cache the presence status
+        userPresenceCache.put(userId, isOnline);
+        
         // Track which comments were updated to minimize UI updates
         final List<RenderableComment> usersComments = commentsByUserId.get(userId);
         if (usersComments == null) {
@@ -617,6 +644,73 @@ public class CommentsTree {
         for (RenderableComment comment : updatedComments) {
             notifyItemChanged(comment);
         }
+    }
+    
+    /**
+     * Check for newly visible comments and return any user IDs we need to fetch presence for
+     * 
+     * @return A set of user IDs needing presence status updates
+     */
+    public Set<String> checkForNewlyVisibleCommentUsers() {
+        Set<String> userIdsToFetch = new HashSet<>();
+        
+        // Check all visible comments
+        for (RenderableNode node : visibleNodes) {
+            if (node instanceof RenderableComment) {
+                RenderableComment comment = (RenderableComment) node;
+                
+                // Check regular user ID
+                String userId = comment.getComment().getUserId();
+                if (userId != null && !userId.isEmpty() && !userPresenceCache.containsKey(userId)) {
+                    userIdsToFetch.add(userId);
+                }
+                
+                // Check anonymous user ID
+                String anonUserId = comment.getComment().getAnonUserId();
+                if (anonUserId != null && !anonUserId.isEmpty() && !userPresenceCache.containsKey(anonUserId)) {
+                    userIdsToFetch.add(anonUserId);
+                }
+            }
+        }
+        
+        return userIdsToFetch;
+    }
+    
+    /**
+     * Check for newly visible comments and request presence status updates if needed
+     */
+    public void checkAndRequestUserPresenceStatuses() {
+        Set<String> userIdsToFetch = checkForNewlyVisibleCommentUsers();
+        
+        if (!userIdsToFetch.isEmpty() && presenceStatusListener != null) {
+            // Create a comma-separated string of user IDs
+            StringBuilder userIdsCSV = new StringBuilder();
+            for (String userId : userIdsToFetch) {
+                if (userIdsCSV.length() > 0) {
+                    userIdsCSV.append(",");
+                }
+                userIdsCSV.append(userId);
+            }
+            
+            // Request presence status updates
+            presenceStatusListener.onPresenceStatusNeeded(userIdsCSV.toString());
+        }
+    }
+    
+    // Interface for requesting presence status updates
+    public interface PresenceStatusListener {
+        void onPresenceStatusNeeded(String userIdsCSV);
+    }
+    
+    private PresenceStatusListener presenceStatusListener;
+    
+    /**
+     * Set the listener for presence status update requests
+     * 
+     * @param listener The listener to set
+     */
+    public void setPresenceStatusListener(PresenceStatusListener listener) {
+        this.presenceStatusListener = listener;
     }
 
     /**
