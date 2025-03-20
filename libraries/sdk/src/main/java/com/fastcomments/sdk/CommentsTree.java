@@ -497,12 +497,10 @@ public class CommentsTree {
                             adapter.notifyItemInserted(insertionIndex);
                         }
                     } else {
-                        // Parent's replies are not shown, just buffer the comment
-                        parent.addNewChildComment(comment);
+                        // don't buffer, we'll display the updated list the next time they open replies for this parent
                     }
                 } else {
-                    // Parent is not visible, just buffer the comment
-                    parent.addNewChildComment(comment);
+                    // don't buffer, we'll display the updated list the next time they open replies for this parent
                 }
             }
         }
