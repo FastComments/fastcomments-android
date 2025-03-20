@@ -129,8 +129,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         pinIcon.setVisibility(isPinned != null && isPinned ? View.VISIBLE : View.GONE);
         
         // Handle online status indicator
-        Boolean isOnline = comment.getComment().getIsOnline();
-        onlineIndicator.setVisibility(isOnline != null && isOnline ? View.VISIBLE : View.GONE);
+        onlineIndicator.setVisibility(comment.isOnline ? View.VISIBLE : View.GONE);
 
         // Store current comment reference first, so updateDateDisplay has the correct reference
         this.currentComment = comment;

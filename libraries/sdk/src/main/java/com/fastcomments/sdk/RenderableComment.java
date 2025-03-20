@@ -14,6 +14,9 @@ public class RenderableComment extends RenderableNode {
     private final PublicComment comment;
     public boolean isRepliesShown = false;
     
+    // Online status flag
+    public boolean isOnline = false;
+    
     // Pagination state for child comments
     public int childSkip = 0;
     public int childPage = 0;

@@ -581,10 +581,9 @@ public class CommentsTree {
                     userId.equals(comment.getComment().getUserId())) {
                 
                 // Check if status actually changed to avoid unnecessary updates
-                Boolean currentStatus = comment.getComment().getIsOnline();
-                if (currentStatus == null || currentStatus != isOnline) {
+                if (comment.isOnline != isOnline) {
                     // Update status
-                    comment.getComment().setIsOnline(isOnline);
+                    comment.isOnline = isOnline;
                     updatedComments.add(comment);
                 }
             }
