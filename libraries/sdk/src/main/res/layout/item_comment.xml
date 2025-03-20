@@ -74,6 +74,17 @@
                     android:textSize="11sp"
                     android:textColor="#757575"
                     android:visibility="gone" />
+                    
+                <!-- User Badges Container -->
+                <com.google.android.flexbox.FlexboxLayout
+                    android:id="@+id/badgesContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="2dp"
+                    app:flexWrap="wrap"
+                    app:alignItems="flex_start"
+                    app:flexDirection="row"
+                    android:visibility="gone" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"

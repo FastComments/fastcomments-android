@@ -46,6 +46,14 @@ public class CommentsTree {
     public void setAdapter(CommentsAdapter adapter) {
         this.adapter = adapter;
     }
+    
+    public CommentsAdapter getAdapter() {
+        return this.adapter;
+    }
+    
+    public Context getContext() {
+        return adapter != null ? adapter.getContext() : null;
+    }
 
     public void notifyItemChanged(RenderableNode node) {
         final int index = this.visibleNodes.indexOf(node);

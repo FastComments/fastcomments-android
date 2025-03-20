@@ -41,6 +41,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private final TextView contentTextView;
     private final TextView unverifiedLabel;
     private final TextView displayLabelTextView; // Display label above username
+    private final com.google.android.flexbox.FlexboxLayout badgesContainer; // Badges container
     private final Button toggleRepliesButton;
     private final Button replyButton;
     private final ImageButton upVoteButton;
@@ -73,6 +74,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         contentTextView = itemView.findViewById(R.id.commentContent);
         unverifiedLabel = itemView.findViewById(R.id.unverifiedLabel);
         displayLabelTextView = itemView.findViewById(R.id.displayLabel);
+        badgesContainer = itemView.findViewById(R.id.badgesContainer);
         toggleRepliesButton = itemView.findViewById(R.id.toggleReplies);
         replyButton = itemView.findViewById(R.id.replyButton);
         upVoteButton = itemView.findViewById(R.id.upVoteButton);
@@ -130,6 +132,9 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         
         // Handle online status indicator
         onlineIndicator.setVisibility(comment.isOnline ? View.VISIBLE : View.GONE);
+        
+        // Handle badges if present
+        updateBadges(comment.getComment().getBadges());
 
         // Store current comment reference first, so updateDateDisplay has the correct reference
         this.currentComment = comment;
@@ -357,6 +362,27 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
 
         standardVoteContainer.setVisibility(useHeartStyle ? View.GONE : View.VISIBLE);
         heartVoteContainer.setVisibility(useHeartStyle ? View.VISIBLE : View.GONE);
+    }
+    
+    /**
+     * Update badges display for a comment
+     *
+     * @param badges List of badge information
+     */
+    public void updateBadges(List<com.fastcomments.model.CommentUserBadgeInfo> badges) {
+        badgesContainer.removeAllViews();
+        
+        if (badges == null || badges.isEmpty()) {
+            badgesContainer.setVisibility(View.GONE);
+            return;
+        }
+        
+        badgesContainer.setVisibility(View.VISIBLE);
+        
+        for (com.fastcomments.model.CommentUserBadgeInfo badge : badges) {
+            View badgeView = BadgeView.createBadgeView(context, badge);
+            badgesContainer.addView(badgeView);
+        }
     }
     
     /**

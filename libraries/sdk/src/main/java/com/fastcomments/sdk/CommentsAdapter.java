@@ -33,6 +33,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         this.sdk = sdk;
         commentsTree.setAdapter(this);
     }
+    
+    public Context getContext() {
+        return context;
+    }
 
     public void setRequestingReplyListener(Callback<RenderableComment> listener) {
         this.replyListener = listener;

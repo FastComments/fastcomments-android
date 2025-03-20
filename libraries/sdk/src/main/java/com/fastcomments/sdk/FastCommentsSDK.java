@@ -1,5 +1,6 @@
 package com.fastcomments.sdk;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -815,6 +816,9 @@ public class FastCommentsSDK {
                     case P_U:
                         handlePresenceChange(eventData);
                         break;
+                    case UPDATE_BADGES:
+                        handleBadgeUpdate(eventData);
+                        break;
                     default:
                         // Ignore other event types for now
                         break;
@@ -1016,6 +1020,53 @@ public class FastCommentsSDK {
             liveEventSubscription.close();
             liveEventSubscription = null;
         }
+    }
+    
+    /**
+     * Handle badge update events
+     */
+    private void handleBadgeUpdate(LiveEvent eventData) {
+        if (eventData.getBadges() == null || eventData.getBadges().isEmpty() || eventData.getUserId() == null) {
+            return;
+        }
+        
+        String userId = eventData.getUserId();
+        boolean isCurrentUser = (currentUser != null && 
+                currentUser.getId() != null && 
+                currentUser.getId().equals(userId));
+        
+        // Update all comments by this user with new badges
+        List<RenderableComment> userComments = commentsTree.commentsByUserId.get(userId);
+        if (userComments != null) {
+            for (RenderableComment comment : userComments) {
+                // Update the badges
+                comment.getComment().setBadges(eventData.getBadges());
+                commentsTree.notifyItemChanged(comment);
+            }
+        }
+        
+        // Show badge award dialog if this is for the current user
+        if (isCurrentUser) {
+            // Use the current user's context (need to get through the adapter)
+            CommentsAdapter adapter = commentsTree.getAdapter();
+            if (adapter != null && adapter.getContext() != null) {
+                showBadgeAwardDialog(adapter.getContext(), eventData.getBadges().get(0)); // Show the first badge if multiple
+            }
+        }
+    }
+    
+    /**
+     * Shows a dialog when the current user is awarded a badge
+     */
+    private void showBadgeAwardDialog(Context context, CommentUserBadgeInfo badge) {
+        if (badge == null) {
+            return;
+        }
+        
+        mainHandler.post(() -> {
+            BadgeAwardDialog dialog = new BadgeAwardDialog(context);
+            dialog.show(badge);
+        });
     }
 
     /**
