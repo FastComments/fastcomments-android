@@ -23,11 +23,13 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.fastcomments.core.VoteStyle;
+import com.fastcomments.model.CommentUserBadgeInfo;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -369,7 +371,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
      *
      * @param badges List of badge information
      */
-    public void updateBadges(List<com.fastcomments.model.CommentUserBadgeInfo> badges) {
+    public void updateBadges(List<CommentUserBadgeInfo> badges) {
         badgesContainer.removeAllViews();
         
         if (badges == null || badges.isEmpty()) {

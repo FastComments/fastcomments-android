@@ -1,5 +1,6 @@
 package com.fastcomments.sdk;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.fastcomments.model.PublicComment;

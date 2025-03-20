@@ -13,6 +13,7 @@ import com.fastcomments.model.*;
 import com.fastcomments.pubsub.LiveEventSubscriber;
 import com.fastcomments.pubsub.SubscribeToChangesResult;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1035,22 +1036,65 @@ public class FastCommentsSDK {
                 currentUser.getId() != null && 
                 currentUser.getId().equals(userId));
         
-        // Update all comments by this user with new badges
+        // Get all comments by this user
         List<RenderableComment> userComments = commentsTree.commentsByUserId.get(userId);
-        if (userComments != null) {
+        if (userComments != null && !userComments.isEmpty()) {
+            // Check for new badges by comparing with existing badges
+            List<CommentUserBadgeInfo> newBadges = new ArrayList<>();
+            
+            // Use the first comment to check which badges are new
+            // (All user's comments should have the same badges)
+            RenderableComment firstComment = userComments.get(0);
+            List<CommentUserBadgeInfo> existingBadges = firstComment.getComment().getBadges();
+            
+            // Determine which badges are new
+            for (CommentUserBadgeInfo updatedBadge : eventData.getBadges()) {
+                boolean isNewBadge = true;
+                
+                if (existingBadges != null) {
+                    for (CommentUserBadgeInfo existingBadge : existingBadges) {
+                        if (existingBadge.getId().equals(updatedBadge.getId())) {
+                            isNewBadge = false;
+                            break;
+                        }
+                    }
+                }
+                
+                if (isNewBadge) {
+                    newBadges.add(updatedBadge);
+                }
+            }
+            
+            // Update all comments by this user with the new badges
             for (RenderableComment comment : userComments) {
-                // Update the badges
                 comment.getComment().setBadges(eventData.getBadges());
                 commentsTree.notifyItemChanged(comment);
             }
-        }
-        
-        // Show badge award dialog if this is for the current user
-        if (isCurrentUser) {
-            // Use the current user's context (need to get through the adapter)
-            CommentsAdapter adapter = commentsTree.getAdapter();
-            if (adapter != null && adapter.getContext() != null) {
-                showBadgeAwardDialog(adapter.getContext(), eventData.getBadges().get(0)); // Show the first badge if multiple
+            
+            // Show badge award dialogs if this is for the current user and we have new badges
+            if (isCurrentUser && !newBadges.isEmpty()) {
+                // Use the current user's context (need to get through the adapter)
+                CommentsAdapter adapter = commentsTree.getAdapter();
+                if (adapter != null && adapter.getContext() != null) {
+                    Context context = adapter.getContext();
+                    // Queue up dialog for each new badge
+                    for (CommentUserBadgeInfo badge : newBadges) {
+                        showBadgeAwardDialog(context, badge);
+                    }
+                }
+            }
+        } else {
+            // If no existing comments to compare with, just set the badges
+            // and show all badges if it's the current user (they might be all new)
+            if (isCurrentUser) {
+                CommentsAdapter adapter = commentsTree.getAdapter();
+                if (adapter != null && adapter.getContext() != null) {
+                    Context context = adapter.getContext();
+                    // Show all badges in case they're all new
+                    for (CommentUserBadgeInfo badge : eventData.getBadges()) {
+                        showBadgeAwardDialog(context, badge);
+                    }
+                }
             }
         }
     }
