@@ -48,11 +48,11 @@
                 <!-- Online status indicator, hidden by default -->
                 <ImageView
                     android:id="@+id/onlineIndicator"
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
                     android:layout_gravity="top|end"
-                    android:layout_marginTop="-2dp"
-                    android:layout_marginEnd="-2dp"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginEnd="1dp"
                     android:contentDescription="@string/online_indicator"
                     android:src="@drawable/online_indicator"
                     android:visibility="gone"
