@@ -1206,7 +1206,7 @@ public class FastCommentsSDK {
      * @param commentId    The ID of the comment to flag
      * @param callback     Callback to receive the response
      */
-    public void flagComment(String commentId, final FCCallback<BlockSuccess> callback) {
+    public void flagComment(String commentId, final FCCallback<APIEmptyResponse> callback) {
         if (commentId == null || commentId.isEmpty()) {
             callback.onFailure(new APIError()
                     .status(ImportedAPIStatusFAILED.FAILED)
@@ -1230,8 +1230,7 @@ public class FastCommentsSDK {
                             if (result.getActualInstance() instanceof APIError) {
                                 callback.onFailure((APIError) result.getActualInstance());
                             } else {
-                                BlockSuccess response = result.getBlockSuccess();
-                                callback.onSuccess(response);
+                                callback.onSuccess(result.getAPIEmptyResponse());
                             }
                         }
 
@@ -1267,7 +1266,7 @@ public class FastCommentsSDK {
         
         try {
             // Make the API call
-            api.blockFromComment(config.tenantId, commentId)
+            api.blockFromComment(config.tenantId, commentId, new BlockFromCommentParams())
                     .sso(config.getSSOToken())
                     .executeAsync(new ApiCallback<BlockFromComment200Response>() {
                         @Override

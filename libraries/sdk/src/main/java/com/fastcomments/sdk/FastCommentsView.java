@@ -13,6 +13,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.Button;
 
 import com.fastcomments.core.VoteStyle;
+import com.fastcomments.model.APIEmptyResponse;
 import com.fastcomments.model.BlockSuccess;
 import com.fastcomments.model.PickFCommentApprovedOrCommentHTML;
 import com.fastcomments.model.PublicComment;
@@ -628,7 +629,7 @@ public class FastCommentsView extends FrameLayout {
             @Override
             public void onFlag(String commentId) {
                 // Call API to flag the comment directly without dialog
-                sdk.flagComment(commentId, new FCCallback<BlockSuccess>() {
+                sdk.flagComment(commentId, new FCCallback<APIEmptyResponse>() {
                         @Override
                         public boolean onFailure(APIError error) {
                             // Show error message
@@ -652,7 +653,7 @@ public class FastCommentsView extends FrameLayout {
                         }
                         
                         @Override
-                        public boolean onSuccess(BlockSuccess success) {
+                        public boolean onSuccess(APIEmptyResponse success) {
                             // Show success message
                             getHandler().post(() -> {
                                 android.widget.Toast.makeText(
