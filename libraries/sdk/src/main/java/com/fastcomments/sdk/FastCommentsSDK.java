@@ -1131,7 +1131,7 @@ public class FastCommentsSDK {
      * @param newText      The new text for the comment
      * @param callback     Callback to receive the response
      */
-    public void editComment(String commentId, String newText, final FCCallback<PublicComment> callback) {
+    public void editComment(String commentId, String newText, final FCCallback<PickFCommentApprovedOrCommentHTML> callback) {
         if (commentId == null || commentId.isEmpty()) {
             callback.onFailure(new APIError()
                     .status(ImportedAPIStatusFAILED.FAILED)
@@ -1207,7 +1207,7 @@ public class FastCommentsSDK {
      * @param reason       The reason for flagging the comment
      * @param callback     Callback to receive the response
      */
-    public void flagComment(String commentId, String reason, final FCCallback<BlockSuccess> callback) {
+    public void flagComment(String commentId, final FCCallback<BlockSuccess> callback) {
         if (commentId == null || commentId.isEmpty()) {
             callback.onFailure(new APIError()
                     .status(ImportedAPIStatusFAILED.FAILED)
@@ -1216,15 +1216,10 @@ public class FastCommentsSDK {
             return;
         }
         
-        // Create flag parameters
-        BlockFromCommentParams params = new BlockFromCommentParams();
-        params.setFlagReason(reason);
-        
         try {
             // Make the API call
-            api.flagComment(config.tenantId, commentId)
+            api.flagComment(config.tenantId, commentId, true)
                     .sso(config.getSSOToken())
-                    .blockFromCommentParams(params)
                     .executeAsync(new ApiCallback<FlagComment200Response>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {

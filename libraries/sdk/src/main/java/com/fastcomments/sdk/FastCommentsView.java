@@ -13,6 +13,8 @@ import android.view.animation.AnimationUtils;
 import android.widget.Button;
 
 import com.fastcomments.core.VoteStyle;
+import com.fastcomments.model.BlockSuccess;
+import com.fastcomments.model.PickFCommentApprovedOrCommentHTML;
 import com.fastcomments.model.PublicComment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import android.widget.FrameLayout;
@@ -577,7 +579,7 @@ public class FastCommentsView extends FrameLayout {
                 CommentEditDialog dialog = new CommentEditDialog(getContext());
                 dialog.setOnSaveCallback(newText -> {
                     // Call API to edit the comment
-                    sdk.editComment(commentId, newText, new FCCallback<PublicComment>() {
+                    sdk.editComment(commentId, newText, new FCCallback<PickFCommentApprovedOrCommentHTML>() {
                         @Override
                         public boolean onFailure(APIError error) {
                             // Show error message
@@ -601,7 +603,7 @@ public class FastCommentsView extends FrameLayout {
                         }
                         
                         @Override
-                        public boolean onSuccess(PublicComment updatedComment) {
+                        public boolean onSuccess(PickFCommentApprovedOrCommentHTML updatedComment) {
                             // Show success message
                             getHandler().post(() -> {
                                 android.widget.Toast.makeText(
@@ -629,7 +631,7 @@ public class FastCommentsView extends FrameLayout {
                 FlagCommentDialog dialog = new FlagCommentDialog(getContext());
                 dialog.setOnSubmitCallback(reason -> {
                     // Call API to flag the comment
-                    sdk.flagComment(commentId, reason, new FCCallback<BlockSuccess>() {
+                    sdk.flagComment(commentId, new FCCallback<BlockSuccess>() {
                         @Override
                         public boolean onFailure(APIError error) {
                             // Show error message
