@@ -128,7 +128,7 @@
                         android:layout_gravity="center_vertical"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="@string/menu_button"
-                        android:src="@android:drawable/ic_menu_more"
+                        android:src="@drawable/ic_more_vertical"
                         android:scaleType="fitCenter"
                         android:padding="2dp" />
                 </LinearLayout>
