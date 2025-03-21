@@ -26,6 +26,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private Callback<RenderableComment> downVoteListener;
     private Producer<GetChildrenRequest, List<PublicComment>> getChildren;
     private Callback<String> newChildCommentsListener; // Triggered when clicking "Show new replies" button
+    private OnCommentMenuItemListener commentMenuListener; // Listener for comment menu actions
 
     public CommentsAdapter(Context context, FastCommentsSDK sdk) {
         this.context = context;
@@ -53,6 +54,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public void setNewChildCommentsListener(Callback<String> listener) {
         this.newChildCommentsListener = listener;
     }
+    
+    public void setCommentMenuListener(OnCommentMenuItemListener listener) {
+        this.commentMenuListener = listener;
+    }
 
     public void setGetChildrenProducer(Producer<GetChildrenRequest, List<PublicComment>> getChildren) {
         this.getChildren = getChildren;
@@ -77,7 +82,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         if (viewType == VIEW_TYPE_COMMENT) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_comment, parent, false);
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_comment_new, parent, false);
             return new CommentViewHolder(context, sdk, view);
         } else {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_button, parent, false);
@@ -134,6 +139,9 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 upVoteListener.call(comment);
             }
         });
+        
+        // Set up comment menu click listener
+        holder.setCommentMenuClickListener(commentMenuListener);
         
         // Set up load more children click listener
         holder.setLoadMoreChildrenClickListener(v -> {
@@ -206,6 +214,15 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     public interface OnToggleRepliesListener {
         void onToggle(RenderableComment comment, Button toggleButton);
+    }
+    
+    /**
+     * Listener for comment menu items
+     */
+    public interface OnCommentMenuItemListener {
+        void onEdit(String commentId, String commentText);
+        void onFlag(String commentId);
+        void onBlock(String commentId, String userName);
     }
     
     /**

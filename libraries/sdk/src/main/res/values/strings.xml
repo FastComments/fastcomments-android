@@ -65,4 +65,24 @@
     <string name="badge_icon">Badge Icon</string>
     <string name="badge_awarded">Badge Awarded!</string>
     <string name="close">Close</string>
+    <string name="edit_comment">Edit Comment</string>
+    <string name="flag_comment">Flag Comment</string>
+    <string name="block_user">Block User</string>
+    <string name="menu_button">Menu Button</string>
+    <string name="edit_your_comment">Edit Your Comment</string>
+    <string name="save_changes">Save Changes</string>
+    <string name="cancel_edit">Cancel</string>
+    <string name="flag_reason">Reason for flagging</string>
+    <string name="flag_submit">Submit Flag</string>
+    <string name="flag_success">Comment has been flagged</string>
+    <string name="block_success">User has been blocked</string>
+    <string name="error_editing_comment">Error editing comment. Please try again.</string>
+    <string name="comment_edited_successfully">Comment edited successfully</string>
+    <string name="error_flagging_comment">Error flagging comment. Please try again.</string>
+    <string name="comment_flagged_successfully">Comment flagged successfully</string>
+    <string name="error_blocking_user">Error blocking user. Please try again.</string>
+    <string name="user_blocked_successfully">User blocked successfully</string>
+    <string name="block_user_title">Block User</string>
+    <string name="block_user_confirm">Are you sure you want to block %1$s and hide their comments?</string>
+    <string name="block">Block</string>
 </resources>

@@ -54,6 +54,7 @@ public class FastCommentsSDK {
     private String tenantIdWS;
     private String urlIdWS;
     private String userIdWS;
+    private String editKey;
 
     public FastCommentsSDK(CommentWidgetConfig config) {
         this.api = new PublicApi();
@@ -1120,6 +1121,188 @@ public class FastCommentsSDK {
     public void refreshLiveEvents() {
         if (tenantIdWS != null && urlIdWS != null && userIdWS != null) {
             subscribeToLiveEvents();
+        }
+    }
+    
+    /**
+     * Edit a comment
+     *
+     * @param commentId    The ID of the comment to edit
+     * @param newText      The new text for the comment
+     * @param callback     Callback to receive the response
+     */
+    public void editComment(String commentId, String newText, final FCCallback<PublicComment> callback) {
+        if (commentId == null || commentId.isEmpty()) {
+            callback.onFailure(new APIError()
+                    .status(ImportedAPIStatusFAILED.FAILED)
+                    .reason("Comment ID is required")
+                    .code("invalid_comment_id"));
+            return;
+        }
+        
+        if (newText == null || newText.trim().isEmpty()) {
+            callback.onFailure(new APIError()
+                    .status(ImportedAPIStatusFAILED.FAILED)
+                    .reason("Comment text is required")
+                    .code("empty_comment"));
+            return;
+        }
+        
+        // Create a unique broadcast ID
+        String broadcastId = UUID.randomUUID().toString();
+        
+        // Track broadcast ID before sending
+        broadcastIdsSent.add(broadcastId);
+        
+        // Create comment text update request
+        CommentTextUpdateRequest updateRequest = new CommentTextUpdateRequest();
+        updateRequest.comment(newText);
+        
+        try {
+            // Make the API call
+            api.setCommentText(config.tenantId, commentId, broadcastId, editKey, updateRequest)
+                    .sso(config.getSSOToken())
+                    .executeAsync(new ApiCallback<SetCommentText200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                        }
+
+                        @Override
+                        public void onSuccess(SetCommentText200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                            } else {
+                                PublicAPISetCommentTextResponse response = result.getPublicAPISetCommentTextResponse();
+                                if (response.getComment() != null) {
+                                    callback.onSuccess(response.getComment());
+                                } else {
+                                    callback.onFailure(new APIError()
+                                            .status(ImportedAPIStatusFAILED.FAILED)
+                                            .reason("No comment returned")
+                                            .code("edit_comment_error"));
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                            // Not used
+                        }
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                            // Not used
+                        }
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+    
+    /**
+     * Flag a comment
+     *
+     * @param commentId    The ID of the comment to flag
+     * @param reason       The reason for flagging the comment
+     * @param callback     Callback to receive the response
+     */
+    public void flagComment(String commentId, String reason, final FCCallback<BlockSuccess> callback) {
+        if (commentId == null || commentId.isEmpty()) {
+            callback.onFailure(new APIError()
+                    .status(ImportedAPIStatusFAILED.FAILED)
+                    .reason("Comment ID is required")
+                    .code("invalid_comment_id"));
+            return;
+        }
+        
+        // Create flag parameters
+        BlockFromCommentParams params = new BlockFromCommentParams();
+        params.setFlagReason(reason);
+        
+        try {
+            // Make the API call
+            api.flagComment(config.tenantId, commentId)
+                    .sso(config.getSSOToken())
+                    .blockFromCommentParams(params)
+                    .executeAsync(new ApiCallback<FlagComment200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                        }
+
+                        @Override
+                        public void onSuccess(FlagComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                            } else {
+                                BlockSuccess response = result.getBlockSuccess();
+                                callback.onSuccess(response);
+                            }
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                            // Not used
+                        }
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                            // Not used
+                        }
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+    
+    /**
+     * Block a user based on their comment
+     *
+     * @param commentId    The ID of the comment to block the user from
+     * @param callback     Callback to receive the response
+     */
+    public void blockUserFromComment(String commentId, final FCCallback<BlockSuccess> callback) {
+        if (commentId == null || commentId.isEmpty()) {
+            callback.onFailure(new APIError()
+                    .status(ImportedAPIStatusFAILED.FAILED)
+                    .reason("Comment ID is required")
+                    .code("invalid_comment_id"));
+            return;
+        }
+        
+        try {
+            // Make the API call
+            api.blockFromComment(config.tenantId, commentId)
+                    .sso(config.getSSOToken())
+                    .executeAsync(new ApiCallback<BlockFromComment200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                        }
+
+                        @Override
+                        public void onSuccess(BlockFromComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                            } else {
+                                BlockSuccess response = result.getBlockSuccess();
+                                callback.onSuccess(response);
+                            }
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                            // Not used
+                        }
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                            // Not used
+                        }
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
         }
     }
 

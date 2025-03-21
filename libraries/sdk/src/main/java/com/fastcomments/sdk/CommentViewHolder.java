@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -55,6 +56,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private final View standardVoteContainer; // Container for standard up/down vote buttons
     private final View heartVoteContainer; // Container for heart vote button
     private final TextView heartVoteCountTextView; // Count for heart votes
+    private final ImageButton commentMenuButton; // Three-dot menu button
     private final FastCommentsSDK sdk;
 
     // Child comments pagination
@@ -85,6 +87,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         downVoteCountTextView = itemView.findViewById(R.id.downVoteCount);
         pinIcon = itemView.findViewById(R.id.pinIcon);
         heartButton = itemView.findViewById(R.id.heartButton);
+        commentMenuButton = itemView.findViewById(R.id.commentMenuButton);
 
         // Get references to vote containers
         standardVoteContainer = itemView.findViewById(R.id.standardVoteContainer);
@@ -420,5 +423,78 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
                 return roundedMillions + "M";
             }
         }
+    }
+    
+    /**
+     * Set the click listener for the comment menu button
+     * 
+     * @param commentMenuListener The listener to handle menu items
+     */
+    public void setCommentMenuClickListener(final CommentsAdapter.OnCommentMenuItemListener commentMenuListener) {
+        commentMenuButton.setOnClickListener(v -> showCommentMenu(commentMenuListener));
+    }
+    
+    /**
+     * Show the comment menu
+     * 
+     * @param commentMenuListener The listener to handle menu items
+     */
+    private void showCommentMenu(final CommentsAdapter.OnCommentMenuItemListener commentMenuListener) {
+        // Create popup menu
+        PopupMenu popupMenu = new PopupMenu(context, commentMenuButton);
+        popupMenu.inflate(R.menu.comment_menu);
+        
+        // Get menu for adjustments
+        android.view.Menu menu = popupMenu.getMenu();
+        
+        // Only show edit option for user's own comments
+        boolean isCurrentUserComment = false;
+        
+        if (currentComment != null && sdk.getCurrentUser() != null) {
+            String commentUserId = currentComment.getComment().getUserId();
+            String currentUserId = sdk.getCurrentUser().getId();
+            
+            if (commentUserId != null && currentUserId != null) {
+                isCurrentUserComment = commentUserId.equals(currentUserId);
+            }
+        }
+        
+        // Show/hide edit option based on ownership
+        menu.findItem(R.id.menu_edit_comment).setVisible(isCurrentUserComment);
+        
+        // Set item click listener
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+            
+            if (itemId == R.id.menu_edit_comment) {
+                // Handle edit comment
+                if (currentComment != null && commentMenuListener != null) {
+                    String commentId = currentComment.getComment().getId();
+                    String commentText = currentComment.getComment().getCommentHTML();
+                    commentMenuListener.onEdit(commentId, commentText);
+                    return true;
+                }
+            } else if (itemId == R.id.menu_flag_comment) {
+                // Handle flag comment
+                if (currentComment != null && commentMenuListener != null) {
+                    String commentId = currentComment.getComment().getId();
+                    commentMenuListener.onFlag(commentId);
+                    return true;
+                }
+            } else if (itemId == R.id.menu_block_user) {
+                // Handle block user
+                if (currentComment != null && commentMenuListener != null) {
+                    String commentId = currentComment.getComment().getId();
+                    String userName = currentComment.getComment().getCommenterName();
+                    commentMenuListener.onBlock(commentId, userName);
+                    return true;
+                }
+            }
+            
+            return false;
+        });
+        
+        // Show the popup menu
+        popupMenu.show();
     }
 }

@@ -568,6 +568,160 @@ public class FastCommentsView extends FrameLayout {
             // This method is called when a "Show New Replies" button is clicked
             // scrolling is handled by the CommentsTree
         });
+        
+        // Set up comment menu listener for edit, flag, and block actions
+        adapter.setCommentMenuListener(new CommentsAdapter.OnCommentMenuItemListener() {
+            @Override
+            public void onEdit(String commentId, String commentText) {
+                // Show edit dialog
+                CommentEditDialog dialog = new CommentEditDialog(getContext());
+                dialog.setOnSaveCallback(newText -> {
+                    // Call API to edit the comment
+                    sdk.editComment(commentId, newText, new FCCallback<PublicComment>() {
+                        @Override
+                        public boolean onFailure(APIError error) {
+                            // Show error message
+                            getHandler().post(() -> {
+                                String errorMessage;
+                                if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                                    errorMessage = error.getTranslatedError();
+                                } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                                    errorMessage = error.getReason();
+                                } else {
+                                    errorMessage = getContext().getString(R.string.error_editing_comment);
+                                }
+                                
+                                android.widget.Toast.makeText(
+                                        getContext(),
+                                        errorMessage,
+                                        android.widget.Toast.LENGTH_SHORT
+                                ).show();
+                            });
+                            return CONSUME;
+                        }
+                        
+                        @Override
+                        public boolean onSuccess(PublicComment updatedComment) {
+                            // Show success message
+                            getHandler().post(() -> {
+                                android.widget.Toast.makeText(
+                                        getContext(),
+                                        R.string.comment_edited_successfully,
+                                        android.widget.Toast.LENGTH_SHORT
+                                ).show();
+                                
+                                // Update the comment HTML in the existing comment object
+                                RenderableComment renderableComment = sdk.commentsTree.commentsById.get(commentId);
+                                if (renderableComment != null) {
+                                    renderableComment.getComment().setCommentHTML(updatedComment.getCommentHTML());
+                                    adapter.notifyDataSetChanged();
+                                }
+                            });
+                            return CONSUME;
+                        }
+                    });
+                }).show(commentText);
+            }
+            
+            @Override
+            public void onFlag(String commentId) {
+                // Show flag dialog
+                FlagCommentDialog dialog = new FlagCommentDialog(getContext());
+                dialog.setOnSubmitCallback(reason -> {
+                    // Call API to flag the comment
+                    sdk.flagComment(commentId, reason, new FCCallback<BlockSuccess>() {
+                        @Override
+                        public boolean onFailure(APIError error) {
+                            // Show error message
+                            getHandler().post(() -> {
+                                String errorMessage;
+                                if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                                    errorMessage = error.getTranslatedError();
+                                } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                                    errorMessage = error.getReason();
+                                } else {
+                                    errorMessage = getContext().getString(R.string.error_flagging_comment);
+                                }
+                                
+                                android.widget.Toast.makeText(
+                                        getContext(),
+                                        errorMessage,
+                                        android.widget.Toast.LENGTH_SHORT
+                                ).show();
+                            });
+                            return CONSUME;
+                        }
+                        
+                        @Override
+                        public boolean onSuccess(BlockSuccess success) {
+                            // Show success message
+                            getHandler().post(() -> {
+                                android.widget.Toast.makeText(
+                                        getContext(),
+                                        R.string.comment_flagged_successfully,
+                                        android.widget.Toast.LENGTH_SHORT
+                                ).show();
+                            });
+                            return CONSUME;
+                        }
+                    });
+                }).show();
+            }
+            
+            @Override
+            public void onBlock(String commentId, String userName) {
+                // Confirm before blocking
+                android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+                builder.setTitle(R.string.block_user_title)
+                       .setMessage(getContext().getString(R.string.block_user_confirm, userName))
+                       .setPositiveButton(R.string.block, (dialog, which) -> {
+                           // Call API to block the user
+                           sdk.blockUserFromComment(commentId, new FCCallback<BlockSuccess>() {
+                               @Override
+                               public boolean onFailure(APIError error) {
+                                   // Show error message
+                                   getHandler().post(() -> {
+                                       String errorMessage;
+                                       if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                                           errorMessage = error.getTranslatedError();
+                                       } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                                           errorMessage = error.getReason();
+                                       } else {
+                                           errorMessage = getContext().getString(R.string.error_blocking_user);
+                                       }
+                                       
+                                       android.widget.Toast.makeText(
+                                               getContext(),
+                                               errorMessage,
+                                               android.widget.Toast.LENGTH_SHORT
+                                       ).show();
+                                   });
+                                   return CONSUME;
+                               }
+                               
+                               @Override
+                               public boolean onSuccess(BlockSuccess success) {
+                                   // Show success message
+                                   getHandler().post(() -> {
+                                       android.widget.Toast.makeText(
+                                               getContext(),
+                                               R.string.user_blocked_successfully,
+                                               android.widget.Toast.LENGTH_SHORT
+                                       ).show();
+                                       
+                                       // Refresh to remove blocked user's comments
+                                       refresh();
+                                   });
+                                   return CONSUME;
+                               }
+                           });
+                       })
+                       .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                           dialog.dismiss();
+                       })
+                       .show();
+            }
+        });
 
         this.sdk = sdk;
     }

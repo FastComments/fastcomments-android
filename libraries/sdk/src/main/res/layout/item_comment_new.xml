@@ -86,31 +86,51 @@
                     app:flexDirection="row"
                     android:visibility="gone" />
 
+                <!-- Username Row with Menu -->
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-                    
-                    <TextView
-                        android:id="@+id/commentName"
-                        android:layout_width="wrap_content"
+                    android:orientation="horizontal">
+                
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
+                        android:layout_weight="1"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
                         
-                    <TextView
-                        android:id="@+id/unverifiedLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/unverified"
-                        android:textSize="10sp"
-                        android:textColor="#757575"
-                        android:background="#F0F0F0"
-                        android:paddingHorizontal="4dp"
-                        android:paddingVertical="1dp"
-                        android:layout_marginStart="4dp"
-                        android:visibility="gone" />
+                        <TextView
+                            android:id="@+id/commentName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                            
+                        <TextView
+                            android:id="@+id/unverifiedLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/unverified"
+                            android:textSize="10sp"
+                            android:textColor="#757575"
+                            android:background="#F0F0F0"
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="1dp"
+                            android:layout_marginStart="4dp"
+                            android:visibility="gone" />
+                    </LinearLayout>
+                    
+                    <!-- Menu Button -->
+                    <ImageButton
+                        android:id="@+id/commentMenuButton"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center_vertical"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/menu_button"
+                        android:src="@android:drawable/ic_menu_more"
+                        android:scaleType="fitCenter"
+                        android:padding="2dp" />
                 </LinearLayout>
 
                 <TextView
