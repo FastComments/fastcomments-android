@@ -72,8 +72,6 @@
     <string name="edit_your_comment">Edit Your Comment</string>
     <string name="save_changes">Save Changes</string>
     <string name="cancel_edit">Cancel</string>
-    <string name="flag_reason">Reason for flagging</string>
-    <string name="flag_submit">Submit Flag</string>
     <string name="flag_success">Comment has been flagged</string>
     <string name="block_success">User has been blocked</string>
     <string name="error_editing_comment">Error editing comment. Please try again.</string>

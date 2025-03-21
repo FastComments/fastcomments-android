@@ -627,11 +627,8 @@ public class FastCommentsView extends FrameLayout {
             
             @Override
             public void onFlag(String commentId) {
-                // Show flag dialog
-                FlagCommentDialog dialog = new FlagCommentDialog(getContext());
-                dialog.setOnSubmitCallback(reason -> {
-                    // Call API to flag the comment
-                    sdk.flagComment(commentId, new FCCallback<BlockSuccess>() {
+                // Call API to flag the comment directly without dialog
+                sdk.flagComment(commentId, new FCCallback<BlockSuccess>() {
                         @Override
                         public boolean onFailure(APIError error) {
                             // Show error message
@@ -667,7 +664,6 @@ public class FastCommentsView extends FrameLayout {
                             return CONSUME;
                         }
                     });
-                }).show();
             }
             
             @Override

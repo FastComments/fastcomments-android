@@ -1204,7 +1204,6 @@ public class FastCommentsSDK {
      * Flag a comment
      *
      * @param commentId    The ID of the comment to flag
-     * @param reason       The reason for flagging the comment
      * @param callback     Callback to receive the response
      */
     public void flagComment(String commentId, final FCCallback<BlockSuccess> callback) {
