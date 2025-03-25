@@ -403,9 +403,9 @@ public class CommentsTree {
      * Add a new comment to the tree (from live events)
      *
      * @param comment           The comment to add
-     * @param showLiveRightAway Whether to show the comment immediately
+     * @param displayNow Whether to show the comment immediately
      */
-    public void addComment(PublicComment comment, boolean showLiveRightAway) {
+    public void addComment(PublicComment comment, boolean displayNow) {
         if (comment == null || commentsById.containsKey(comment.getId())) {
             return;
         }
@@ -418,7 +418,7 @@ public class CommentsTree {
             // This is a root comment
             allComments.add(0, renderableComment);
 
-            if (showLiveRightAway) {
+            if (displayNow) {
                 // Show the comment right away at the top of the list
                 visibleNodes.add(0, renderableComment);
                 adapter.notifyItemInserted(0);
@@ -479,7 +479,7 @@ public class CommentsTree {
                 if (parentIndex >= 0) {
                     adapter.notifyItemChanged(parentIndex); // re-render reply count
 
-                    if (parent.isRepliesShown && showLiveRightAway) {
+                    if (parent.isRepliesShown && displayNow) {
                         // Parent's replies are shown and we should show the new reply immediately
                         int insertionIndex = findLastChildIndex(parent) + 1;
                         visibleNodes.add(insertionIndex, renderableComment);

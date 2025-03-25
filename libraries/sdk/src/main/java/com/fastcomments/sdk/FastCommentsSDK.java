@@ -116,7 +116,7 @@ public class FastCommentsSDK {
 
         // Reset any existing error message
         blockingErrorMessage = null;
-        
+
         getCommentsAndRelatedData(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
             @Override
             public boolean onFailure(APIError error) {
@@ -127,7 +127,7 @@ public class FastCommentsSDK {
                     blockingErrorMessage = error.getReason();
                 }
                 // Note: No fallback string here - the UI will handle this with R.string.generic_loading_error
-                
+
                 callback.onFailure(error);
                 return CONSUME;
             }
@@ -147,7 +147,7 @@ public class FastCommentsSDK {
 
                 // Extract WebSocket parameters for live events
                 boolean needsWebsocketReconnect = false;
-                
+
                 if (response.getTenantIdWS() != null) {
                     tenantIdWS = response.getTenantIdWS();
                 }
@@ -172,8 +172,8 @@ public class FastCommentsSDK {
 
                 // Subscribe to live events if we have all required parameters
                 // or if we need to reconnect due to userIdWS change
-                if ((tenantIdWS != null && urlIdWS != null && userIdWS != null) && 
-                    (liveEventSubscription == null || needsWebsocketReconnect)) {
+                if ((tenantIdWS != null && urlIdWS != null && userIdWS != null) &&
+                        (liveEventSubscription == null || needsWebsocketReconnect)) {
                     subscribeToLiveEvents();
                 }
 
@@ -232,14 +232,14 @@ public class FastCommentsSDK {
                         public void onSuccess(GetCommentsPublic200Response response, int i, Map<String, List<String>> map) {
                             if (response.getActualInstance() instanceof APIError) {
                                 APIError error = (APIError) response.getActualInstance();
-                                
+
                                 // Set blockingErrorMessage from translatedError or reason
                                 if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
                                     blockingErrorMessage = error.getTranslatedError();
                                 } else if (error.getReason() != null && !error.getReason().isEmpty()) {
                                     blockingErrorMessage = error.getReason();
                                 }
-                                
+
                                 callback.onFailure(error);
                             } else {
                                 final GetCommentsResponseWithPresencePublicComment commentsResponse = response.getGetCommentsResponseWithPresencePublicComment();
@@ -421,7 +421,7 @@ public class FastCommentsSDK {
                                 }
                                 if (response.getUserIdWS() != null && !Objects.equals(response.getUserIdWS(), userIdWS)) {
                                     userIdWS = response.getUserIdWS();
-                                    
+
                                     // Reconnect websocket with new user ID
                                     if (tenantIdWS != null && urlIdWS != null && userIdWS != null) {
                                         subscribeToLiveEvents();
@@ -847,10 +847,13 @@ public class FastCommentsSDK {
         copyEventToComment(pubSubComment, newComment);
 
         // Determine if we should show comments immediately based on config
-        boolean showLiveRightAway = config.showLiveRightAway != null && config.showLiveRightAway;
+        final boolean showLiveRightAway = config.showLiveRightAway != null && config.showLiveRightAway;
+        addComment(newComment, showLiveRightAway);
+    }
 
+    public void addComment(PublicComment publicComment, boolean displayNow) {
         // Add to comments tree
-        commentsTree.addComment(newComment, showLiveRightAway);
+        commentsTree.addComment(publicComment, displayNow);
 
         // Increment the server comment count
         commentCountOnServer++;
@@ -1023,7 +1026,7 @@ public class FastCommentsSDK {
             liveEventSubscription = null;
         }
     }
-    
+
     /**
      * Handle badge update events
      */
@@ -1031,27 +1034,27 @@ public class FastCommentsSDK {
         if (eventData.getBadges() == null || eventData.getBadges().isEmpty() || eventData.getUserId() == null) {
             return;
         }
-        
+
         String userId = eventData.getUserId();
-        boolean isCurrentUser = (currentUser != null && 
-                currentUser.getId() != null && 
+        boolean isCurrentUser = (currentUser != null &&
+                currentUser.getId() != null &&
                 currentUser.getId().equals(userId));
-        
+
         // Get all comments by this user
         List<RenderableComment> userComments = commentsTree.commentsByUserId.get(userId);
         if (userComments != null && !userComments.isEmpty()) {
             // Check for new badges by comparing with existing badges
             List<CommentUserBadgeInfo> newBadges = new ArrayList<>();
-            
+
             // Use the first comment to check which badges are new
             // (All user's comments should have the same badges)
             RenderableComment firstComment = userComments.get(0);
             List<CommentUserBadgeInfo> existingBadges = firstComment.getComment().getBadges();
-            
+
             // Determine which badges are new
             for (CommentUserBadgeInfo updatedBadge : eventData.getBadges()) {
                 boolean isNewBadge = true;
-                
+
                 if (existingBadges != null) {
                     for (CommentUserBadgeInfo existingBadge : existingBadges) {
                         if (existingBadge.getId().equals(updatedBadge.getId())) {
@@ -1060,18 +1063,18 @@ public class FastCommentsSDK {
                         }
                     }
                 }
-                
+
                 if (isNewBadge) {
                     newBadges.add(updatedBadge);
                 }
             }
-            
+
             // Update all comments by this user with the new badges
             for (RenderableComment comment : userComments) {
                 comment.getComment().setBadges(eventData.getBadges());
                 commentsTree.notifyItemChanged(comment);
             }
-            
+
             // Show badge award dialogs if this is for the current user and we have new badges
             if (isCurrentUser && !newBadges.isEmpty()) {
                 // Use the current user's context (need to get through the adapter)
@@ -1099,7 +1102,7 @@ public class FastCommentsSDK {
             }
         }
     }
-    
+
     /**
      * Shows a dialog when the current user is awarded a badge
      */
@@ -1107,7 +1110,7 @@ public class FastCommentsSDK {
         if (badge == null) {
             return;
         }
-        
+
         mainHandler.post(() -> {
             BadgeAwardDialog dialog = new BadgeAwardDialog(context);
             dialog.show(badge);
@@ -1123,13 +1126,13 @@ public class FastCommentsSDK {
             subscribeToLiveEvents();
         }
     }
-    
+
     /**
      * Edit a comment
      *
-     * @param commentId    The ID of the comment to edit
-     * @param newText      The new text for the comment
-     * @param callback     Callback to receive the response
+     * @param commentId The ID of the comment to edit
+     * @param newText   The new text for the comment
+     * @param callback  Callback to receive the response
      */
     public void editComment(String commentId, String newText, final FCCallback<PickFCommentApprovedOrCommentHTML> callback) {
         if (commentId == null || commentId.isEmpty()) {
@@ -1139,7 +1142,7 @@ public class FastCommentsSDK {
                     .code("invalid_comment_id"));
             return;
         }
-        
+
         if (newText == null || newText.trim().isEmpty()) {
             callback.onFailure(new APIError()
                     .status(ImportedAPIStatusFAILED.FAILED)
@@ -1147,17 +1150,17 @@ public class FastCommentsSDK {
                     .code("empty_comment"));
             return;
         }
-        
+
         // Create a unique broadcast ID
         String broadcastId = UUID.randomUUID().toString();
-        
+
         // Track broadcast ID before sending
         broadcastIdsSent.add(broadcastId);
-        
+
         // Create comment text update request
         CommentTextUpdateRequest updateRequest = new CommentTextUpdateRequest();
         updateRequest.comment(newText);
-        
+
         try {
             // Make the API call
             api.setCommentText(config.tenantId, commentId, broadcastId, updateRequest)
@@ -1200,12 +1203,12 @@ public class FastCommentsSDK {
             CallbackWrapper.handleAPIException(mainHandler, callback, e);
         }
     }
-    
+
     /**
      * Flag a comment
      *
-     * @param commentId    The ID of the comment to flag
-     * @param callback     Callback to receive the response
+     * @param commentId The ID of the comment to flag
+     * @param callback  Callback to receive the response
      */
     public void flagComment(String commentId, final FCCallback<APIEmptyResponse> callback) {
         if (commentId == null || commentId.isEmpty()) {
@@ -1215,7 +1218,7 @@ public class FastCommentsSDK {
                     .code("invalid_comment_id"));
             return;
         }
-        
+
         try {
             // Make the API call
             api.flagCommentPublic(config.tenantId, commentId, true)
@@ -1249,12 +1252,12 @@ public class FastCommentsSDK {
             CallbackWrapper.handleAPIException(mainHandler, callback, e);
         }
     }
-    
+
     /**
      * Block a user based on their comment
      *
-     * @param commentId    The ID of the comment to block the user from
-     * @param callback     Callback to receive the response
+     * @param commentId The ID of the comment to block the user from
+     * @param callback  Callback to receive the response
      */
     public void blockUserFromComment(String commentId, final FCCallback<BlockSuccess> callback) {
         if (commentId == null || commentId.isEmpty()) {
@@ -1264,7 +1267,7 @@ public class FastCommentsSDK {
                     .code("invalid_comment_id"));
             return;
         }
-        
+
         try {
             // Make the API call
             api.blockFromCommentPublic(config.tenantId, commentId, new PublicBlockFromCommentParams())

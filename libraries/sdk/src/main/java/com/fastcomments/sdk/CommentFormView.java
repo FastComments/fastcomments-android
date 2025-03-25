@@ -14,7 +14,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
-import com.fastcomments.sdk.R;
 import com.fastcomments.model.PublicComment;
 import com.fastcomments.model.UserSessionInfo;
 

@@ -786,8 +786,6 @@ public class FastCommentsView extends FrameLayout {
             @Override
             public boolean onFailure(APIError error) {
                 getHandler().post(() -> {
-                    commentForm.setSubmitting(false);
-                    
                     // Check for translated error message
                     String errorMessage;
                     if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
@@ -817,9 +815,7 @@ public class FastCommentsView extends FrameLayout {
                             android.widget.Toast.LENGTH_SHORT
                     ).show();
                     
-                    // The comment should appear through the live event system,
-                    // but we'll refresh comments to ensure it shows up
-                    refresh();
+                    sdk.addComment(comment, true);
                 });
                 return CONSUME;
             }
