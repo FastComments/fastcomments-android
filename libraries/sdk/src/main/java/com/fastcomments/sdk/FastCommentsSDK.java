@@ -207,7 +207,7 @@ public class FastCommentsSDK {
 
         try {
             // Make the API call asynchronously
-            api.getComments(config.tenantId, config.urlId)
+            api.getCommentsPublic(config.tenantId, config.urlId)
                     .direction(direction)
                     .sso(config.getSSOToken())
                     .asTree(true)
@@ -222,14 +222,14 @@ public class FastCommentsSDK {
                     .countChildren(true)
                     .locale(config.locale)
                     .includeNotificationCount(includeNotificationCount)
-                    .executeAsync(new ApiCallback<GetComments200Response>() {
+                    .executeAsync(new ApiCallback<GetCommentsPublic200Response>() {
                         @Override
                         public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(GetComments200Response response, int i, Map<String, List<String>> map) {
+                        public void onSuccess(GetCommentsPublic200Response response, int i, Map<String, List<String>> map) {
                             if (response.getActualInstance() instanceof APIError) {
                                 APIError error = (APIError) response.getActualInstance();
                                 
@@ -277,7 +277,7 @@ public class FastCommentsSDK {
 
         try {
             // Make the API call asynchronously
-            api.getComments(config.tenantId, config.urlId)
+            api.getCommentsPublic(config.tenantId, config.urlId)
                     .direction(direction)
                     .sso(config.getSSOToken())
                     .asTree(true)
@@ -290,14 +290,14 @@ public class FastCommentsSDK {
                     .lastGenDate(lastGenDate)
                     .countChildren(true)
                     .locale(config.locale)
-                    .executeAsync(new ApiCallback<GetComments200Response>() {
+                    .executeAsync(new ApiCallback<GetCommentsPublic200Response>() {
                         @Override
                         public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(GetComments200Response response, int i, Map<String, List<String>> map) {
+                        public void onSuccess(GetCommentsPublic200Response response, int i, Map<String, List<String>> map) {
                             if (response.getActualInstance() instanceof APIError) {
                                 callback.onFailure((APIError) response.getActualInstance());
                             } else {
@@ -402,16 +402,16 @@ public class FastCommentsSDK {
 
         try {
             // Make the API call
-            api.createComment(config.tenantId, config.urlId, broadcastId, commentData)
+            api.createCommentPublic(config.tenantId, config.urlId, broadcastId, commentData)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<CreateComment200Response>() {
+                    .executeAsync(new ApiCallback<CreateCommentPublic200Response>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(CreateComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                        public void onSuccess(CreateCommentPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
                             if (result.getActualInstance() instanceof APIError) {
                                 callback.onFailure((APIError) result.getActualInstance());
                             } else {
@@ -1160,8 +1160,9 @@ public class FastCommentsSDK {
         
         try {
             // Make the API call
-            api.setCommentText(config.tenantId, commentId, broadcastId, editKey, updateRequest)
+            api.setCommentText(config.tenantId, commentId, broadcastId, updateRequest)
                     .sso(config.getSSOToken())
+                    .editKey(editKey)
                     .executeAsync(new ApiCallback<SetCommentText200Response>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
@@ -1217,16 +1218,16 @@ public class FastCommentsSDK {
         
         try {
             // Make the API call
-            api.flagComment(config.tenantId, commentId, true)
+            api.flagCommentPublic(config.tenantId, commentId, true)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<FlagComment200Response>() {
+                    .executeAsync(new ApiCallback<FlagCommentPublic200Response>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(FlagComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                        public void onSuccess(FlagCommentPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
                             if (result.getActualInstance() instanceof APIError) {
                                 callback.onFailure((APIError) result.getActualInstance());
                             } else {
@@ -1266,16 +1267,16 @@ public class FastCommentsSDK {
         
         try {
             // Make the API call
-            api.blockFromComment(config.tenantId, commentId, new BlockFromCommentParams())
+            api.blockFromCommentPublic(config.tenantId, commentId, new PublicBlockFromCommentParams())
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<BlockFromComment200Response>() {
+                    .executeAsync(new ApiCallback<BlockFromCommentPublic200Response>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(BlockFromComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                        public void onSuccess(BlockFromCommentPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
                             if (result.getActualInstance() instanceof APIError) {
                                 callback.onFailure((APIError) result.getActualInstance());
                             } else {
