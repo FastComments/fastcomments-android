@@ -18,6 +18,7 @@ import com.fastcomments.model.BlockSuccess;
 import com.fastcomments.model.PickFCommentApprovedOrCommentHTML;
 import com.fastcomments.model.PublicComment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -72,7 +73,7 @@ public class FastCommentsView extends FrameLayout {
 
     private void init(Context context, AttributeSet attrs, FastCommentsSDK sdk) {
         LayoutInflater.from(context).inflate(R.layout.fast_comments_view, this, true);
-        
+
         // Initialize the date update handler and runnable
         dateUpdateHandler = new Handler(Looper.getMainLooper());
         dateUpdateRunnable = new Runnable() {
@@ -132,22 +133,22 @@ public class FastCommentsView extends FrameLayout {
         recyclerView.setLayoutManager(layoutManager);
         adapter = new CommentsAdapter(context, sdk);
         recyclerView.setAdapter(adapter);
-        
+
         // Set up infinite scrolling if enabled in config
-        boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null && 
-                                           sdk.getConfig().enableInfiniteScrolling;
-        
+        boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null &&
+                sdk.getConfig().enableInfiniteScrolling;
+
         if (isInfiniteScrollingEnabled) {
             recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
                 public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                     super.onScrolled(recyclerView, dx, dy);
-                    
+
                     if (dy > 0) { // Scrolling down
                         int visibleItemCount = layoutManager.getChildCount();
                         int totalItemCount = layoutManager.getItemCount();
                         int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
-                        
+
                         // Load more when user is near the end (last 5 items)
                         if ((visibleItemCount + firstVisibleItemPosition + 5) >= totalItemCount
                                 && sdk.hasMore) {
@@ -161,8 +162,6 @@ public class FastCommentsView extends FrameLayout {
         // Setup form listeners
         commentForm.setOnCommentSubmitListener((commentText, parentId) -> {
             postComment(commentText, parentId);
-            // Hide form after submitting with animation
-            hideCommentForm();
         });
 
         commentForm.setOnCancelReplyListener(() -> {
@@ -188,7 +187,7 @@ public class FastCommentsView extends FrameLayout {
             // Scroll to show both the comment and the form
             recyclerView.smoothScrollToPosition(adapter.getPositionForComment(commentToReplyTo));
         });
-        
+
         // Handle upvote requests
         adapter.setUpVoteListener((commentToVote) -> {
             // Get commenter name for the toast message
@@ -196,19 +195,19 @@ public class FastCommentsView extends FrameLayout {
             if (commenterName == null || commenterName.isEmpty()) {
                 commenterName = getContext().getString(R.string.anonymous);
             }
-            
+
             // Save original state for rollback in case of API failure
             final Boolean originalIsVotedUp = commentToVote.getComment().getIsVotedUp();
             final Boolean originalIsVotedDown = commentToVote.getComment().getIsVotedDown();
             final Integer originalVotesUp = commentToVote.getComment().getVotesUp();
             final Integer originalVotesDown = commentToVote.getComment().getVotesDown();
             final String originalVoteId = commentToVote.getComment().getMyVoteId();
-            
+
             String toastMessage;
-            
+
             // Check vote style for appropriate message
             final boolean isHeartStyle = Objects.equals(sdk.getConfig().voteStyle, VoteStyle.Heart);
-            
+
             // Toggle the vote state
             boolean needToDelete = false;
             if (originalIsVotedUp != null && originalIsVotedUp) {
@@ -229,7 +228,7 @@ public class FastCommentsView extends FrameLayout {
                 // User hasn't upvoted, so add the vote
                 commentToVote.getComment().setIsVotedUp(true);
                 // Also remove downvote if exists
-                if (commentToVote.getComment().getIsVotedDown() != null && 
+                if (commentToVote.getComment().getIsVotedDown() != null &&
                         commentToVote.getComment().getIsVotedDown()) {
                     commentToVote.getComment().setIsVotedDown(false);
                     // Update downvote count
@@ -252,13 +251,13 @@ public class FastCommentsView extends FrameLayout {
                     toastMessage = getContext().getString(R.string.you_upvoted, commenterName);
                 }
             }
-            
+
             // Notify adapter to update UI immediately for better UX
             adapter.notifyDataSetChanged();
-            
+
             // Store toast message for display after successful API call
             final String finalToastMessage = toastMessage;
-            
+
             // Create error handler for voting operations
             final FCCallback<APIError> upvoteErrorHandler = new FCCallback<APIError>() {
                 @Override
@@ -266,7 +265,7 @@ public class FastCommentsView extends FrameLayout {
                     // This shouldn't get called since we're already in a failure handler
                     return CONSUME;
                 }
-                
+
                 @Override
                 public boolean onSuccess(APIError error) {
                     // Revert to original state on failure
@@ -275,7 +274,7 @@ public class FastCommentsView extends FrameLayout {
                     commentToVote.getComment().setVotesUp(originalVotesUp);
                     commentToVote.getComment().setVotesDown(originalVotesDown);
                     commentToVote.getComment().setMyVoteId(originalVoteId);
-                    
+
                     // Show error message
                     getHandler().post(() -> {
                         android.widget.Toast.makeText(
@@ -283,15 +282,15 @@ public class FastCommentsView extends FrameLayout {
                                 R.string.error_voting,
                                 android.widget.Toast.LENGTH_SHORT
                         ).show();
-                        
+
                         // Update the UI
                         adapter.notifyDataSetChanged();
                     });
-                    
+
                     return CONSUME;
                 }
             };
-            
+
             // The general vote flow: 
             // 1. If there's an existing vote, delete it first
             // 2. Then make a new vote if needed (not needed when removing an upvote)
@@ -338,7 +337,7 @@ public class FastCommentsView extends FrameLayout {
                         upvoteErrorHandler, null, null, finalToastMessage);
             }
         });
-        
+
         // Handle downvote requests
         adapter.setDownVoteListener((commentToVote) -> {
             // Get commenter name for the toast message
@@ -346,17 +345,17 @@ public class FastCommentsView extends FrameLayout {
             if (commenterName == null || commenterName.isEmpty()) {
                 commenterName = getContext().getString(R.string.anonymous);
             }
-            
+
             // Save original state for rollback in case of API failure
             final Boolean originalIsVotedUp = commentToVote.getComment().getIsVotedUp();
             final Boolean originalIsVotedDown = commentToVote.getComment().getIsVotedDown();
             final Integer originalVotesUp = commentToVote.getComment().getVotesUp();
             final Integer originalVotesDown = commentToVote.getComment().getVotesDown();
             final String originalVoteId = commentToVote.getComment().getMyVoteId();
-            
+
             String toastMessage;
             boolean needToDelete = false;
-            
+
             // Toggle the vote state
             if (originalIsVotedDown != null && originalIsVotedDown) {
                 // User already downvoted, so remove the vote
@@ -372,7 +371,7 @@ public class FastCommentsView extends FrameLayout {
                 // User hasn't downvoted, so add the vote
                 commentToVote.getComment().setIsVotedDown(true);
                 // Also remove upvote if exists
-                if (commentToVote.getComment().getIsVotedUp() != null && 
+                if (commentToVote.getComment().getIsVotedUp() != null &&
                         commentToVote.getComment().getIsVotedUp()) {
                     commentToVote.getComment().setIsVotedUp(false);
                     // Update upvote count
@@ -391,13 +390,13 @@ public class FastCommentsView extends FrameLayout {
                 }
                 toastMessage = getContext().getString(R.string.you_downvoted, commenterName);
             }
-            
+
             // Notify adapter to update UI immediately for better UX
             adapter.notifyDataSetChanged();
-            
+
             // Store toast message for display after successful API call
             final String finalToastMessage = toastMessage;
-            
+
             // Create error handler for voting operations
             final FCCallback<APIError> downvoteErrorHandler = new FCCallback<APIError>() {
                 @Override
@@ -405,7 +404,7 @@ public class FastCommentsView extends FrameLayout {
                     // This shouldn't get called since we're already in a failure handler
                     return CONSUME;
                 }
-                
+
                 @Override
                 public boolean onSuccess(APIError error) {
                     // Revert to original state on failure
@@ -414,7 +413,7 @@ public class FastCommentsView extends FrameLayout {
                     commentToVote.getComment().setVotesUp(originalVotesUp);
                     commentToVote.getComment().setVotesDown(originalVotesDown);
                     commentToVote.getComment().setMyVoteId(originalVoteId);
-                    
+
                     // Show error message
                     getHandler().post(() -> {
                         android.widget.Toast.makeText(
@@ -422,26 +421,26 @@ public class FastCommentsView extends FrameLayout {
                                 R.string.error_voting,
                                 android.widget.Toast.LENGTH_SHORT
                         ).show();
-                        
+
                         // Update the UI
                         adapter.notifyDataSetChanged();
                     });
-                    
+
                     return CONSUME;
                 }
             };
-            
+
             // The general vote flow: 
             // 1. If there's an existing vote, delete it first
             // 2. Then make a new vote if needed (not needed when removing a downvote)
-            
+
             // Check if user is logged in or if anonymous votes are allowed
             boolean userIsLoggedIn = sdk.getCurrentUser() != null &&
                     sdk.getCurrentUser().getAuthorized() != null &&
                     sdk.getCurrentUser().getAuthorized();
             boolean allowAnonVotes = sdk.getConfig() != null &&
                     Boolean.TRUE.equals(sdk.getConfig().allowAnonVotes);
-                                    
+
             // Special handling if the user is not logged in
             if (!userIsLoggedIn) {
                 if (!allowAnonVotes) {
@@ -454,7 +453,7 @@ public class FastCommentsView extends FrameLayout {
                             processDownvote(commentToVote, needToDeleteFinal, originalIsVotedDown, originalVoteId,
                                     downvoteErrorHandler, username, email, finalToastMessage);
                         }
-                        
+
                         @Override
                         public void onCancel() {
                             // User canceled, revert UI state
@@ -484,26 +483,26 @@ public class FastCommentsView extends FrameLayout {
             Integer skip = request.getSkip();
             Integer limit = request.getLimit();
             boolean isLoadMore = request.isLoadMore();
-            
+
             // Get the parent comment
             RenderableComment parentComment = sdk.commentsTree.commentsById.get(parentId);
-            
+
             // If this is a pagination request, use the comment's pagination state
             if (parentComment != null) {
                 if (skip == null) {
                     skip = isLoadMore ? parentComment.childSkip : 0;
                 }
-                
+
                 if (limit == null) {
                     limit = parentComment.childPageSize;
                 }
-                
+
                 // Update the skip value for subsequent requests
                 if (isLoadMore) {
                     parentComment.childPage++;
                     parentComment.childSkip += parentComment.childPageSize;
                 }
-                
+
                 // Mark as loading to update UI
                 parentComment.isLoadingChildren = true;
             }
@@ -520,14 +519,14 @@ public class FastCommentsView extends FrameLayout {
                         // If we have a parent comment, update its loading state
                         if (parentComment != null) {
                             parentComment.isLoadingChildren = false;
-                            
+
                             // Revert pagination state on failure
                             if (isLoadMore) {
                                 parentComment.childPage--;
                                 parentComment.childSkip -= parentComment.childPageSize;
                             }
                         }
-                        
+
                         // Show toast with error message
                         android.widget.Toast.makeText(
                                 getContext(),
@@ -558,20 +557,20 @@ public class FastCommentsView extends FrameLayout {
                             parentComment.isLoadingChildren = false;
                             parentComment.hasMoreChildren = response.getHasMore() != null ? response.getHasMore() : false;
                         }
-                        
+
                         sendResults.call(response.getComments());
                     });
                     return CONSUME;
                 }
             });
         });
-        
+
         // Set up listener for new child comments button clicks
         adapter.setNewChildCommentsListener(parentId -> {
             // This method is called when a "Show New Replies" button is clicked
             // scrolling is handled by the CommentsTree
         });
-        
+
         // Set up comment menu listener for edit, flag, and block actions
         adapter.setCommentMenuListener(new CommentsAdapter.OnCommentMenuItemListener() {
             @Override
@@ -593,7 +592,7 @@ public class FastCommentsView extends FrameLayout {
                                 } else {
                                     errorMessage = getContext().getString(R.string.error_editing_comment);
                                 }
-                                
+
                                 android.widget.Toast.makeText(
                                         getContext(),
                                         errorMessage,
@@ -602,7 +601,7 @@ public class FastCommentsView extends FrameLayout {
                             });
                             return CONSUME;
                         }
-                        
+
                         @Override
                         public boolean onSuccess(PickFCommentApprovedOrCommentHTML updatedComment) {
                             // Show success message
@@ -612,7 +611,7 @@ public class FastCommentsView extends FrameLayout {
                                         R.string.comment_edited_successfully,
                                         android.widget.Toast.LENGTH_SHORT
                                 ).show();
-                                
+
                                 // Update the comment HTML in the existing comment object
                                 RenderableComment renderableComment = sdk.commentsTree.commentsById.get(commentId);
                                 if (renderableComment != null) {
@@ -625,100 +624,100 @@ public class FastCommentsView extends FrameLayout {
                     });
                 }).show(commentText);
             }
-            
+
             @Override
             public void onFlag(String commentId) {
                 // Call API to flag the comment directly without dialog
                 sdk.flagComment(commentId, new FCCallback<APIEmptyResponse>() {
-                        @Override
-                        public boolean onFailure(APIError error) {
-                            // Show error message
-                            getHandler().post(() -> {
-                                String errorMessage;
-                                if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
-                                    errorMessage = error.getTranslatedError();
-                                } else if (error.getReason() != null && !error.getReason().isEmpty()) {
-                                    errorMessage = error.getReason();
-                                } else {
-                                    errorMessage = getContext().getString(R.string.error_flagging_comment);
-                                }
-                                
-                                android.widget.Toast.makeText(
-                                        getContext(),
-                                        errorMessage,
-                                        android.widget.Toast.LENGTH_SHORT
-                                ).show();
-                            });
-                            return CONSUME;
-                        }
-                        
-                        @Override
-                        public boolean onSuccess(APIEmptyResponse success) {
-                            // Show success message
-                            getHandler().post(() -> {
-                                android.widget.Toast.makeText(
-                                        getContext(),
-                                        R.string.comment_flagged_successfully,
-                                        android.widget.Toast.LENGTH_SHORT
-                                ).show();
-                            });
-                            return CONSUME;
-                        }
-                    });
+                    @Override
+                    public boolean onFailure(APIError error) {
+                        // Show error message
+                        getHandler().post(() -> {
+                            String errorMessage;
+                            if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                                errorMessage = error.getTranslatedError();
+                            } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                                errorMessage = error.getReason();
+                            } else {
+                                errorMessage = getContext().getString(R.string.error_flagging_comment);
+                            }
+
+                            android.widget.Toast.makeText(
+                                    getContext(),
+                                    errorMessage,
+                                    android.widget.Toast.LENGTH_SHORT
+                            ).show();
+                        });
+                        return CONSUME;
+                    }
+
+                    @Override
+                    public boolean onSuccess(APIEmptyResponse success) {
+                        // Show success message
+                        getHandler().post(() -> {
+                            android.widget.Toast.makeText(
+                                    getContext(),
+                                    R.string.comment_flagged_successfully,
+                                    android.widget.Toast.LENGTH_SHORT
+                            ).show();
+                        });
+                        return CONSUME;
+                    }
+                });
             }
-            
+
             @Override
             public void onBlock(String commentId, String userName) {
                 // Confirm before blocking
                 android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
                 builder.setTitle(R.string.block_user_title)
-                       .setMessage(getContext().getString(R.string.block_user_confirm, userName))
-                       .setPositiveButton(R.string.block, (dialog, which) -> {
-                           // Call API to block the user
-                           sdk.blockUserFromComment(commentId, new FCCallback<BlockSuccess>() {
-                               @Override
-                               public boolean onFailure(APIError error) {
-                                   // Show error message
-                                   getHandler().post(() -> {
-                                       String errorMessage;
-                                       if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
-                                           errorMessage = error.getTranslatedError();
-                                       } else if (error.getReason() != null && !error.getReason().isEmpty()) {
-                                           errorMessage = error.getReason();
-                                       } else {
-                                           errorMessage = getContext().getString(R.string.error_blocking_user);
-                                       }
-                                       
-                                       android.widget.Toast.makeText(
-                                               getContext(),
-                                               errorMessage,
-                                               android.widget.Toast.LENGTH_SHORT
-                                       ).show();
-                                   });
-                                   return CONSUME;
-                               }
-                               
-                               @Override
-                               public boolean onSuccess(BlockSuccess success) {
-                                   // Show success message
-                                   getHandler().post(() -> {
-                                       android.widget.Toast.makeText(
-                                               getContext(),
-                                               R.string.user_blocked_successfully,
-                                               android.widget.Toast.LENGTH_SHORT
-                                       ).show();
-                                       
-                                       // Refresh to remove blocked user's comments
-                                       refresh();
-                                   });
-                                   return CONSUME;
-                               }
-                           });
-                       })
-                       .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
-                           dialog.dismiss();
-                       })
-                       .show();
+                        .setMessage(getContext().getString(R.string.block_user_confirm, userName))
+                        .setPositiveButton(R.string.block, (dialog, which) -> {
+                            // Call API to block the user
+                            sdk.blockUserFromComment(commentId, new FCCallback<BlockSuccess>() {
+                                @Override
+                                public boolean onFailure(APIError error) {
+                                    // Show error message
+                                    getHandler().post(() -> {
+                                        String errorMessage;
+                                        if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                                            errorMessage = error.getTranslatedError();
+                                        } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                                            errorMessage = error.getReason();
+                                        } else {
+                                            errorMessage = getContext().getString(R.string.error_blocking_user);
+                                        }
+
+                                        android.widget.Toast.makeText(
+                                                getContext(),
+                                                errorMessage,
+                                                android.widget.Toast.LENGTH_SHORT
+                                        ).show();
+                                    });
+                                    return CONSUME;
+                                }
+
+                                @Override
+                                public boolean onSuccess(BlockSuccess success) {
+                                    // Show success message
+                                    getHandler().post(() -> {
+                                        android.widget.Toast.makeText(
+                                                getContext(),
+                                                R.string.user_blocked_successfully,
+                                                android.widget.Toast.LENGTH_SHORT
+                                        ).show();
+
+                                        // Refresh to remove blocked user's comments
+                                        refresh();
+                                    });
+                                    return CONSUME;
+                                }
+                            });
+                        })
+                        .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                            dialog.dismiss();
+                        })
+                        .show();
             }
         });
 
@@ -734,7 +733,7 @@ public class FastCommentsView extends FrameLayout {
                 Log.e("FastCommentsView", error.toString());
                 getHandler().post(() -> {
                     showLoading(false);
-                    
+
                     // Use blockingErrorMessage if available, otherwise fallback to a generic message
                     if (sdk.blockingErrorMessage != null && !sdk.blockingErrorMessage.isEmpty()) {
                         setBlockingError(sdk.blockingErrorMessage);
@@ -750,7 +749,7 @@ public class FastCommentsView extends FrameLayout {
             public boolean onSuccess(GetCommentsResponseWithPresencePublicComment response) {
                 getHandler().post(() -> {
                     showLoading(false);
-                    
+
                     // Clear any blocking error
                     setBlockingError(null);
 
@@ -763,7 +762,7 @@ public class FastCommentsView extends FrameLayout {
 
                         // Update pagination controls
                         updatePaginationControls();
-                        
+
                         // Start the date update timer
                         startDateUpdateTimer();
                     }
@@ -786,6 +785,7 @@ public class FastCommentsView extends FrameLayout {
             @Override
             public boolean onFailure(APIError error) {
                 getHandler().post(() -> {
+                    commentForm.setSubmitting(false);
                     // Check for translated error message
                     String errorMessage;
                     if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
@@ -795,7 +795,7 @@ public class FastCommentsView extends FrameLayout {
                     } else {
                         errorMessage = getContext().getString(R.string.error_posting_comment);
                     }
-                    
+
                     commentForm.showError(errorMessage);
                 });
                 return CONSUME;
@@ -814,7 +814,9 @@ public class FastCommentsView extends FrameLayout {
                             R.string.comment_posted_successfully,
                             android.widget.Toast.LENGTH_SHORT
                     ).show();
-                    
+                    // Hide form after submitting with animation
+                    hideCommentForm();
+
                     sdk.addComment(comment, true);
                 });
                 return CONSUME;
@@ -833,10 +835,10 @@ public class FastCommentsView extends FrameLayout {
         emptyStateView.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
     }
-    
+
     /**
      * Set the view to display a blocking error message
-     * 
+     *
      * @param errorMessage The error message to display, or null to hide the error
      */
     private void setBlockingError(String errorMessage) {
@@ -851,14 +853,14 @@ public class FastCommentsView extends FrameLayout {
             // No error, restore normal visibility based on comments count
             boolean isEmpty = adapter.getItemCount() == 0;
             setIsEmpty(isEmpty);
-            
+
             // Show or hide pagination controls based on hasMore
             if (sdk.hasMore && !isEmpty) {
                 updatePaginationControls();
             } else {
                 paginationControls.setVisibility(View.GONE);
             }
-            
+
             // Show the new comment button
             newCommentButton.setVisibility(View.VISIBLE);
         }
@@ -878,7 +880,7 @@ public class FastCommentsView extends FrameLayout {
         Animation fadeOutAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.fade_out);
         newCommentButton.startAnimation(fadeOutAnimation);
         newCommentButton.setVisibility(View.GONE);
-        
+
         // Hide pagination controls while commenting
         if (paginationControls.getVisibility() == View.VISIBLE) {
             paginationControls.startAnimation(fadeOutAnimation);
@@ -917,11 +919,11 @@ public class FastCommentsView extends FrameLayout {
         Animation fadeInAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.fade_in);
         newCommentButton.startAnimation(fadeInAnimation);
         newCommentButton.setVisibility(View.VISIBLE);
-        
+
         // Restore pagination controls if needed
         if (sdk.hasMore && adapter.getItemCount() > 0) {
             updatePaginationControls();
-            if (paginationControls.getVisibility() == View.GONE && 
+            if (paginationControls.getVisibility() == View.GONE &&
                     (sdk.getCountRemainingToShow() > 0 || sdk.shouldShowLoadAll())) {
                 paginationControls.startAnimation(fadeInAnimation);
                 paginationControls.setVisibility(View.VISIBLE);
@@ -946,15 +948,15 @@ public class FastCommentsView extends FrameLayout {
      */
     private void updatePaginationControls() {
         // Check if infinite scrolling is enabled
-        boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null && 
-                                           sdk.getConfig().enableInfiniteScrolling;
-        
+        boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null &&
+                sdk.getConfig().enableInfiniteScrolling;
+
         if (isInfiniteScrollingEnabled) {
             // Hide pagination controls when infinite scrolling is enabled
             paginationControls.setVisibility(View.GONE);
             return;
         }
-        
+
         // Standard pagination controls logic for when infinite scrolling is disabled
         if (sdk.hasMore) {
             paginationControls.setVisibility(View.VISIBLE);
@@ -988,11 +990,11 @@ public class FastCommentsView extends FrameLayout {
         if (paginationProgressBar.getVisibility() == View.VISIBLE) {
             return;
         }
-        
+
         // Check if infinite scrolling is enabled
-        boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null && 
-                                           sdk.getConfig().enableInfiniteScrolling;
-        
+        boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null &&
+                sdk.getConfig().enableInfiniteScrolling;
+
         // Show loading indicator
         if (isInfiniteScrollingEnabled) {
             // In infinite scrolling mode, the pagination controls are hidden
@@ -1015,11 +1017,11 @@ public class FastCommentsView extends FrameLayout {
                 getHandler().post(() -> {
                     // Hide loading indicator
                     paginationProgressBar.setVisibility(View.GONE);
-                    
+
                     // Check if infinite scrolling is enabled
-                    boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null && 
-                                                       sdk.getConfig().enableInfiniteScrolling;
-                    
+                    boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null &&
+                            sdk.getConfig().enableInfiniteScrolling;
+
                     if (isInfiniteScrollingEnabled) {
                         // For infinite scrolling, hide the pagination controls on error
                         paginationControls.setVisibility(View.GONE);
@@ -1046,11 +1048,11 @@ public class FastCommentsView extends FrameLayout {
                 getHandler().post(() -> {
                     // Hide loading indicator
                     paginationProgressBar.setVisibility(View.GONE);
-                    
+
                     // Check if infinite scrolling is enabled
-                    boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null && 
-                                                       sdk.getConfig().enableInfiniteScrolling;
-                    
+                    boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null &&
+                            sdk.getConfig().enableInfiniteScrolling;
+
                     if (isInfiniteScrollingEnabled) {
                         // For infinite scrolling, hide the pagination controls again
                         paginationControls.setVisibility(View.GONE);
@@ -1106,163 +1108,93 @@ public class FastCommentsView extends FrameLayout {
             }
         });
     }
-    
+
     /**
      * Helper method for processing upvotes with or without anonymous credentials
-     * 
-     * @param commentToVote The comment being voted on
-     * @param needToDelete Whether an existing vote needs to be deleted first
+     *
+     * @param commentToVote     The comment being voted on
+     * @param needToDelete      Whether an existing vote needs to be deleted first
      * @param originalIsVotedUp The original upvote state before optimistic update
-     * @param originalVoteId The ID of the existing vote, if any
-     * @param errorHandler Callback to handle errors
-     * @param username Username for anonymous voting (null if authenticated)
-     * @param email Email for anonymous voting (null if authenticated)
-     * @param toastMessage Message to show on success
+     * @param originalVoteId    The ID of the existing vote, if any
+     * @param errorHandler      Callback to handle errors
+     * @param username          Username for anonymous voting (null if authenticated)
+     * @param email             Email for anonymous voting (null if authenticated)
+     * @param toastMessage      Message to show on success
      */
-    private void processUpvote(RenderableComment commentToVote, boolean needToDelete, 
-                              Boolean originalIsVotedUp, String originalVoteId,
-                              FCCallback<APIError> errorHandler, String username, String email, String toastMessage) {
+    private void processUpvote(RenderableComment commentToVote, boolean needToDelete,
+                               Boolean originalIsVotedUp, String originalVoteId,
+                               FCCallback<APIError> errorHandler, String username, String email, String toastMessage) {
         if (needToDelete && originalVoteId != null) {
             // Delete the existing vote first
-            sdk.deleteCommentVote(commentToVote.getComment().getId(), originalVoteId, username, email, 
+            sdk.deleteCommentVote(commentToVote.getComment().getId(), originalVoteId, username, email,
                     new FCCallback<VoteDeleteResponse>() {
-                @Override
-                public boolean onFailure(APIError error) {
-                    return errorHandler.onSuccess(error);
-                }
-                
-                @Override
-                public boolean onSuccess(VoteDeleteResponse response) {
-                    // Clear vote ID since it was deleted
-                    commentToVote.getComment().setMyVoteId(null);
-                    
-                    // If removing an upvote, we're done - show success message
-                    if (originalIsVotedUp != null && originalIsVotedUp) {
-                        // Show success toast message for removing vote
-                        getHandler().post(() -> {
-                            android.widget.Toast.makeText(
-                                    getContext(),
-                                    toastMessage,
-                                    android.widget.Toast.LENGTH_SHORT
-                            ).show();
-                        });
-                        return CONSUME;
-                    }
-                    
-                    // Otherwise, we need to add a new upvote
-                    sdk.voteComment(commentToVote.getComment().getId(), true, username, email, 
-                            new FCCallback<VoteResponse>() {
                         @Override
                         public boolean onFailure(APIError error) {
                             return errorHandler.onSuccess(error);
                         }
-                        
+
                         @Override
-                        public boolean onSuccess(VoteResponse response) {
-                            // Store new vote ID
-                            commentToVote.getComment().setMyVoteId(response.getVoteId());
-                            
-                            // Show success toast message
-                            getHandler().post(() -> {
-                                android.widget.Toast.makeText(
-                                        getContext(),
-                                        toastMessage,
-                                        android.widget.Toast.LENGTH_SHORT
-                                ).show();
-                            });
-                            
+                        public boolean onSuccess(VoteDeleteResponse response) {
+                            // Clear vote ID since it was deleted
+                            commentToVote.getComment().setMyVoteId(null);
+
+                            // If removing an upvote, we're done - show success message
+                            if (originalIsVotedUp != null && originalIsVotedUp) {
+                                // Show success toast message for removing vote
+                                getHandler().post(() -> {
+                                    android.widget.Toast.makeText(
+                                            getContext(),
+                                            toastMessage,
+                                            android.widget.Toast.LENGTH_SHORT
+                                    ).show();
+                                });
+                                return CONSUME;
+                            }
+
+                            // Otherwise, we need to add a new upvote
+                            sdk.voteComment(commentToVote.getComment().getId(), true, username, email,
+                                    new FCCallback<VoteResponse>() {
+                                        @Override
+                                        public boolean onFailure(APIError error) {
+                                            return errorHandler.onSuccess(error);
+                                        }
+
+                                        @Override
+                                        public boolean onSuccess(VoteResponse response) {
+                                            // Store new vote ID
+                                            commentToVote.getComment().setMyVoteId(response.getVoteId());
+
+                                            // Show success toast message
+                                            getHandler().post(() -> {
+                                                android.widget.Toast.makeText(
+                                                        getContext(),
+                                                        toastMessage,
+                                                        android.widget.Toast.LENGTH_SHORT
+                                                ).show();
+                                            });
+
+                                            return CONSUME;
+                                        }
+                                    });
+
                             return CONSUME;
                         }
                     });
-                    
-                    return CONSUME;
-                }
-            });
         } else if (originalIsVotedUp == null || !originalIsVotedUp) {
             // No existing vote to delete or it's a downvote being converted to upvote
             // Just add a new upvote
-            sdk.voteComment(commentToVote.getComment().getId(), true, username, email, 
+            sdk.voteComment(commentToVote.getComment().getId(), true, username, email,
                     new FCCallback<VoteResponse>() {
-                @Override
-                public boolean onFailure(APIError error) {
-                    return errorHandler.onSuccess(error);
-                }
-                
-                @Override
-                public boolean onSuccess(VoteResponse response) {
-                    // Store new vote ID
-                    commentToVote.getComment().setMyVoteId(response.getVoteId());
-                    
-                    // Show success toast message
-                    getHandler().post(() -> {
-                        android.widget.Toast.makeText(
-                                getContext(),
-                                toastMessage,
-                                android.widget.Toast.LENGTH_SHORT
-                        ).show();
-                    });
-                    
-                    return CONSUME;
-                }
-            });
-        }
-    }
-    
-    /**
-     * Helper method for processing downvotes with or without anonymous credentials
-     * 
-     * @param commentToVote The comment being voted on
-     * @param needToDelete Whether an existing vote needs to be deleted first
-     * @param originalIsVotedDown The original downvote state before optimistic update
-     * @param originalVoteId The ID of the existing vote, if any
-     * @param errorHandler Callback to handle errors
-     * @param username Username for anonymous voting (null if authenticated)
-     * @param email Email for anonymous voting (null if authenticated)
-     * @param toastMessage Message to show on success
-     */
-    private void processDownvote(RenderableComment commentToVote, boolean needToDelete, 
-                                Boolean originalIsVotedDown, String originalVoteId,
-                                FCCallback<APIError> errorHandler, String username, String email, String toastMessage) {
-        if (needToDelete && originalVoteId != null) {
-            // Delete the existing vote first
-            sdk.deleteCommentVote(commentToVote.getComment().getId(), originalVoteId, username, email, 
-                    new FCCallback<VoteDeleteResponse>() {
-                @Override
-                public boolean onFailure(APIError error) {
-                    return errorHandler.onSuccess(error);
-                }
-                
-                @Override
-                public boolean onSuccess(VoteDeleteResponse response) {
-                    // Clear vote ID since it was deleted
-                    commentToVote.getComment().setMyVoteId(null);
-                    
-                    // If removing a downvote, we're done - show success message
-                    if (originalIsVotedDown != null && originalIsVotedDown) {
-                        // Show success toast message for removing vote
-                        getHandler().post(() -> {
-                            android.widget.Toast.makeText(
-                                    getContext(),
-                                    toastMessage,
-                                    android.widget.Toast.LENGTH_SHORT
-                            ).show();
-                        });
-                        return CONSUME;
-                    }
-                    
-                    // Otherwise, we need to add a new downvote
-                    sdk.voteComment(commentToVote.getComment().getId(), false, username, email, 
-                            new FCCallback<VoteResponse>() {
                         @Override
                         public boolean onFailure(APIError error) {
                             return errorHandler.onSuccess(error);
                         }
-                        
+
                         @Override
                         public boolean onSuccess(VoteResponse response) {
                             // Store new vote ID
                             commentToVote.getComment().setMyVoteId(response.getVoteId());
-                            
+
                             // Show success toast message
                             getHandler().post(() -> {
                                 android.widget.Toast.makeText(
@@ -1271,64 +1203,134 @@ public class FastCommentsView extends FrameLayout {
                                         android.widget.Toast.LENGTH_SHORT
                                 ).show();
                             });
-                            
+
                             return CONSUME;
                         }
                     });
-                    
-                    return CONSUME;
-                }
-            });
+        }
+    }
+
+    /**
+     * Helper method for processing downvotes with or without anonymous credentials
+     *
+     * @param commentToVote       The comment being voted on
+     * @param needToDelete        Whether an existing vote needs to be deleted first
+     * @param originalIsVotedDown The original downvote state before optimistic update
+     * @param originalVoteId      The ID of the existing vote, if any
+     * @param errorHandler        Callback to handle errors
+     * @param username            Username for anonymous voting (null if authenticated)
+     * @param email               Email for anonymous voting (null if authenticated)
+     * @param toastMessage        Message to show on success
+     */
+    private void processDownvote(RenderableComment commentToVote, boolean needToDelete,
+                                 Boolean originalIsVotedDown, String originalVoteId,
+                                 FCCallback<APIError> errorHandler, String username, String email, String toastMessage) {
+        if (needToDelete && originalVoteId != null) {
+            // Delete the existing vote first
+            sdk.deleteCommentVote(commentToVote.getComment().getId(), originalVoteId, username, email,
+                    new FCCallback<VoteDeleteResponse>() {
+                        @Override
+                        public boolean onFailure(APIError error) {
+                            return errorHandler.onSuccess(error);
+                        }
+
+                        @Override
+                        public boolean onSuccess(VoteDeleteResponse response) {
+                            // Clear vote ID since it was deleted
+                            commentToVote.getComment().setMyVoteId(null);
+
+                            // If removing a downvote, we're done - show success message
+                            if (originalIsVotedDown != null && originalIsVotedDown) {
+                                // Show success toast message for removing vote
+                                getHandler().post(() -> {
+                                    android.widget.Toast.makeText(
+                                            getContext(),
+                                            toastMessage,
+                                            android.widget.Toast.LENGTH_SHORT
+                                    ).show();
+                                });
+                                return CONSUME;
+                            }
+
+                            // Otherwise, we need to add a new downvote
+                            sdk.voteComment(commentToVote.getComment().getId(), false, username, email,
+                                    new FCCallback<VoteResponse>() {
+                                        @Override
+                                        public boolean onFailure(APIError error) {
+                                            return errorHandler.onSuccess(error);
+                                        }
+
+                                        @Override
+                                        public boolean onSuccess(VoteResponse response) {
+                                            // Store new vote ID
+                                            commentToVote.getComment().setMyVoteId(response.getVoteId());
+
+                                            // Show success toast message
+                                            getHandler().post(() -> {
+                                                android.widget.Toast.makeText(
+                                                        getContext(),
+                                                        toastMessage,
+                                                        android.widget.Toast.LENGTH_SHORT
+                                                ).show();
+                                            });
+
+                                            return CONSUME;
+                                        }
+                                    });
+
+                            return CONSUME;
+                        }
+                    });
         } else if (originalIsVotedDown == null || !originalIsVotedDown) {
             // No existing vote to delete or it's an upvote being converted to downvote
             // Just add a new downvote
-            sdk.voteComment(commentToVote.getComment().getId(), false, username, email, 
+            sdk.voteComment(commentToVote.getComment().getId(), false, username, email,
                     new FCCallback<VoteResponse>() {
-                @Override
-                public boolean onFailure(APIError error) {
-                    return errorHandler.onSuccess(error);
-                }
-                
-                @Override
-                public boolean onSuccess(VoteResponse response) {
-                    // Store new vote ID
-                    commentToVote.getComment().setMyVoteId(response.getVoteId());
-                    
-                    // Show success toast message
-                    getHandler().post(() -> {
-                        android.widget.Toast.makeText(
-                                getContext(),
-                                toastMessage,
-                                android.widget.Toast.LENGTH_SHORT
-                        ).show();
+                        @Override
+                        public boolean onFailure(APIError error) {
+                            return errorHandler.onSuccess(error);
+                        }
+
+                        @Override
+                        public boolean onSuccess(VoteResponse response) {
+                            // Store new vote ID
+                            commentToVote.getComment().setMyVoteId(response.getVoteId());
+
+                            // Show success toast message
+                            getHandler().post(() -> {
+                                android.widget.Toast.makeText(
+                                        getContext(),
+                                        toastMessage,
+                                        android.widget.Toast.LENGTH_SHORT
+                                ).show();
+                            });
+
+                            return CONSUME;
+                        }
                     });
-                    
-                    return CONSUME;
-                }
-            });
         }
     }
-    
+
     /**
      * Starts the timer for updating relative dates
      */
     private void startDateUpdateTimer() {
         // Remove any existing callbacks to avoid duplicates
         stopDateUpdateTimer();
-        
+
         // Only start the timer if we have comments and absolute dates are not enabled
         if (adapter.getItemCount() > 0 && (sdk.getConfig().absoluteDates == null || !sdk.getConfig().absoluteDates)) {
             dateUpdateHandler.postDelayed(dateUpdateRunnable, DATE_UPDATE_INTERVAL);
         }
     }
-    
+
     /**
      * Stops the timer for updating relative dates
      */
     private void stopDateUpdateTimer() {
         dateUpdateHandler.removeCallbacks(dateUpdateRunnable);
     }
-    
+
     /**
      * Updates the dates for all visible comments
      */
@@ -1337,13 +1339,13 @@ public class FastCommentsView extends FrameLayout {
         if (sdk.getConfig().absoluteDates != null && sdk.getConfig().absoluteDates) {
             return;
         }
-        
+
         // Get visible position range
         LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
         if (layoutManager != null) {
             int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
             int lastVisiblePosition = layoutManager.findLastVisibleItemPosition();
-            
+
             // Update only visible items to avoid unnecessary work
             for (int i = firstVisiblePosition; i <= lastVisiblePosition; i++) {
                 RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(i);
@@ -1353,7 +1355,7 @@ public class FastCommentsView extends FrameLayout {
             }
         }
     }
-    
+
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
