@@ -4,30 +4,27 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.fastcomments.core.CommentWidgetConfig
 import com.fastcomments.core.VoteStyle
+import com.fastcomments.core.sso.FastCommentsSSO
+import com.fastcomments.core.sso.SecureSSOUserData
 import com.fastcomments.sdk.FastCommentsSDK
 import com.fastcomments.sdk.FastCommentsView
 
-class MainActivity : AppCompatActivity() {
-    
+class SecureSSOExampleActivity : AppCompatActivity() {
+
     private lateinit var commentsView: FastCommentsView
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // TODO simple sso example
-        // TODO secure sso example
-        // TODO all same examples as React library
-
         val config = CommentWidgetConfig(
             "L177BUDVvSe",
-            "https://blog.fastcomments.com/(12-30-2019)-fastcomments-demo.html",
+            "ssotest",
             "https://fastcomments.com/demo",
             "fastcomments.com",
             "Demo"
         )
-//        config.showLiveRightAway = false;
-//        config.voteStyle = VoteStyle.Heart;
+        config.sso = getSSOTokenFromServer();
         val sdk = FastCommentsSDK(config)
 
         val container = findViewById<android.widget.FrameLayout>(R.id.commentsContainer)
@@ -35,7 +32,15 @@ class MainActivity : AppCompatActivity() {
         container.addView(commentsView)
         commentsView.load()
     }
-    
+
+    private fun getSSOTokenFromServer(): String {
+        // DO THIS ON THE SERVER. THIS IS ONLY IN THE APP AS AN EXAMPLE!
+        val userData = SecureSSOUserData("user-123", "user@example.com", "Example User", "https://staticm.fastcomments.com/1639362726066-DSC_0841.JPG");
+        userData.displayName = "Fancy Name";
+        val sso = FastCommentsSSO.createSecure("YOUR_API_KEY", userData);
+        return sso.prepareToSend(); // send to client
+    }
+
     companion object {
         private const val TAG = "FastCommentsExample"
     }
