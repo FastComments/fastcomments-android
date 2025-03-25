@@ -817,7 +817,17 @@ public class FastCommentsView extends FrameLayout {
                     // Hide form after submitting with animation
                     hideCommentForm();
 
+                    // Add the comment to the tree, display immediately
                     sdk.addComment(comment, true);
+                    
+                    // Get the position of the newly added comment and scroll to it
+                    final RenderableComment renderableComment = sdk.commentsTree.commentsById.get(comment.getId());
+                    if (renderableComment != null) {
+                        int position = sdk.commentsTree.visibleNodes.indexOf(renderableComment);
+                        if (position >= 0) {
+                            recyclerView.smoothScrollToPosition(position);
+                        }
+                    }
                 });
                 return CONSUME;
             }
