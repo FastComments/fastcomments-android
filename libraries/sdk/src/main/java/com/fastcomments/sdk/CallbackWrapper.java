@@ -1,10 +1,12 @@
 package com.fastcomments.sdk;
 
 import android.os.Handler;
+import android.util.Log;
 
 import com.fastcomments.invoker.ApiCallback;
 import com.fastcomments.invoker.ApiException;
 import com.fastcomments.model.APIError;
+import com.google.gson.Gson;
 
 import java.util.List;
 import java.util.Map;
@@ -52,6 +54,19 @@ public class CallbackWrapper<T> {
     }
 
     public static APIError createErrorFromException(ApiException e) {
+        if (e.getResponseBody() != null) {
+            try {
+                final Gson gson = new Gson();
+                APIError error = gson.fromJson(e.getResponseBody(), APIError.class);
+                if (error != null) {
+                    return error;
+                }
+            } catch (Exception ex) {
+                Log.w("CallbackWrapper", "Failed to deserialize response body on error.");
+                ex.printStackTrace();
+                // continue...
+            }
+        }
         final APIError error = new APIError();
         error.setCode("internal");
         error.setReason(e.getMessage() != null ? e.getMessage() : "N/A");
