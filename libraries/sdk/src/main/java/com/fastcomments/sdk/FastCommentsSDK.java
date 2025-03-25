@@ -124,7 +124,7 @@ public class FastCommentsSDK {
                 if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
                     blockingErrorMessage = error.getTranslatedError();
                 } else if (error.getReason() != null && !error.getReason().isEmpty()) {
-                    blockingErrorMessage = error.getReason();
+                    blockingErrorMessage = "Comments could not load! Details: " + error.getReason();
                 }
                 // Note: No fallback string here - the UI will handle this with R.string.generic_loading_error
 
