@@ -15,7 +15,6 @@ public class CallbackWrapper<T> {
             @Override
             public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
                 final APIError error = new APIError();
-                error.setStatusCode((double) i);
                 error.setCode("internal");
                 mainHandler.post(() -> {
                     if (!callback.onFailure(error)) {
@@ -56,7 +55,6 @@ public class CallbackWrapper<T> {
         final APIError error = new APIError();
         error.setCode("internal");
         error.setReason(e.getMessage() != null ? e.getMessage() : "N/A");
-        error.setStatusCode((double) e.getCode());
         return error;
     }
 
