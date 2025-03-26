@@ -51,6 +51,12 @@ public class FastCommentsFeedView extends FrameLayout {
         void onFeedLoaded(List<FeedPost> posts);
         void onFeedError(String errorMessage);
         void onPostSelected(FeedPost post);
+        /**
+         * Called when the user wants to view or add comments for a post
+         * 
+         * @param post The post to show comments for
+         */
+        void onCommentsRequested(FeedPost post);
     }
 
     // Standard View constructors for inflation from XML
@@ -118,9 +124,9 @@ public class FastCommentsFeedView extends FrameLayout {
         adapter = new FeedPostsAdapter(context, feedPosts, sdk, new FeedPostsAdapter.OnFeedPostInteractionListener() {
             @Override
             public void onCommentClick(FeedPost post) {
-                // Navigate to comments for this post
+                // Notify callback for handling comments
                 if (listener != null) {
-                    listener.onPostSelected(post);
+                    listener.onCommentsRequested(post);
                 }
             }
 
@@ -485,6 +491,24 @@ public class FastCommentsFeedView extends FrameLayout {
      */
     private void hideError() {
         errorStateView.setVisibility(View.GONE);
+    }
+
+    /**
+     * Creates a FastCommentsView for displaying comments for a specific post
+     *
+     * @param post The post to show comments for
+     * @return A FastCommentsView instance configured for the post
+     */
+    public FastCommentsView createCommentsViewForPost(FeedPost post) {
+        if (sdk == null) {
+            throw new IllegalStateException("SDK must be set before creating a comments view");
+        }
+
+        // Create a FastCommentsSDK instance for this post's comments
+        FastCommentsSDK commentsSDK = sdk.createCommentsSDKForPost(post);
+        
+        // Create and return a FastCommentsView with the new SDK
+        return new FastCommentsView(getContext(), commentsSDK);
     }
 
     /**

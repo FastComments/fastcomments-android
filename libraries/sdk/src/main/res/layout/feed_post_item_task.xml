@@ -92,7 +92,7 @@
             android:orientation="vertical"
             android:layout_marginBottom="12dp">
 
-            <!-- Task action buttons will be added dynamically -->
+            <!-- Task action buttons will be added dynamically in horizontal rows -->
         </LinearLayout>
 
         <!-- Tags Container -->
