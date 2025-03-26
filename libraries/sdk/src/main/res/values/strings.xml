@@ -83,4 +83,20 @@
     <string name="block_user_title">Block User</string>
     <string name="block_user_confirm">Are you sure you want to block %1$s and hide their comments?</string>
     <string name="block">Block</string>
+    
+    <!-- Feed view strings -->
+    <string name="no_posts_yet">No posts to display.</string>
+    <string name="error_loading_posts">Error loading posts. Please try again.</string>
+    <string name="post_image">Post image</string>
+    <string name="play_video">Play video</string>
+    <string name="link_icon">Link icon</string>
+    <string name="comment">Comment</string>
+    <string name="share">Share</string>
+    <string name="minutes_ago">%1$d mins ago</string>
+    <string name="hours_ago">%1$d hrs ago</string>
+    <string name="days_ago">%1$d days ago</string>
+    <string name="just_now">Just now</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="post_liked">Post liked</string>
+    <string name="post_like_removed">Like removed</string>
 </resources>
