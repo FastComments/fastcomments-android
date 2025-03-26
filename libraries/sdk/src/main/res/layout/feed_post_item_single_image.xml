@@ -27,6 +27,8 @@
                 android:id="@+id/avatarImageView"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
+                android:padding="1dp"
+                android:background="@android:color/darker_gray"
                 android:scaleType="centerCrop"
                 android:src="@drawable/default_avatar"
                 android:contentDescription="@string/user_avatar" />
@@ -75,10 +77,8 @@
             <ImageView
                 android:id="@+id/mediaImageView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
-                android:scaleType="fitCenter"
-                android:maxHeight="300dp"
+                android:layout_height="280dp"
+                android:scaleType="centerCrop"
                 android:contentDescription="@string/post_image" />
 
             <!-- Play button for video content -->

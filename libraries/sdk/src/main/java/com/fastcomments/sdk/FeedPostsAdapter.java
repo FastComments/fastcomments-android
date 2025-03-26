@@ -121,6 +121,15 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         FeedPost post = feedPosts.get(position);
         holder.bind(post, position);
     }
+    
+    @Override
+    public void onViewRecycled(@NonNull FeedPostViewHolder holder) {
+        super.onViewRecycled(holder);
+        // Clean up ViewPager callbacks when view is recycled
+        if (holder.postType == FeedPostType.MULTI_IMAGE && holder.imageViewPager != null) {
+            holder.imageViewPager.unregisterOnPageChangeCallback(holder.pageChangeCallback);
+        }
+    }
 
     @Override
     public int getItemCount() {
@@ -166,12 +175,11 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         
         // Multi-image layout elements
         private FrameLayout mediaGalleryContainer;
-        private ImageView primaryImageView;
+        private androidx.viewpager2.widget.ViewPager2 imageViewPager;
         private TextView imageCounterTextView;
-        private ImageButton prevImageButton;
-        private ImageButton nextImageButton;
-        private int currentImageIndex = 0;
         private List<FeedPostMediaItem> mediaItems;
+        private PostImagesAdapter imagesAdapter;
+        private androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback pageChangeCallback;
         
         // Task layout elements
         private LinearLayout taskButtonsContainer;
@@ -200,14 +208,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     
                 case MULTI_IMAGE:
                     mediaGalleryContainer = itemView.findViewById(R.id.mediaGalleryContainer);
-                    primaryImageView = itemView.findViewById(R.id.primaryImageView);
+                    imageViewPager = itemView.findViewById(R.id.imageViewPager);
                     imageCounterTextView = itemView.findViewById(R.id.imageCounterTextView);
-                    prevImageButton = itemView.findViewById(R.id.prevImageButton);
-                    nextImageButton = itemView.findViewById(R.id.nextImageButton);
-                    
-                    // Set up navigation buttons
-                    prevImageButton.setOnClickListener(v -> showPreviousImage());
-                    nextImageButton.setOnClickListener(v -> showNextImage());
                     break;
                     
                 case TASK:
@@ -237,6 +239,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 if (avatarImageView != null) {
                     if (post.getFromUserAvatar() != null && !post.getFromUserAvatar().isEmpty()) {
                         avatarImageView.setVisibility(View.VISIBLE);
+                        // Use properly rounded avatar with border
                         Glide.with(context)
                                 .load(post.getFromUserAvatar())
                                 .circleCrop()
@@ -350,131 +353,48 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         private void bindMultiImagePost(FeedPost post) {
             if (post.getMedia() != null && !post.getMedia().isEmpty()) {
                 mediaItems = post.getMedia();
-                currentImageIndex = 0;
                 
-                // Show first image
-                showImageAtIndex(0);
-                
-                // Update counter
-                updateImageCounter();
-                
-                // Set navigation button states
-                updateNavigationButtons();
-                
-                // Add click listener to the main image
-                primaryImageView.setOnClickListener(v -> {
-                    if (listener != null && currentImageIndex < mediaItems.size()) {
-                        listener.onMediaClick(mediaItems.get(currentImageIndex));
+                // Create and set up the images adapter
+                imagesAdapter = new PostImagesAdapter(context, mediaItems, mediaItem -> {
+                    if (listener != null) {
+                        listener.onMediaClick(mediaItem);
                     }
                 });
-            }
-        }
-        
-        /**
-         * Show the image at the specified index in the multi-image carousel
-         *
-         * @param index The index of the image to display
-         */
-        private void showImageAtIndex(int index) {
-            if (mediaItems == null || mediaItems.isEmpty() || index < 0 || index >= mediaItems.size()) {
-                return;
-            }
-            
-            FeedPostMediaItem mediaItem = mediaItems.get(index);
-            
-            // Determine direction for animation (left or right)
-            boolean slideFromRight = index > currentImageIndex;
-            currentImageIndex = index;
-            
-            if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
-                // Select best size for display
-                FeedPostMediaItemAsset bestSizeAsset = selectBestImageSize(mediaItem.getSizes());
                 
-                if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
-                    // Apply fade animation
-                    primaryImageView.animate()
-                            .alpha(0f)
-                            .setDuration(150)
-                            .withEndAction(() -> {
-                                // Load the new image with error handling
-                                Glide.with(context)
-                                        .load(bestSizeAsset.getSrc())
-                                        .transition(DrawableTransitionOptions.withCrossFade())
-                                        .error(R.drawable.image_placeholder)
-                                        .into(primaryImageView);
-                                
-                                // Animate the image back in
-                                primaryImageView.animate()
-                                        .alpha(1f)
-                                        .setDuration(150)
-                                        .start();
-                            })
-                            .start();
+                // Set up the ViewPager
+                imageViewPager.setAdapter(imagesAdapter);
+                
+                // Initial counter update
+                updateImageCounter(0);
+                
+                // Clean up any existing callback
+                if (pageChangeCallback != null) {
+                    imageViewPager.unregisterOnPageChangeCallback(pageChangeCallback);
                 }
+                
+                // Create and register new callback
+                pageChangeCallback = new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        updateImageCounter(position);
+                    }
+                };
+                imageViewPager.registerOnPageChangeCallback(pageChangeCallback);
             }
-            
-            // Update counter and navigation buttons after changing the image
-            updateImageCounter();
-            updateNavigationButtons();
-        }
-        
-        /**
-         * Show the previous image in the carousel
-         */
-        private void showPreviousImage() {
-            if (mediaItems == null || mediaItems.isEmpty() || currentImageIndex <= 0) {
-                return;
-            }
-            
-            showImageAtIndex(currentImageIndex - 1);
-        }
-        
-        /**
-         * Show the next image in the carousel
-         */
-        private void showNextImage() {
-            if (mediaItems == null || mediaItems.isEmpty() || currentImageIndex >= mediaItems.size() - 1) {
-                return;
-            }
-            
-            showImageAtIndex(currentImageIndex + 1);
         }
         
         /**
          * Update the image counter text (e.g., "1/5")
+         * 
+         * @param position Current page position
          */
-        private void updateImageCounter() {
+        private void updateImageCounter(int position) {
             if (mediaItems == null || mediaItems.isEmpty() || imageCounterTextView == null) {
                 return;
             }
             
-            String counterText = String.format("%d/%d", currentImageIndex + 1, mediaItems.size());
+            String counterText = String.format("%d/%d", position + 1, mediaItems.size());
             imageCounterTextView.setText(counterText);
-        }
-        
-        /**
-         * Update the visibility and enabled state of navigation buttons
-         */
-        private void updateNavigationButtons() {
-            if (mediaItems == null || mediaItems.isEmpty()) {
-                if (prevImageButton != null) prevImageButton.setVisibility(View.GONE);
-                if (nextImageButton != null) nextImageButton.setVisibility(View.GONE);
-                return;
-            }
-            
-            // Only show navigation buttons if there are multiple images
-            boolean hasMultipleImages = mediaItems.size() > 1;
-            if (prevImageButton != null) {
-                prevImageButton.setVisibility(hasMultipleImages ? View.VISIBLE : View.GONE);
-                prevImageButton.setEnabled(currentImageIndex > 0);
-                prevImageButton.setAlpha(currentImageIndex > 0 ? 1.0f : 0.5f);
-            }
-            
-            if (nextImageButton != null) {
-                nextImageButton.setVisibility(hasMultipleImages ? View.VISIBLE : View.GONE);
-                nextImageButton.setEnabled(currentImageIndex < mediaItems.size() - 1);
-                nextImageButton.setAlpha(currentImageIndex < mediaItems.size() - 1 ? 1.0f : 0.5f);
-            }
         }
         
         private void bindTaskPost(FeedPost post) {

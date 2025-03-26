@@ -27,6 +27,8 @@
                 android:id="@+id/avatarImageView"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
+                android:padding="1dp"
+                android:background="@android:color/darker_gray"
                 android:scaleType="centerCrop"
                 android:src="@drawable/default_avatar"
                 android:contentDescription="@string/user_avatar" />
@@ -65,55 +67,32 @@
             android:textSize="16sp"
             tools:text="This is a post with multiple images." />
 
-        <!-- Media Gallery - Multiple Images -->
+        <!-- Media Gallery - Multiple Images with ViewPager2 -->
         <FrameLayout
             android:id="@+id/mediaGalleryContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp">
 
-            <!-- Main Image -->
-            <ImageView
-                android:id="@+id/primaryImageView"
+            <!-- Image ViewPager with increased height -->
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/imageViewPager"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:scaleType="centerCrop"
-                android:contentDescription="@string/post_image" />
+                android:layout_height="280dp" />
 
-            <!-- Image Counter -->
+            <!-- Image Counter (smaller size) -->
             <TextView
                 android:id="@+id/imageCounterTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end|bottom"
                 android:background="#80000000"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="4dp"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
                 android:layout_margin="8dp"
                 android:textColor="@android:color/white"
-                android:textSize="14sp"
+                android:textSize="10sp"
                 tools:text="1/5" />
-                
-            <!-- Navigation Buttons -->
-            <ImageButton
-                android:id="@+id/prevImageButton"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="center_vertical|start"
-                android:layout_marginStart="8dp"
-                android:background="@android:drawable/ic_media_previous"
-                android:backgroundTint="#80FFFFFF"
-                android:contentDescription="@string/previous_image" />
-                
-            <ImageButton
-                android:id="@+id/nextImageButton"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="center_vertical|end"
-                android:layout_marginEnd="8dp"
-                android:background="@android:drawable/ic_media_next"
-                android:backgroundTint="#80FFFFFF"
-                android:contentDescription="@string/next_image" />
         </FrameLayout>
 
         <!-- Tags Container -->
