@@ -62,6 +62,13 @@ public class ExampleFeedActivity extends AppCompatActivity {
                 // or
                 // showCommentsForPost(post);
             }
+
+            @Override
+            public void onCommentsRequested(FeedPost post) {
+                // Show comments dialog for the post
+                CommentsDialog dialog = new CommentsDialog(ExampleFeedActivity.this, post, feedSDK);
+                dialog.show();
+            }
         });
 
         // Load the feed

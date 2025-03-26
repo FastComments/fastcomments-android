@@ -239,10 +239,10 @@ public class FastCommentsFeedSDK {
     public void cleanup() {
         // Nothing to clean up yet
     }
-    
+
     /**
      * Creates a FastCommentsSDK instance configured for a specific post's comments
-     * 
+     *
      * @param post The feed post to create a comments SDK for
      * @return A configured FastCommentsSDK instance ready to display comments for this post
      */
@@ -250,18 +250,16 @@ public class FastCommentsFeedSDK {
         // Start with the same tenant ID from the feed SDK
         com.fastcomments.core.CommentWidgetConfig config = new com.fastcomments.core.CommentWidgetConfig();
         config.tenantId = this.config.tenantId;
-        
+
         // Set URL ID to the post ID - this is how comments are associated with the post
-        if (post.getId() != null) {
-            config.urlId = post.getId();
-        }
-        
+        config.urlId = "post:" + post.getId();
+
         // Set page title if available
         if (post.getTitle() != null) {
             config.pageTitle = post.getTitle();
         } else if (post.getContentHTML() != null) {
             // Use start of content as title if no title is available
-            String contentText = android.text.Html.fromHtml(post.getContentHTML(), 
+            String contentText = android.text.Html.fromHtml(post.getContentHTML(),
                     android.text.Html.FROM_HTML_MODE_COMPACT).toString();
             // Limit to 100 characters
             if (contentText.length() > 100) {
@@ -269,12 +267,12 @@ public class FastCommentsFeedSDK {
             }
             config.pageTitle = contentText;
         }
-        
+
         // Copy SSO token if available
-        if (this.config.ssoPayload != null) {
-            config.ssoPayload = this.config.ssoPayload;
+        if (this.config.sso != null) {
+            config.sso = this.config.sso;
         }
-        
+
         // Create a new FastCommentsSDK with this config
         return new FastCommentsSDK(config);
     }

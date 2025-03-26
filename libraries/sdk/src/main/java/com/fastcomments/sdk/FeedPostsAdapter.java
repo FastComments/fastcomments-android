@@ -235,10 +235,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 
                 // If there's an avatar URL, load it - otherwise show a default avatar
                 if (avatarImageView != null) {
-                    if (post.getFromUserAvatarSrc() != null && !post.getFromUserAvatarSrc().isEmpty()) {
+                    if (post.getFromUserAvatar() != null && !post.getFromUserAvatar().isEmpty()) {
                         avatarImageView.setVisibility(View.VISIBLE);
                         Glide.with(context)
-                                .load(post.getFromUserAvatarSrc())
+                                .load(post.getFromUserAvatar())
                                 .circleCrop()
                                 .error(R.drawable.default_avatar)
                                 .into(avatarImageView);
