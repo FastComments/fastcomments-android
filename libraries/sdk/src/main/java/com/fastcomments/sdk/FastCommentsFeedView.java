@@ -352,12 +352,10 @@ public class FastCommentsFeedView extends FrameLayout {
                         errorMessage = error.getReason();
                     }
 
-                    // Show a non-blocking toast instead of an error message
-                    android.widget.Toast.makeText(
-                            getContext(),
-                            errorMessage,
-                            android.widget.Toast.LENGTH_SHORT
-                    ).show();
+                    // Notify listener of error (if set)
+                    if (listener != null) {
+                        listener.onFeedError(errorMessage);
+                    }
                 });
                 return CONSUME;
             }
@@ -391,14 +389,10 @@ public class FastCommentsFeedView extends FrameLayout {
      */
     private void toggleLike(FeedPost post, int position) {
         // This is a placeholder for like functionality
-        // In a real implementation, this would call to the server
+        // In a real implementation, this would call to the server API
         
-        // For now, just show a toast message
-        android.widget.Toast.makeText(
-                getContext(),
-                R.string.post_liked,
-                android.widget.Toast.LENGTH_SHORT
-        ).show();
+        // For now, we just apply the state change locally
+        // No toast message - the UI update is enough feedback
     }
 
     /**

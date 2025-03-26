@@ -1,7 +1,6 @@
 package com.fastcomments;
 
 import android.os.Bundle;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -44,28 +43,24 @@ public class ExampleFeedActivity extends AppCompatActivity {
             @Override
             public void onFeedLoaded(List<FeedPost> posts) {
                 // Feed loaded successfully
-                Toast.makeText(ExampleFeedActivity.this, 
-                        "Loaded " + posts.size() + " posts", 
-                        Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onFeedError(String errorMessage) {
                 // Error loading feed
-                Toast.makeText(ExampleFeedActivity.this, 
-                        "Error: " + errorMessage, 
-                        Toast.LENGTH_SHORT).show();
+                // Consumer can handle this error as needed
             }
 
             @Override
             public void onPostSelected(FeedPost post) {
                 // User selected a post
-                Toast.makeText(ExampleFeedActivity.this, 
-                        "Selected post: " + post.getId(), 
-                        Toast.LENGTH_SHORT).show();
+                // Here you would typically navigate to a detail view 
+                // or show comments for this post
                 
-                // Here you could navigate to a detail view for the post
-                // or show the comments for this post
+                // In a real app, you might do:
+                // navigateToPostDetail(post);
+                // or
+                // showCommentsForPost(post);
             }
         });
 
