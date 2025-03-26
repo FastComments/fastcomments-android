@@ -77,7 +77,7 @@ public class FastCommentsFeedSDK {
 
     /**
      * Initial load method that fetches the first page of feed posts
-     * 
+     *
      * @param callback Callback to receive the response
      */
     public void load(FCCallback<GetFeedPostsResponse> callback) {
@@ -99,44 +99,44 @@ public class FastCommentsFeedSDK {
     private void loadFeedPosts(FCCallback<GetFeedPostsResponse> callback) {
         try {
             api.getFeedPostsPublic(config.tenantId)
-                .afterId(lastPostId)
-                .limit((double) pageSize)
-                .executeAsync(new ApiCallback<GetFeedPosts200Response>() {
-                    @Override
-                    public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
-                        APIError error = CallbackWrapper.createErrorFromException(e);
-                        if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
-                            blockingErrorMessage = error.getTranslatedError();
-                        } else if (error.getReason() != null && !error.getReason().isEmpty()) {
-                            blockingErrorMessage = "Feed could not load! Details: " + error.getReason();
-                        }
-                        callback.onFailure(error);
-                    }
-
-                    @Override
-                    public void onSuccess(GetFeedPosts200Response response, int statusCode, Map<String, List<String>> responseHeaders) {
-                        if (response.getActualInstance() instanceof APIError) {
-                            APIError error = (APIError) response.getActualInstance();
+                    .afterId(lastPostId)
+                    .limit((double) pageSize)
+                    .executeAsync(new ApiCallback<GetFeedPosts200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            APIError error = CallbackWrapper.createErrorFromException(e);
                             if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
                                 blockingErrorMessage = error.getTranslatedError();
                             } else if (error.getReason() != null && !error.getReason().isEmpty()) {
                                 blockingErrorMessage = "Feed could not load! Details: " + error.getReason();
                             }
                             callback.onFailure(error);
-                        } else {
-                            GetFeedPostsResponse feedResponse = response.getGetFeedPostsResponse();
-                            processResponse(feedResponse, callback);
                         }
-                    }
 
-                    @Override
-                    public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
-                    }
+                        @Override
+                        public void onSuccess(GetFeedPosts200Response response, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (response.getActualInstance() instanceof APIError) {
+                                APIError error = (APIError) response.getActualInstance();
+                                if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                                    blockingErrorMessage = error.getTranslatedError();
+                                } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                                    blockingErrorMessage = "Feed could not load! Details: " + error.getReason();
+                                }
+                                callback.onFailure(error);
+                            } else {
+                                GetFeedPostsResponse feedResponse = response.getGetFeedPostsResponse();
+                                processResponse(feedResponse, callback);
+                            }
+                        }
 
-                    @Override
-                    public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
-                    }
-                });
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                        }
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                        }
+                    });
         } catch (ApiException e) {
             CallbackWrapper.handleAPIException(mainHandler, callback, e);
         }
@@ -144,48 +144,42 @@ public class FastCommentsFeedSDK {
 
     /**
      * Process the feed posts response and update the internal state
-     * 
+     *
      * @param response The response from the API
      * @param callback Callback to receive the processed response
      */
     private void processResponse(GetFeedPostsResponse response, FCCallback<GetFeedPostsResponse> callback) {
         mainHandler.post(() -> {
-            if (response.getStatus() != null && response.getStatus().equals("SUCCESS")) {
-                List<FeedPost> posts = response.getFeedPosts();
-                
-                // Update the feed posts list
-                if (currentPage == 0) {
-                    feedPosts.clear();
-                }
-                
-                if (posts != null && !posts.isEmpty()) {
-                    feedPosts.addAll(posts);
-                    
-                    // Update lastPostId for pagination if we have posts
-                    FeedPost lastPost = posts.get(posts.size() - 1);
-                    try {
-                        lastPostId = Double.parseDouble(lastPost.getId());
-                    } catch (NumberFormatException e) {
-                        Log.e("FastCommentsFeedSDK", "Error parsing post ID: " + e.getMessage());
-                    }
-                }
-                
-                // Check if there are more posts to load
-                // If we got posts back and size equals page size, assume more posts are available
-                hasMore = posts != null && !posts.isEmpty() && posts.size() >= pageSize;
-                
-                callback.onSuccess(response);
-            } else {
-                APIError error = new APIError();
-                error.setReason("Failed to fetch feed posts");
-                callback.onFailure(error);
+            List<FeedPost> posts = response.getFeedPosts();
+
+            // Update the feed posts list
+            if (currentPage == 0) {
+                feedPosts.clear();
             }
+
+            if (posts != null && !posts.isEmpty()) {
+                feedPosts.addAll(posts);
+
+                // Update lastPostId for pagination if we have posts
+                FeedPost lastPost = posts.get(posts.size() - 1);
+                try {
+                    lastPostId = Double.parseDouble(lastPost.getId());
+                } catch (NumberFormatException e) {
+                    Log.e("FastCommentsFeedSDK", "Error parsing post ID: " + e.getMessage());
+                }
+            }
+
+            // Check if there are more posts to load
+            // If we got posts back and size equals page size, assume more posts are available
+            hasMore = posts != null && !posts.isEmpty() && posts.size() >= pageSize;
+
+            callback.onSuccess(response);
         });
     }
 
     /**
      * Load more feed posts (next page)
-     * 
+     *
      * @param callback Callback to receive the response
      */
     public void loadMore(FCCallback<GetFeedPostsResponse> callback) {
@@ -215,7 +209,7 @@ public class FastCommentsFeedSDK {
 
     /**
      * Refresh the feed by loading the most recent posts
-     * 
+     *
      * @param callback Callback to receive the response
      */
     public void refresh(FCCallback<GetFeedPostsResponse> callback) {
@@ -226,8 +220,8 @@ public class FastCommentsFeedSDK {
 
     /**
      * Like a feed post
-     * 
-     * @param postId The ID of the post to like
+     *
+     * @param postId   The ID of the post to like
      * @param callback Callback to receive the response
      */
     public void likePost(String postId, FCCallback<APIError> callback) {
