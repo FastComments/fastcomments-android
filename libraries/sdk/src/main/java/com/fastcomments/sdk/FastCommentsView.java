@@ -1404,7 +1404,7 @@ public class FastCommentsView extends FrameLayout {
      * 
      * @return Handler for UI updates
      */
-    private Handler getHandler() {
+    public Handler getHandler() {
         if (dateUpdateHandler == null) {
             dateUpdateHandler = new Handler(Looper.getMainLooper());
         }
