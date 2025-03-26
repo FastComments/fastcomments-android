@@ -227,9 +227,35 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         }
 
         void bind(FeedPost post, int position) {
-            // Set common elements
-            String userName = post.getFromUserId() != null ? post.getFromUserId() : context.getString(R.string.anonymous);
-            userNameTextView.setText(userName);
+            // Handle user information
+            if (post.getFromUserId() != null) {
+                String userName = post.getFromUserId();
+                userNameTextView.setText(userName);
+                userNameTextView.setVisibility(View.VISIBLE);
+                
+                // If there's an avatar URL, load it - otherwise show a default avatar
+                if (avatarImageView != null) {
+                    if (post.getFromUserAvatarSrc() != null && !post.getFromUserAvatarSrc().isEmpty()) {
+                        avatarImageView.setVisibility(View.VISIBLE);
+                        Glide.with(context)
+                                .load(post.getFromUserAvatarSrc())
+                                .circleCrop()
+                                .error(R.drawable.default_avatar)
+                                .into(avatarImageView);
+                    } else {
+                        // Show default avatar image
+                        avatarImageView.setVisibility(View.VISIBLE);
+                        avatarImageView.setImageResource(R.drawable.default_avatar);
+                    }
+                }
+            } else {
+                // Hide user information for anonymous posts
+                userNameTextView.setVisibility(View.GONE);
+                if (avatarImageView != null) {
+                    avatarImageView.setVisibility(View.GONE);
+                }
+            }
+            
             postTimeTextView.setText(formatTimestamp(post.getCreatedAt()));
 
             // Set content
@@ -480,17 +506,43 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             taskButtonsContainer.removeAllViews();
             
             if (post.getLinks() != null && !post.getLinks().isEmpty()) {
-                for (FeedPostLink link : post.getLinks()) {
+                // Create a horizontal layout for the buttons
+                LinearLayout buttonRow = new LinearLayout(context);
+                buttonRow.setLayoutParams(new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT));
+                buttonRow.setOrientation(LinearLayout.HORIZONTAL);
+                
+                // Set equal distribution of buttons
+                int buttonWeight = 1;
+                int buttonCount = post.getLinks().size();
+                
+                // Add buttons horizontally with equal weight
+                for (int i = 0; i < buttonCount; i++) {
+                    FeedPostLink link = post.getLinks().get(i);
                     Button actionButton = new Button(context);
-                    actionButton.setLayoutParams(new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT));
+                    
+                    // Create layout params with weight for equal distribution
+                    LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
+                            0, // 0dp width with weight for equal distribution
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            buttonWeight); // Equal weight for each button
+                    
+                    // Add margins between buttons (but not on edges)
+                    if (i > 0) {
+                        buttonParams.setMarginStart(8); // Add margin between buttons
+                    }
+                    if (i < buttonCount - 1) {
+                        buttonParams.setMarginEnd(8); // Add margin between buttons
+                    }
+                    
+                    actionButton.setLayoutParams(buttonParams);
                     
                     // Style as a filled button
                     actionButton.setBackgroundResource(android.R.color.holo_blue_light);
                     actionButton.setTextColor(context.getResources().getColor(android.R.color.white, null));
                     
-                    // Set button text
+                    // Set button text (keeping text short for horizontal layout)
                     String buttonText = link.getTitle();
                     if (buttonText == null || buttonText.isEmpty()) {
                         buttonText = link.getLink() != null ? 
@@ -498,11 +550,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                                 context.getString(R.string.learn_more);
                     }
                     actionButton.setText(buttonText);
-                    
-                    // Set margin between buttons
-                    LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) actionButton.getLayoutParams();
-                    params.setMargins(0, 0, 0, 16); // Add bottom margin
-                    actionButton.setLayoutParams(params);
+                    actionButton.setTextSize(12); // Smaller text size to fit better
+                    actionButton.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    actionButton.setSingleLine(true);
                     
                     // Set click listener
                     final String url = link.getLink();
@@ -512,8 +562,12 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         }
                     });
                     
-                    taskButtonsContainer.addView(actionButton);
+                    // Add to the horizontal row
+                    buttonRow.addView(actionButton);
                 }
+                
+                // Add the row to the container
+                taskButtonsContainer.addView(buttonRow);
             }
         }
 
