@@ -56,6 +56,23 @@ public class FastCommentsView extends FrameLayout {
     private Runnable dateUpdateRunnable;
     private static final long DATE_UPDATE_INTERVAL = 60000; // Update every minute
 
+    // Standard View constructors for inflation from XML
+    public FastCommentsView(Context context) {
+        super(context);
+        init(context, null, null);
+    }
+
+    public FastCommentsView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init(context, attrs, null);
+    }
+
+    public FastCommentsView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        init(context, attrs, null);
+    }
+
+    // Custom constructors with SDK
     public FastCommentsView(Context context, FastCommentsSDK sdk) {
         super(context);
         init(context, null, sdk);
@@ -131,13 +148,46 @@ public class FastCommentsView extends FrameLayout {
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         recyclerView.setLayoutManager(layoutManager);
-        adapter = new CommentsAdapter(context, sdk);
+        
+        // Store the SDK reference
+        this.sdk = sdk;
+        
+        // If SDK is not provided, postpone adapter initialization
+        // It will be initialized when setSDK is called
+        if (sdk != null) {
+            initializeWithSDK();
+        }
+    }
+    
+    /**
+     * Set the SDK instance to use with this view (for use when inflating from XML)
+     * 
+     * @param sdk The FastCommentsSDK instance
+     */
+    public void setSDK(FastCommentsSDK sdk) {
+        // If we already have this SDK instance set, don't reinitialize
+        if (this.sdk == sdk) {
+            return;
+        }
+        
+        this.sdk = sdk;
+        if (sdk != null) {
+            initializeWithSDK();
+        }
+    }
+    
+    /**
+     * Initialize the adapter and other SDK-dependent functionality
+     */
+    private void initializeWithSDK() {
+        // Initialize adapter
+        adapter = new CommentsAdapter(getContext(), sdk);
         recyclerView.setAdapter(adapter);
-
+        
         // Set up infinite scrolling if enabled in config
         boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null &&
                 sdk.getConfig().enableInfiniteScrolling;
-
+                
         if (isInfiniteScrollingEnabled) {
             recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
@@ -145,14 +195,17 @@ public class FastCommentsView extends FrameLayout {
                     super.onScrolled(recyclerView, dx, dy);
 
                     if (dy > 0) { // Scrolling down
-                        int visibleItemCount = layoutManager.getChildCount();
-                        int totalItemCount = layoutManager.getItemCount();
-                        int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
+                        LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                        if (layoutManager != null) {
+                            int visibleItemCount = layoutManager.getChildCount();
+                            int totalItemCount = layoutManager.getItemCount();
+                            int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
 
-                        // Load more when user is near the end (last 5 items)
-                        if ((visibleItemCount + firstVisibleItemPosition + 5) >= totalItemCount
-                                && sdk.hasMore) {
-                            loadMoreComments();
+                            // Load more when user is near the end (last 5 items)
+                            if ((visibleItemCount + firstVisibleItemPosition + 5) >= totalItemCount
+                                    && sdk.hasMore) {
+                                loadMoreComments();
+                            }
                         }
                     }
                 }
@@ -725,6 +778,11 @@ public class FastCommentsView extends FrameLayout {
     }
 
     public void load() {
+        if (sdk == null) {
+            Log.e("FastCommentsView", "Cannot load comments: SDK not set. Call setSDK() first.");
+            return;
+        }
+        
         showLoading(true);
 
         sdk.load(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
@@ -1342,14 +1400,26 @@ public class FastCommentsView extends FrameLayout {
     }
 
     /**
+     * Get the UI handler for posting to the main thread
+     * 
+     * @return Handler for UI updates
+     */
+    private Handler getHandler() {
+        if (dateUpdateHandler == null) {
+            dateUpdateHandler = new Handler(Looper.getMainLooper());
+        }
+        return dateUpdateHandler;
+    }
+
+    /**
      * Updates the dates for all visible comments
      */
     private void updateDates() {
-        // Skip if absolute dates are enabled
-        if (sdk.getConfig().absoluteDates != null && sdk.getConfig().absoluteDates) {
+        // Skip if SDK is not set or absolute dates are enabled
+        if (sdk == null || (sdk.getConfig().absoluteDates != null && sdk.getConfig().absoluteDates)) {
             return;
         }
-
+        
         // Get visible position range
         LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
         if (layoutManager != null) {

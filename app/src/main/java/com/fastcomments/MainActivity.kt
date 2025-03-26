@@ -15,24 +15,29 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // TODO simple sso example
-        // TODO secure sso example
-        // TODO all same examples as React library
-
+        // Configure the SDK
         val config = CommentWidgetConfig(
-            "L177BUDVvSe",
-            "https://blog.fastcomments.com/(12-30-2019)-fastcomments-demo.html",
-            "https://fastcomments.com/demo",
-            "fastcomments.com",
-            "Demo"
+            "demo", // Use your tenant ID
+            "https://example.com/page1", // Use your URL ID
+            "Example Page", // Page title
+            "example.com", // Domain
+            "Example Demo" // Site name
         )
-//        config.showLiveRightAway = false;
-//        config.voteStyle = VoteStyle.Heart;
+        
+        // Optional configuration
+        // config.voteStyle = VoteStyle.Heart
+        // config.enableInfiniteScrolling = true
+        
+        // Initialize the SDK
         val sdk = FastCommentsSDK(config)
 
-        val container = findViewById<android.widget.FrameLayout>(R.id.commentsContainer)
-        commentsView = FastCommentsView(this, sdk)
-        container.addView(commentsView)
+        // Find the comments view in the layout
+        commentsView = findViewById(R.id.commentsView)
+        
+        // Set the SDK instance for the view
+        commentsView.setSDK(sdk)
+        
+        // Load comments
         commentsView.load()
     }
     
