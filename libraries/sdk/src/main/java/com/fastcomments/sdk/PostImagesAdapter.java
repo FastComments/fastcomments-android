@@ -65,11 +65,23 @@ public class PostImagesAdapter extends RecyclerView.Adapter<PostImagesAdapter.Im
             imageView = itemView.findViewById(R.id.postImageView);
             playButton = itemView.findViewById(R.id.playButton);
 
-            // Set click listener
+            // Set click listener to show full image
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();
-                if (position != RecyclerView.NO_POSITION && listener != null) {
-                    listener.onImageClick(mediaItems.get(position));
+                if (position != RecyclerView.NO_POSITION) {
+                    FeedPostMediaItem mediaItem = mediaItems.get(position);
+                    // Get the best quality image URL for full view
+                    String fullImageUrl = getBestQualityImageUrl(mediaItem);
+                    
+                    if (fullImageUrl != null) {
+                        // Show the full image dialog
+                        new FullImageDialog(context, fullImageUrl).show();
+                    }
+                    
+                    // Also notify the listener if set
+                    if (listener != null) {
+                        listener.onImageClick(mediaItem);
+                    }
                 }
             });
         }
@@ -95,6 +107,35 @@ public class PostImagesAdapter extends RecyclerView.Adapter<PostImagesAdapter.Im
                               mediaItem.getLink().contains(".mp4"));
             
             playButton.setVisibility(isVideo ? View.VISIBLE : View.GONE);
+        }
+        
+        /**
+         * Get the best quality image URL for full-screen viewing
+         * For full-screen viewing, we want the highest quality image available
+         * 
+         * @param mediaItem The media item to get the URL from
+         * @return The URL of the highest quality image, or null if not available
+         */
+        private String getBestQualityImageUrl(FeedPostMediaItem mediaItem) {
+            if (mediaItem == null || mediaItem.getSizes() == null || mediaItem.getSizes().isEmpty()) {
+                return null;
+            }
+            
+            // Find the image with the highest resolution (largest width)
+            FeedPostMediaItemAsset highestQualityAsset = null;
+            double maxWidth = 0;
+            
+            for (FeedPostMediaItemAsset asset : mediaItem.getSizes()) {
+                if (asset != null && asset.getSrc() != null && asset.getW() != null) {
+                    double width = asset.getW();
+                    if (width > maxWidth) {
+                        maxWidth = width;
+                        highestQualityAsset = asset;
+                    }
+                }
+            }
+            
+            return highestQualityAsset != null ? highestQualityAsset.getSrc() : null;
         }
         
         /**

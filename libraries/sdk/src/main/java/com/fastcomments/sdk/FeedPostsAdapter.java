@@ -239,16 +239,11 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 if (avatarImageView != null) {
                     if (post.getFromUserAvatar() != null && !post.getFromUserAvatar().isEmpty()) {
                         avatarImageView.setVisibility(View.VISIBLE);
-                        // Use properly rounded avatar with border
-                        Glide.with(context)
-                                .load(post.getFromUserAvatar())
-                                .circleCrop()
-                                .error(R.drawable.default_avatar)
-                                .into(avatarImageView);
+                        AvatarFetcher.fetchTransformInto(context, post.getFromUserAvatar(), avatarImageView);
                     } else {
                         // Show default avatar image
                         avatarImageView.setVisibility(View.VISIBLE);
-                        avatarImageView.setImageResource(R.drawable.default_avatar);
+                        AvatarFetcher.fetchTransformInto(context, R.drawable.default_avatar, avatarImageView);
                     }
                 }
             } else {
@@ -333,8 +328,17 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         
                         playButton.setVisibility(isVideo ? View.VISIBLE : View.GONE);
                         
-                        // Set click listener for media
+                        // Set click listener for media to show full image
                         mediaContainer.setOnClickListener(v -> {
+                            // Get best quality image URL
+                            String fullImageUrl = getBestQualityImageUrl(mediaItem);
+                            
+                            if (fullImageUrl != null) {
+                                // Show the full image dialog
+                                new FullImageDialog(context, fullImageUrl).show();
+                            }
+                            
+                            // Also notify the listener if set
                             if (listener != null) {
                                 listener.onMediaClick(mediaItem);
                             }
@@ -513,6 +517,35 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             }
         }
 
+        /**
+         * Get the best quality image URL for full-screen viewing
+         * For full-screen viewing, we want the highest quality image available
+         * 
+         * @param mediaItem The media item to get the URL from
+         * @return The URL of the highest quality image, or null if not available
+         */
+        private String getBestQualityImageUrl(FeedPostMediaItem mediaItem) {
+            if (mediaItem == null || mediaItem.getSizes() == null || mediaItem.getSizes().isEmpty()) {
+                return null;
+            }
+            
+            // Find the image with the highest resolution (largest width)
+            FeedPostMediaItemAsset highestQualityAsset = null;
+            double maxWidth = 0;
+            
+            for (FeedPostMediaItemAsset asset : mediaItem.getSizes()) {
+                if (asset != null && asset.getSrc() != null && asset.getW() != null) {
+                    double width = asset.getW();
+                    if (width > maxWidth) {
+                        maxWidth = width;
+                        highestQualityAsset = asset;
+                    }
+                }
+            }
+            
+            return highestQualityAsset != null ? highestQualityAsset.getSrc() : null;
+        }
+        
         /**
          * Format timestamp based on SDK configuration
          * Uses the same logic as CommentViewHolder.updateDateDisplay()

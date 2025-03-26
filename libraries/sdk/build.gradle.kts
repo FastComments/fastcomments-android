@@ -48,6 +48,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.12.1")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("com.google.android.flexbox:flexbox:3.0.0")
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
