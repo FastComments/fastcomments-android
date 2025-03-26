@@ -27,9 +27,11 @@ class SecureSSOExampleActivity : AppCompatActivity() {
         config.sso = getSSOTokenFromServer();
         val sdk = FastCommentsSDK(config)
 
-        val container = findViewById<android.widget.FrameLayout>(R.id.commentsContainer)
-        commentsView = FastCommentsView(this, sdk)
-        container.addView(commentsView)
+        // Find the comments view in the layout
+        commentsView = findViewById(R.id.commentsView)
+        
+        // Set the SDK instance for the view
+        commentsView.setSDK(sdk)
         commentsView.load()
     }
 
