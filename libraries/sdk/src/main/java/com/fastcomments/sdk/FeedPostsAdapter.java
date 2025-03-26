@@ -21,6 +21,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.FeedPostLink;
 import com.fastcomments.model.FeedPostMediaItem;
+import com.fastcomments.model.FeedPostMediaItemAsset;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
@@ -282,29 +283,36 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             if (post.getMedia() != null && !post.getMedia().isEmpty()) {
                 FeedPostMediaItem mediaItem = post.getMedia().get(0);
                 
-                if (mediaItem.getSizes() != null && mediaItem.getSizes().getSrc() != null) {
-                    mediaContainer.setVisibility(View.VISIBLE);
+                if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
+                    // Select most appropriate size for display
+                    FeedPostMediaItemAsset bestSizeAsset = selectBestImageSize(mediaItem.getSizes());
                     
-                    Glide.with(context)
-                            .load(mediaItem.getSizes().getSrc())
-                            .transition(DrawableTransitionOptions.withCrossFade())
-                            .error(R.drawable.image_placeholder)
-                            .into(mediaImageView);
-
-                    // Determine if it's a video
-                    boolean isVideo = mediaItem.getLink() != null && 
-                                     (mediaItem.getLink().contains("youtube") || 
-                                      mediaItem.getLink().contains("vimeo") ||
-                                      mediaItem.getLink().contains(".mp4"));
-                    
-                    playButton.setVisibility(isVideo ? View.VISIBLE : View.GONE);
-                    
-                    // Set click listener for media
-                    mediaContainer.setOnClickListener(v -> {
-                        if (listener != null) {
-                            listener.onMediaClick(mediaItem);
-                        }
-                    });
+                    if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
+                        mediaContainer.setVisibility(View.VISIBLE);
+                        
+                        Glide.with(context)
+                                .load(bestSizeAsset.getSrc())
+                                .transition(DrawableTransitionOptions.withCrossFade())
+                                .error(R.drawable.image_placeholder)
+                                .into(mediaImageView);
+    
+                        // Determine if it's a video
+                        boolean isVideo = mediaItem.getLink() != null && 
+                                         (mediaItem.getLink().contains("youtube") || 
+                                          mediaItem.getLink().contains("vimeo") ||
+                                          mediaItem.getLink().contains(".mp4"));
+                        
+                        playButton.setVisibility(isVideo ? View.VISIBLE : View.GONE);
+                        
+                        // Set click listener for media
+                        mediaContainer.setOnClickListener(v -> {
+                            if (listener != null) {
+                                listener.onMediaClick(mediaItem);
+                            }
+                        });
+                    } else {
+                        mediaContainer.setVisibility(View.GONE);
+                    }
                 } else {
                     mediaContainer.setVisibility(View.GONE);
                 }
@@ -352,26 +360,31 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             boolean slideFromRight = index > currentImageIndex;
             currentImageIndex = index;
             
-            if (mediaItem.getSizes() != null && mediaItem.getSizes().getSrc() != null) {
-                // Apply fade animation
-                primaryImageView.animate()
-                        .alpha(0f)
-                        .setDuration(150)
-                        .withEndAction(() -> {
-                            // Load the new image with error handling
-                            Glide.with(context)
-                                    .load(mediaItem.getSizes().getSrc())
-                                    .transition(DrawableTransitionOptions.withCrossFade())
-                                    .error(R.drawable.image_placeholder)
-                                    .into(primaryImageView);
-                            
-                            // Animate the image back in
-                            primaryImageView.animate()
-                                    .alpha(1f)
-                                    .setDuration(150)
-                                    .start();
-                        })
-                        .start();
+            if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
+                // Select best size for display
+                FeedPostMediaItemAsset bestSizeAsset = selectBestImageSize(mediaItem.getSizes());
+                
+                if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
+                    // Apply fade animation
+                    primaryImageView.animate()
+                            .alpha(0f)
+                            .setDuration(150)
+                            .withEndAction(() -> {
+                                // Load the new image with error handling
+                                Glide.with(context)
+                                        .load(bestSizeAsset.getSrc())
+                                        .transition(DrawableTransitionOptions.withCrossFade())
+                                        .error(R.drawable.image_placeholder)
+                                        .into(primaryImageView);
+                                
+                                // Animate the image back in
+                                primaryImageView.animate()
+                                        .alpha(1f)
+                                        .setDuration(150)
+                                        .start();
+                            })
+                            .start();
+                }
             }
             
             // Update counter and navigation buttons after changing the image
@@ -442,13 +455,20 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             // Handle optional media
             if (post.getMedia() != null && !post.getMedia().isEmpty()) {
                 FeedPostMediaItem mediaItem = post.getMedia().get(0);
-                if (mediaItem.getSizes() != null && mediaItem.getSizes().getSrc() != null) {
-                    mediaContainer.setVisibility(View.VISIBLE);
-                    Glide.with(context)
-                            .load(mediaItem.getSizes().getSrc())
-                            .transition(DrawableTransitionOptions.withCrossFade())
-                            .error(R.drawable.image_placeholder)
-                            .into(mediaImageView);
+                if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
+                    // Select best size for display
+                    FeedPostMediaItemAsset bestSizeAsset = selectBestImageSize(mediaItem.getSizes());
+                    
+                    if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
+                        mediaContainer.setVisibility(View.VISIBLE);
+                        Glide.with(context)
+                                .load(bestSizeAsset.getSrc())
+                                .transition(DrawableTransitionOptions.withCrossFade())
+                                .error(R.drawable.image_placeholder)
+                                .into(mediaImageView);
+                    } else {
+                        mediaContainer.setVisibility(View.GONE);
+                    }
                 } else {
                     mediaContainer.setVisibility(View.GONE);
                 }
@@ -545,6 +565,82 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 );
                 return relativeTime.toString();
             }
+        }
+        
+        /**
+         * Select the best image size based on device display metrics
+         * Prioritizes images that fit well on the screen while maintaining quality
+         * 
+         * @param sizes List of available image sizes
+         * @return The most appropriate FeedPostMediaItemAsset or the first one if no optimal size is found
+         */
+        private FeedPostMediaItemAsset selectBestImageSize(List<FeedPostMediaItemAsset> sizes) {
+            if (sizes == null || sizes.isEmpty()) {
+                return null;
+            }
+            
+            // If there's only one size, use it
+            if (sizes.size() == 1) {
+                return sizes.get(0);
+            }
+            
+            // Get screen width for comparison
+            int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+            
+            // Target a size that's close to the screen width for optimal display
+            // We'll tolerate images up to 1.5x screen width to maintain quality
+            double optimalWidth = screenWidth;
+            double maxAcceptableWidth = screenWidth * 1.5;
+            
+            FeedPostMediaItemAsset bestMatch = null;
+            double smallestDiff = Double.MAX_VALUE;
+            
+            // First pass: find close matches to optimal width
+            for (FeedPostMediaItemAsset asset : sizes) {
+                if (asset == null || asset.getW() == null || asset.getSrc() == null) {
+                    continue;
+                }
+                
+                double width = asset.getW();
+                double diff = Math.abs(width - optimalWidth);
+                
+                // If width is within acceptable range and has smaller difference than current best match
+                if (width <= maxAcceptableWidth && diff < smallestDiff) {
+                    bestMatch = asset;
+                    smallestDiff = diff;
+                }
+            }
+            
+            // If no match found in optimal range, just use the largest that's not excessively large
+            if (bestMatch == null) {
+                double largestAcceptableWidth = 0;
+                
+                for (FeedPostMediaItemAsset asset : sizes) {
+                    if (asset == null || asset.getW() == null || asset.getSrc() == null) {
+                        continue;
+                    }
+                    
+                    double width = asset.getW();
+                    
+                    // Find largest image that's not too oversized
+                    if (width > largestAcceptableWidth && width <= maxAcceptableWidth * 2) {
+                        bestMatch = asset;
+                        largestAcceptableWidth = width;
+                    }
+                }
+                
+                // If still no match, use the first valid asset
+                if (bestMatch == null) {
+                    for (FeedPostMediaItemAsset asset : sizes) {
+                        if (asset != null && asset.getSrc() != null) {
+                            return asset;
+                        }
+                    }
+                }
+            }
+            
+            // Return best match or first asset if no match found
+            return bestMatch != null ? bestMatch : sizes.get(0);
         }
     }
 }
