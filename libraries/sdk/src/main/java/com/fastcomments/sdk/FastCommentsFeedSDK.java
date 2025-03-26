@@ -26,7 +26,7 @@ public class FastCommentsFeedSDK {
 
     private UserSessionInfo currentUser;
     private final CommentWidgetConfig config;
-    private final DefaultApi api;
+    private final PublicApi api;
     private final Handler mainHandler;
 
     private List<FeedPost> feedPosts = new ArrayList<>();
@@ -42,7 +42,7 @@ public class FastCommentsFeedSDK {
      * @param config CommentWidgetConfig object containing credentials and other settings
      */
     public FastCommentsFeedSDK(CommentWidgetConfig config) {
-        this.api = new DefaultApi();
+        this.api = new PublicApi();
         this.mainHandler = new Handler(Looper.getMainLooper());
         this.config = config;
         this.api.getApiClient().setBasePath("https://fastcomments.com");
@@ -98,7 +98,7 @@ public class FastCommentsFeedSDK {
      */
     private void loadFeedPosts(FCCallback<GetFeedPostsResponse> callback) {
         try {
-            api.getFeedPosts(config.tenantId)
+            api.getFeedPostsPublic(config.tenantId)
                 .afterId(lastPostId)
                 .limit((double) pageSize)
                 .executeAsync(new ApiCallback<GetFeedPosts200Response>() {
