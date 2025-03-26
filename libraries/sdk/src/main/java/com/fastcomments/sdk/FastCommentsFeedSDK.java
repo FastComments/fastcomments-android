@@ -32,7 +32,7 @@ public class FastCommentsFeedSDK {
     private List<FeedPost> feedPosts = new ArrayList<>();
     public boolean hasMore = false;
     public int currentPage = 0;
-    public Double lastPostId = null;
+    public String lastPostId = null;
     public int pageSize = 10;
     public String blockingErrorMessage = null;
 
@@ -100,7 +100,7 @@ public class FastCommentsFeedSDK {
         try {
             api.getFeedPostsPublic(config.tenantId)
                     .afterId(lastPostId)
-                    .limit((double) pageSize)
+                    .limit(pageSize)
                     .executeAsync(new ApiCallback<GetFeedPosts200Response>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
@@ -162,11 +162,7 @@ public class FastCommentsFeedSDK {
 
                 // Update lastPostId for pagination if we have posts
                 FeedPost lastPost = posts.get(posts.size() - 1);
-                try {
-                    lastPostId = Double.parseDouble(lastPost.getId());
-                } catch (NumberFormatException e) {
-                    Log.e("FastCommentsFeedSDK", "Error parsing post ID: " + e.getMessage());
-                }
+                lastPostId = lastPost.getId();
             }
 
             // Check if there are more posts to load
