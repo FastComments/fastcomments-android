@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -55,11 +56,63 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         this.useAbsoluteDates = Boolean.TRUE.equals(sdk.getConfig().absoluteDates);
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        FeedPost post = feedPosts.get(position);
+        return determinePostType(post).ordinal();
+    }
+
+    /**
+     * Determine the type of post based on its content
+     * 
+     * @param post The post to analyze
+     * @return The FeedPostType for this post
+     */
+    private FeedPostType determinePostType(FeedPost post) {
+        // Check if this is a task post with action links
+        if (post.getLinks() != null && !post.getLinks().isEmpty()) {
+            return FeedPostType.TASK;
+        }
+        
+        // Check for multiple images
+        if (post.getMedia() != null && post.getMedia().size() > 1) {
+            return FeedPostType.MULTI_IMAGE;
+        }
+        
+        // Check for a single image
+        if (post.getMedia() != null && post.getMedia().size() == 1) {
+            return FeedPostType.SINGLE_IMAGE;
+        }
+        
+        // Default to text only
+        return FeedPostType.TEXT_ONLY;
+    }
+
     @NonNull
     @Override
     public FeedPostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.feed_post_item, parent, false);
-        return new FeedPostViewHolder(view);
+        FeedPostType postType = FeedPostType.values()[viewType];
+        int layoutResId;
+        
+        // Select the appropriate layout based on post type
+        switch (postType) {
+            case SINGLE_IMAGE:
+                layoutResId = R.layout.feed_post_item_single_image;
+                break;
+            case MULTI_IMAGE:
+                layoutResId = R.layout.feed_post_item_multi_image;
+                break;
+            case TASK:
+                layoutResId = R.layout.feed_post_item_task;
+                break;
+            case TEXT_ONLY:
+            default:
+                layoutResId = R.layout.feed_post_item_text_only;
+                break;
+        }
+        
+        View view = LayoutInflater.from(context).inflate(layoutResId, parent, false);
+        return new FeedPostViewHolder(view, postType);
     }
 
     @Override
@@ -93,34 +146,77 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
     }
 
     class FeedPostViewHolder extends RecyclerView.ViewHolder {
+        private final FeedPostType postType;
+        
+        // Common elements in all layouts
         private final TextView userNameTextView;
         private final TextView postTimeTextView;
         private final TextView contentTextView;
         private final ImageView avatarImageView;
-        private final FrameLayout mediaContainer;
-        private final ImageView mediaImageView;
-        private final ImageView playButton;
-        private final LinearLayout linksContainer;
         private final ChipGroup tagsChipGroup;
         private final Button commentButton;
         private final Button likeButton;
         private final Button shareButton;
-
-        FeedPostViewHolder(@NonNull View itemView) {
+        
+        // Single image layout elements
+        private FrameLayout mediaContainer;
+        private ImageView mediaImageView;
+        private ImageView playButton;
+        
+        // Multi-image layout elements
+        private FrameLayout mediaGalleryContainer;
+        private ImageView primaryImageView;
+        private TextView imageCounterTextView;
+        private ImageButton prevImageButton;
+        private ImageButton nextImageButton;
+        private int currentImageIndex = 0;
+        private List<FeedPostMediaItem> mediaItems;
+        
+        // Task layout elements
+        private LinearLayout taskButtonsContainer;
+        
+        FeedPostViewHolder(@NonNull View itemView, FeedPostType postType) {
             super(itemView);
+            this.postType = postType;
+            
+            // Common elements
             userNameTextView = itemView.findViewById(R.id.userNameTextView);
             postTimeTextView = itemView.findViewById(R.id.postTimeTextView);
             contentTextView = itemView.findViewById(R.id.contentTextView);
             avatarImageView = itemView.findViewById(R.id.avatarImageView);
-            mediaContainer = itemView.findViewById(R.id.mediaContainer);
-            mediaImageView = itemView.findViewById(R.id.mediaImageView);
-            playButton = itemView.findViewById(R.id.playButton);
-            linksContainer = itemView.findViewById(R.id.linksContainer);
             tagsChipGroup = itemView.findViewById(R.id.tagsChipGroup);
             commentButton = itemView.findViewById(R.id.commentButton);
             likeButton = itemView.findViewById(R.id.likeButton);
             shareButton = itemView.findViewById(R.id.shareButton);
+            
+            // Type-specific elements
+            switch (postType) {
+                case SINGLE_IMAGE:
+                    mediaContainer = itemView.findViewById(R.id.mediaContainer);
+                    mediaImageView = itemView.findViewById(R.id.mediaImageView);
+                    playButton = itemView.findViewById(R.id.playButton);
+                    break;
+                    
+                case MULTI_IMAGE:
+                    mediaGalleryContainer = itemView.findViewById(R.id.mediaGalleryContainer);
+                    primaryImageView = itemView.findViewById(R.id.primaryImageView);
+                    imageCounterTextView = itemView.findViewById(R.id.imageCounterTextView);
+                    prevImageButton = itemView.findViewById(R.id.prevImageButton);
+                    nextImageButton = itemView.findViewById(R.id.nextImageButton);
+                    
+                    // Set up navigation buttons
+                    prevImageButton.setOnClickListener(v -> showPreviousImage());
+                    nextImageButton.setOnClickListener(v -> showNextImage());
+                    break;
+                    
+                case TASK:
+                    taskButtonsContainer = itemView.findViewById(R.id.taskButtonsContainer);
+                    mediaContainer = itemView.findViewById(R.id.mediaContainer);
+                    mediaImageView = itemView.findViewById(R.id.mediaImageView);
+                    break;
+            }
 
+            // Set post click listener
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION && listener != null) {
@@ -130,11 +226,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         }
 
         void bind(FeedPost post, int position) {
-            // Set user info
+            // Set common elements
             String userName = post.getFromUserId() != null ? post.getFromUserId() : context.getString(R.string.anonymous);
             userNameTextView.setText(userName);
-
-            // Set post time
             postTimeTextView.setText(formatTimestamp(post.getCreatedAt()));
 
             // Set content
@@ -145,16 +239,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 contentTextView.setVisibility(View.GONE);
             }
 
-            // Set media content if available
-            setupMediaContent(post);
-
-            // Set links if available
-            setupLinks(post);
-
             // Set tags if available
             setupTags(post);
 
-            // Set button actions
+            // Set common button actions
             commentButton.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onCommentClick(post);
@@ -172,17 +260,35 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     listener.onShareClick(post);
                 }
             });
+            
+            // Handle type-specific bindings
+            switch (postType) {
+                case SINGLE_IMAGE:
+                    bindSingleImagePost(post);
+                    break;
+                case MULTI_IMAGE:
+                    bindMultiImagePost(post);
+                    break;
+                case TASK:
+                    bindTaskPost(post);
+                    break;
+                case TEXT_ONLY:
+                    // No additional binding needed for text-only posts
+                    break;
+            }
         }
-
-        private void setupMediaContent(FeedPost post) {
+        
+        private void bindSingleImagePost(FeedPost post) {
             if (post.getMedia() != null && !post.getMedia().isEmpty()) {
-                FeedPostMediaItem mediaItem = post.getMedia().get(0); // Display the first media item
-                mediaContainer.setVisibility(View.VISIBLE);
-
+                FeedPostMediaItem mediaItem = post.getMedia().get(0);
+                
                 if (mediaItem.getSizes() != null && mediaItem.getSizes().getSrc() != null) {
+                    mediaContainer.setVisibility(View.VISIBLE);
+                    
                     Glide.with(context)
                             .load(mediaItem.getSizes().getSrc())
                             .transition(DrawableTransitionOptions.withCrossFade())
+                            .error(R.drawable.image_placeholder)
                             .into(mediaImageView);
 
                     // Determine if it's a video
@@ -206,31 +312,188 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 mediaContainer.setVisibility(View.GONE);
             }
         }
-
-        private void setupLinks(FeedPost post) {
-            linksContainer.removeAllViews();
+        
+        private void bindMultiImagePost(FeedPost post) {
+            if (post.getMedia() != null && !post.getMedia().isEmpty()) {
+                mediaItems = post.getMedia();
+                currentImageIndex = 0;
+                
+                // Show first image
+                showImageAtIndex(0);
+                
+                // Update counter
+                updateImageCounter();
+                
+                // Set navigation button states
+                updateNavigationButtons();
+                
+                // Add click listener to the main image
+                primaryImageView.setOnClickListener(v -> {
+                    if (listener != null && currentImageIndex < mediaItems.size()) {
+                        listener.onMediaClick(mediaItems.get(currentImageIndex));
+                    }
+                });
+            }
+        }
+        
+        /**
+         * Show the image at the specified index in the multi-image carousel
+         *
+         * @param index The index of the image to display
+         */
+        private void showImageAtIndex(int index) {
+            if (mediaItems == null || mediaItems.isEmpty() || index < 0 || index >= mediaItems.size()) {
+                return;
+            }
+            
+            FeedPostMediaItem mediaItem = mediaItems.get(index);
+            
+            // Determine direction for animation (left or right)
+            boolean slideFromRight = index > currentImageIndex;
+            currentImageIndex = index;
+            
+            if (mediaItem.getSizes() != null && mediaItem.getSizes().getSrc() != null) {
+                // Apply fade animation
+                primaryImageView.animate()
+                        .alpha(0f)
+                        .setDuration(150)
+                        .withEndAction(() -> {
+                            // Load the new image with error handling
+                            Glide.with(context)
+                                    .load(mediaItem.getSizes().getSrc())
+                                    .transition(DrawableTransitionOptions.withCrossFade())
+                                    .error(R.drawable.image_placeholder)
+                                    .into(primaryImageView);
+                            
+                            // Animate the image back in
+                            primaryImageView.animate()
+                                    .alpha(1f)
+                                    .setDuration(150)
+                                    .start();
+                        })
+                        .start();
+            }
+            
+            // Update counter and navigation buttons after changing the image
+            updateImageCounter();
+            updateNavigationButtons();
+        }
+        
+        /**
+         * Show the previous image in the carousel
+         */
+        private void showPreviousImage() {
+            if (mediaItems == null || mediaItems.isEmpty() || currentImageIndex <= 0) {
+                return;
+            }
+            
+            showImageAtIndex(currentImageIndex - 1);
+        }
+        
+        /**
+         * Show the next image in the carousel
+         */
+        private void showNextImage() {
+            if (mediaItems == null || mediaItems.isEmpty() || currentImageIndex >= mediaItems.size() - 1) {
+                return;
+            }
+            
+            showImageAtIndex(currentImageIndex + 1);
+        }
+        
+        /**
+         * Update the image counter text (e.g., "1/5")
+         */
+        private void updateImageCounter() {
+            if (mediaItems == null || mediaItems.isEmpty() || imageCounterTextView == null) {
+                return;
+            }
+            
+            String counterText = String.format("%d/%d", currentImageIndex + 1, mediaItems.size());
+            imageCounterTextView.setText(counterText);
+        }
+        
+        /**
+         * Update the visibility and enabled state of navigation buttons
+         */
+        private void updateNavigationButtons() {
+            if (mediaItems == null || mediaItems.isEmpty()) {
+                if (prevImageButton != null) prevImageButton.setVisibility(View.GONE);
+                if (nextImageButton != null) nextImageButton.setVisibility(View.GONE);
+                return;
+            }
+            
+            // Only show navigation buttons if there are multiple images
+            boolean hasMultipleImages = mediaItems.size() > 1;
+            if (prevImageButton != null) {
+                prevImageButton.setVisibility(hasMultipleImages ? View.VISIBLE : View.GONE);
+                prevImageButton.setEnabled(currentImageIndex > 0);
+                prevImageButton.setAlpha(currentImageIndex > 0 ? 1.0f : 0.5f);
+            }
+            
+            if (nextImageButton != null) {
+                nextImageButton.setVisibility(hasMultipleImages ? View.VISIBLE : View.GONE);
+                nextImageButton.setEnabled(currentImageIndex < mediaItems.size() - 1);
+                nextImageButton.setAlpha(currentImageIndex < mediaItems.size() - 1 ? 1.0f : 0.5f);
+            }
+        }
+        
+        private void bindTaskPost(FeedPost post) {
+            // Handle optional media
+            if (post.getMedia() != null && !post.getMedia().isEmpty()) {
+                FeedPostMediaItem mediaItem = post.getMedia().get(0);
+                if (mediaItem.getSizes() != null && mediaItem.getSizes().getSrc() != null) {
+                    mediaContainer.setVisibility(View.VISIBLE);
+                    Glide.with(context)
+                            .load(mediaItem.getSizes().getSrc())
+                            .transition(DrawableTransitionOptions.withCrossFade())
+                            .error(R.drawable.image_placeholder)
+                            .into(mediaImageView);
+                } else {
+                    mediaContainer.setVisibility(View.GONE);
+                }
+            } else {
+                mediaContainer.setVisibility(View.GONE);
+            }
+            
+            // Create action buttons from links
+            taskButtonsContainer.removeAllViews();
             
             if (post.getLinks() != null && !post.getLinks().isEmpty()) {
-                linksContainer.setVisibility(View.VISIBLE);
-                
                 for (FeedPostLink link : post.getLinks()) {
-                    View linkItemView = LayoutInflater.from(context).inflate(
-                            R.layout.feed_post_link_item, linksContainer, false);
+                    Button actionButton = new Button(context);
+                    actionButton.setLayoutParams(new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT));
                     
-                    TextView linkTitleView = linkItemView.findViewById(R.id.linkTitleTextView);
-                    linkTitleView.setText(link.getTitle() != null ? link.getTitle() : link.getLink());
+                    // Style as a filled button
+                    actionButton.setBackgroundResource(android.R.color.holo_blue_light);
+                    actionButton.setTextColor(context.getResources().getColor(android.R.color.white, null));
                     
+                    // Set button text
+                    String buttonText = link.getTitle();
+                    if (buttonText == null || buttonText.isEmpty()) {
+                        buttonText = link.getLink() != null ? 
+                                context.getString(R.string.view_details) : 
+                                context.getString(R.string.learn_more);
+                    }
+                    actionButton.setText(buttonText);
+                    
+                    // Set margin between buttons
+                    LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) actionButton.getLayoutParams();
+                    params.setMargins(0, 0, 0, 16); // Add bottom margin
+                    actionButton.setLayoutParams(params);
+                    
+                    // Set click listener
                     final String url = link.getLink();
-                    linkItemView.setOnClickListener(v -> {
+                    actionButton.setOnClickListener(v -> {
                         if (listener != null && url != null) {
                             listener.onLinkClick(url);
                         }
                     });
                     
-                    linksContainer.addView(linkItemView);
+                    taskButtonsContainer.addView(actionButton);
                 }
-            } else {
-                linksContainer.setVisibility(View.GONE);
             }
         }
 
