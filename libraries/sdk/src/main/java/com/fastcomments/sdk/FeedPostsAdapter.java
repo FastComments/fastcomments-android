@@ -338,7 +338,29 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         
                         playButton.setVisibility(isVideo ? View.VISIBLE : View.GONE);
                         
-                        // Set click listener for media to show full image
+                        // Make sure both the container and the image itself are clickable
+                        mediaContainer.setClickable(true);
+                        mediaContainer.setFocusable(true);
+                        mediaImageView.setClickable(true);
+                        mediaImageView.setFocusable(true);
+                        
+                        // Set click listener for the image
+                        mediaImageView.setOnClickListener(v -> {
+                            // Get best quality image URL
+                            String fullImageUrl = getBestQualityImageUrl(mediaItem);
+                            
+                            if (fullImageUrl != null) {
+                                // Show the full image dialog
+                                new FullImageDialog(context, fullImageUrl).show();
+                            }
+                            
+                            // Also notify the listener if set
+                            if (listener != null) {
+                                listener.onMediaClick(mediaItem);
+                            }
+                        });
+                        
+                        // Set click listener for media container as a backup
                         mediaContainer.setOnClickListener(v -> {
                             // Get best quality image URL
                             String fullImageUrl = getBestQualityImageUrl(mediaItem);
@@ -430,6 +452,31 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                                 .transition(DrawableTransitionOptions.withCrossFade())
                                 .error(R.drawable.image_placeholder)
                                 .into(mediaImageView);
+                        
+                        // Make sure image and container are clickable
+                        mediaContainer.setClickable(true);
+                        mediaContainer.setFocusable(true);
+                        mediaImageView.setClickable(true);
+                        mediaImageView.setFocusable(true);
+                        
+                        // Set click listeners for both container and image
+                        View.OnClickListener imageClickListener = v -> {
+                            // Get best quality image URL
+                            String fullImageUrl = getBestQualityImageUrl(mediaItem);
+                            
+                            if (fullImageUrl != null) {
+                                // Show the full image dialog
+                                new FullImageDialog(context, fullImageUrl).show();
+                            }
+                            
+                            // Also notify the listener
+                            if (listener != null) {
+                                listener.onMediaClick(mediaItem);
+                            }
+                        };
+                        
+                        mediaContainer.setOnClickListener(imageClickListener);
+                        mediaImageView.setOnClickListener(imageClickListener);
                     } else {
                         mediaContainer.setVisibility(View.GONE);
                     }

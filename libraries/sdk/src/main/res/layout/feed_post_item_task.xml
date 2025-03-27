@@ -76,6 +76,8 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
             android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true"
             tools:visibility="visible">
 
             <ImageView
@@ -85,6 +87,9 @@
                 android:adjustViewBounds="true"
                 android:maxHeight="300dp"
                 android:scaleType="centerCrop"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
                 android:contentDescription="@string/post_image" />
         </FrameLayout>
 

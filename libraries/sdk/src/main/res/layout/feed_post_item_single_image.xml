@@ -71,7 +71,9 @@
             android:id="@+id/mediaContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:focusable="true">
 
             <ImageView
                 android:id="@+id/mediaImageView"
@@ -80,6 +82,9 @@
                 android:adjustViewBounds="true"
                 android:maxHeight="300dp"
                 android:scaleType="centerCrop"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
                 android:contentDescription="@string/post_image" />
 
             <!-- Play button for video content -->
