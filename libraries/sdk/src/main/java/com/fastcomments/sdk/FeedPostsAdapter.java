@@ -462,9 +462,11 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     
                     actionButton.setLayoutParams(buttonParams);
                     
-                    // Style as a filled button
-                    actionButton.setBackgroundResource(android.R.color.holo_blue_light);
-                    actionButton.setTextColor(context.getResources().getColor(android.R.color.white, null));
+                    // Apply modern styling with our custom background
+                    actionButton.setBackgroundResource(R.drawable.task_button_background);
+                    actionButton.setTextColor(context.getResources().getColor(android.R.color.black, null));
+                    actionButton.setPadding(16, 12, 16, 12); // Increased vertical padding for taller buttons
+                    actionButton.setMinHeight(48); // Set minimum height to 48dp (standard button height)
                     
                     // Set button text (keeping text short for horizontal layout)
                     String buttonText = link.getTitle();
@@ -477,6 +479,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     actionButton.setTextSize(12); // Smaller text size to fit better
                     actionButton.setEllipsize(android.text.TextUtils.TruncateAt.END);
                     actionButton.setSingleLine(true);
+                    actionButton.setAllCaps(false); // More modern look with lowercase
                     
                     // Set click listener
                     final String url = link.getLink();
