@@ -240,8 +240,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
         void bind(FeedPost post, int position) {
             // Handle user information
-            if (post.getFromUserId() != null) {
-                String userName = post.getFromUserId();
+            if (post.getFromUserDisplayName() != null) {
+                String userName = post.getFromUserDisplayName();
                 userNameTextView.setText(userName);
                 userNameTextView.setVisibility(View.VISIBLE);
                 
