@@ -70,7 +70,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
      * @return The FeedPostType for this post
      */
     private FeedPostType determinePostType(FeedPost post) {
-        // Check if this is a task post with action links
+        // Check if this is a post with action links
         if (post.getLinks() != null && !post.getLinks().isEmpty()) {
             return FeedPostType.TASK;
         }
@@ -216,6 +216,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     taskButtonsContainer = itemView.findViewById(R.id.taskButtonsContainer);
                     mediaContainer = itemView.findViewById(R.id.mediaContainer);
                     mediaImageView = itemView.findViewById(R.id.mediaImageView);
+                    
+                    // Make sure link preview elements are initialized
+                    // The findViewById calls happen in bindTaskPost now
                     break;
             }
 
@@ -402,6 +405,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         }
         
         private void bindTaskPost(FeedPost post) {
+            View linkPreviewContainer = itemView.findViewById(R.id.linkPreviewContainer);
+            TextView linkTitleTextView = itemView.findViewById(R.id.linkTitleTextView);
+            TextView linkDescriptionTextView = itemView.findViewById(R.id.linkDescriptionTextView);
+            
             // Handle optional media
             if (post.getMedia() != null && !post.getMedia().isEmpty()) {
                 FeedPostMediaItem mediaItem = post.getMedia().get(0);
@@ -426,38 +433,55 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 mediaContainer.setVisibility(View.GONE);
             }
             
-            // Create action buttons from links
+            // Process links for the Facebook-style display
             taskButtonsContainer.removeAllViews();
             
             if (post.getLinks() != null && !post.getLinks().isEmpty()) {
-                // Create a horizontal layout for the buttons
-                LinearLayout buttonRow = new LinearLayout(context);
-                buttonRow.setLayoutParams(new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT));
-                buttonRow.setOrientation(LinearLayout.HORIZONTAL);
+                FeedPostLink primaryLink = post.getLinks().get(0); // Use the first link as primary
                 
-                // Set equal distribution of buttons
-                int buttonWeight = 1;
+                // Set up the link preview container
+                linkPreviewContainer.setVisibility(View.VISIBLE);
+                
+                // Display link title and description if available
+                boolean hasTitleOrDescription = false;
+                
+                if (primaryLink.getTitle() != null && !primaryLink.getTitle().isEmpty()) {
+                    linkTitleTextView.setText(primaryLink.getTitle());
+                    linkTitleTextView.setVisibility(View.VISIBLE);
+                    hasTitleOrDescription = true;
+                } else {
+                    linkTitleTextView.setVisibility(View.GONE);
+                }
+                
+                if (primaryLink.getDescription() != null && !primaryLink.getDescription().isEmpty()) {
+                    linkDescriptionTextView.setText(primaryLink.getDescription());
+                    linkDescriptionTextView.setVisibility(View.VISIBLE);
+                    hasTitleOrDescription = true;
+                } else {
+                    linkDescriptionTextView.setVisibility(View.GONE);
+                }
+                
+                // Create action buttons for each link
                 int buttonCount = post.getLinks().size();
                 
-                // Add buttons horizontally with equal weight
                 for (int i = 0; i < buttonCount; i++) {
                     FeedPostLink link = post.getLinks().get(i);
                     Button actionButton = new Button(context);
                     
-                    // Create layout params with weight for equal distribution
-                    LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
-                            0, // 0dp width with weight for equal distribution
-                            LinearLayout.LayoutParams.WRAP_CONTENT,
-                            buttonWeight); // Equal weight for each button
-                    
-                    // Add margins between buttons (but not on edges)
-                    if (i > 0) {
-                        buttonParams.setMarginStart(8); // Add margin between buttons
-                    }
-                    if (i < buttonCount - 1) {
-                        buttonParams.setMarginEnd(8); // Add margin between buttons
+                    // If we have title/description, make button vertical on right side
+                    LinearLayout.LayoutParams buttonParams;
+                    if (hasTitleOrDescription) {
+                        // Vertical button on right side
+                        buttonParams = new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT);
+                        buttonParams.setMargins(0, i > 0 ? 8 : 0, 0, 0); // Add top margin for subsequent buttons
+                    } else {
+                        // Full-width horizontal button (original style)
+                        buttonParams = new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT);
+                        buttonParams.setMargins(0, i > 0 ? 8 : 0, 0, 0); // Add top margin for subsequent buttons
                     }
                     
                     actionButton.setLayoutParams(buttonParams);
@@ -466,15 +490,18 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     actionButton.setBackgroundResource(R.drawable.task_button_background);
                     actionButton.setTextColor(context.getResources().getColor(android.R.color.black, null));
                     actionButton.setPadding(16, 12, 16, 12); // Increased vertical padding for taller buttons
-                    actionButton.setMinHeight(48); // Set minimum height to 48dp (standard button height)
                     
-                    // Set button text (keeping text short for horizontal layout)
-                    String buttonText = link.getTitle();
+                    // Set button text
+                    String buttonText = link.getText(); // Prefer the display text if available
                     if (buttonText == null || buttonText.isEmpty()) {
-                        buttonText = link.getUrl() != null ?
-                                context.getString(R.string.view_details) : 
-                                context.getString(R.string.learn_more);
+                        buttonText = link.getTitle(); // Try title next
+                        if (buttonText == null || buttonText.isEmpty()) {
+                            buttonText = link.getUrl() != null ?
+                                    context.getString(R.string.view_details) : 
+                                    context.getString(R.string.learn_more);
+                        }
                     }
+                    
                     actionButton.setText(buttonText);
                     actionButton.setTextSize(12); // Smaller text size to fit better
                     actionButton.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -489,12 +516,18 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         }
                     });
                     
-                    // Add to the horizontal row
-                    buttonRow.addView(actionButton);
+                    // For first button in vertical layout, add vertical margins to center it
+                    if (hasTitleOrDescription && i == 0) {
+                        actionButton.setMinWidth(100); // Ensure button has reasonable width
+                        buttonParams.setMargins(12, 0, 12, 0); // Add side margins
+                    }
+                    
+                    // Add button to container
+                    taskButtonsContainer.addView(actionButton);
                 }
-                
-                // Add the row to the container
-                taskButtonsContainer.addView(buttonRow);
+            } else {
+                // No links, hide the link preview container
+                linkPreviewContainer.setVisibility(View.GONE);
             }
         }
 

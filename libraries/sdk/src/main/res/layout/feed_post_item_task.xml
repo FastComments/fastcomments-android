@@ -67,7 +67,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
             android:textSize="16sp"
-            tools:text="This is a task post that might contain details about what the user did or what actions they can take." />
+            tools:text="This is a post with a link that displays title and description below." />
 
         <!-- Optional Media Container -->
         <FrameLayout
@@ -88,16 +88,71 @@
                 android:contentDescription="@string/post_image" />
         </FrameLayout>
 
-        <!-- Task Action Buttons -->
-        <LinearLayout
-            android:id="@+id/taskButtonsContainer"
+        <!-- Link Preview Container (Facebook-style) -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/linkPreviewContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="4dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#F5F5F5">
 
-            <!-- Task action buttons will be added dynamically in horizontal rows -->
-        </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Link Content with Task Action Buttons -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="80dp"
+                    android:orientation="horizontal">
+
+                    <!-- Link Title & Description (Left Side) -->
+                    <LinearLayout
+                        android:id="@+id/linkContentContainer"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:id="@+id/linkTitleTextView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:maxLines="2"
+                            android:ellipsize="end"
+                            tools:text="Link Title Goes Here" />
+
+                        <TextView
+                            android:id="@+id/linkDescriptionTextView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textSize="14sp"
+                            android:maxLines="3"
+                            android:ellipsize="end"
+                            tools:text="Link description text goes here with more details about the linked content that may span multiple lines." />
+                    </LinearLayout>
+
+                    <!-- Link Action Buttons (Right Side) -->
+                    <LinearLayout
+                        android:id="@+id/taskButtonsContainer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <!-- Task action buttons will be added dynamically -->
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
         <!-- Tags Container -->
         <com.google.android.material.chip.ChipGroup
