@@ -1,7 +1,6 @@
 plugins {
     id("com.android.library")
     id("maven-publish")
-    id("signing")
 }
 
 android {
@@ -104,25 +103,15 @@ publishing {
 
     repositories {
         maven {
-            name = "sonatype"
-            url = uri(
-                if (releaseVersion.endsWith("SNAPSHOT")) {
-                    "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-                } else {
-                    "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
-                }
-            )
+            name = "repsy"
+            val releasesRepoUrl = "https://repo.repsy.io/mvn/winrid/fastcomments"
+            val snapshotsRepoUrl = "https://repo.repsy.io/mvn/winrid/fastcomments" 
+            url = uri(if (releaseVersion.endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
+            
             credentials {
-                username = findProperty("ossrhUsername") as String? ?: System.getenv("OSSRH_USERNAME")
-                password = findProperty("ossrhPassword") as String? ?: System.getenv("OSSRH_PASSWORD")
+                username = findProperty("repsyUsername") as String? ?: System.getenv("REPSY_USERNAME")
+                password = findProperty("repsyPassword") as String? ?: System.getenv("REPSY_PASSWORD")
             }
         }
     }
-}
-
-signing {
-    val signingKey: String? = findProperty("signingKey") as String? ?: System.getenv("SIGNING_KEY")
-    val signingPassword: String? = findProperty("signingPassword") as String? ?: System.getenv("SIGNING_PASSWORD")
-    useInMemoryPgpKeys(signingKey, signingPassword)
-    sign(publishing.publications["release"])
 }
