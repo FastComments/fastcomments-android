@@ -321,10 +321,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                                 .into(mediaImageView);
     
                         // Determine if it's a video
-                        boolean isVideo = mediaItem.getLink() != null && 
-                                         (mediaItem.getLink().contains("youtube") || 
-                                          mediaItem.getLink().contains("vimeo") ||
-                                          mediaItem.getLink().contains(".mp4"));
+                        boolean isVideo = mediaItem.getLinkUrl() != null &&
+                                         (mediaItem.getLinkUrl().contains("youtube") ||
+                                          mediaItem.getLinkUrl().contains("vimeo") ||
+                                          mediaItem.getLinkUrl().contains(".mp4"));
                         
                         playButton.setVisibility(isVideo ? View.VISIBLE : View.GONE);
                         
@@ -471,7 +471,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     // Set button text (keeping text short for horizontal layout)
                     String buttonText = link.getTitle();
                     if (buttonText == null || buttonText.isEmpty()) {
-                        buttonText = link.getLink() != null ? 
+                        buttonText = link.getUrl() != null ?
                                 context.getString(R.string.view_details) : 
                                 context.getString(R.string.learn_more);
                     }
@@ -482,7 +482,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     actionButton.setAllCaps(false); // More modern look with lowercase
                     
                     // Set click listener
-                    final String url = link.getLink();
+                    final String url = link.getUrl();
                     actionButton.setOnClickListener(v -> {
                         if (listener != null && url != null) {
                             listener.onLinkClick(url);

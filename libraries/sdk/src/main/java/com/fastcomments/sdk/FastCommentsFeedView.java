@@ -159,8 +159,8 @@ public class FastCommentsFeedView extends FrameLayout {
             @Override
             public void onMediaClick(FeedPostMediaItem mediaItem) {
                 // Handle media click
-                if (mediaItem.getLink() != null) {
-                    openUrl(mediaItem.getLink());
+                if (mediaItem.getLinkUrl() != null) {
+                    openUrl(mediaItem.getLinkUrl());
                 }
             }
         });
@@ -424,11 +424,11 @@ public class FastCommentsFeedView extends FrameLayout {
         
         // Get the first link if available
         if (post.getLinks() != null && !post.getLinks().isEmpty() 
-                && post.getLinks().get(0).getLink() != null) {
+                && post.getLinks().get(0).getUrl() != null) {
             if (shareMessage.length() > 0) {
                 shareMessage.append("\n\n");
             }
-            shareMessage.append(post.getLinks().get(0).getLink());
+            shareMessage.append(post.getLinks().get(0).getUrl());
         }
         
         shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage.toString());

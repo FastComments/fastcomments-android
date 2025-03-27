@@ -101,10 +101,10 @@ public class PostImagesAdapter extends RecyclerView.Adapter<PostImagesAdapter.Im
             }
 
             // Determine if it's a video
-            boolean isVideo = mediaItem.getLink() != null && 
-                             (mediaItem.getLink().contains("youtube") || 
-                              mediaItem.getLink().contains("vimeo") ||
-                              mediaItem.getLink().contains(".mp4"));
+            boolean isVideo = mediaItem.getLinkUrl() != null &&
+                             (mediaItem.getLinkUrl().contains("youtube") ||
+                              mediaItem.getLinkUrl().contains("vimeo") ||
+                              mediaItem.getLinkUrl().contains(".mp4"));
             
             playButton.setVisibility(isVideo ? View.VISIBLE : View.GONE);
         }
