@@ -31,8 +31,7 @@ public class FastCommentsFeedSDK {
 
     private List<FeedPost> feedPosts = new ArrayList<>();
     public boolean hasMore = false;
-    public int currentPage = 0;
-    public String lastPostId = null;
+    public String lastPostId = null; // Used for cursor-based pagination with afterId
     public int pageSize = 10;
     public String blockingErrorMessage = null;
 
@@ -82,8 +81,7 @@ public class FastCommentsFeedSDK {
      */
     public void load(FCCallback<GetFeedPostsResponse> callback) {
         // Reset pagination for initial load
-        currentPage = 0;
-        lastPostId = null;
+        lastPostId = null;  // Reset the cursor for pagination
 
         // Reset any existing error message
         blockingErrorMessage = null;
@@ -152,8 +150,9 @@ public class FastCommentsFeedSDK {
         mainHandler.post(() -> {
             List<FeedPost> posts = response.getFeedPosts();
 
-            // Update the feed posts list
-            if (currentPage == 0) {
+            // Only clear the list if this is an initial load (no lastPostId)
+            // This ensures we don't clear when paginating or loading more
+            if (lastPostId == null) {
                 feedPosts.clear();
             }
 
@@ -175,6 +174,7 @@ public class FastCommentsFeedSDK {
 
     /**
      * Load more feed posts (next page)
+     * This uses cursor-based pagination with the lastPostId
      *
      * @param callback Callback to receive the response
      */
@@ -186,11 +186,11 @@ public class FastCommentsFeedSDK {
             return;
         }
 
-        currentPage++;
+        // Using cursor-based pagination with lastPostId
+        // No need to track the page number
         loadFeedPosts(new FCCallback<GetFeedPostsResponse>() {
             @Override
             public boolean onFailure(APIError error) {
-                currentPage--; // Reset page on failure
                 callback.onFailure(error);
                 return CONSUME;
             }
@@ -209,8 +209,7 @@ public class FastCommentsFeedSDK {
      * @param callback Callback to receive the response
      */
     public void refresh(FCCallback<GetFeedPostsResponse> callback) {
-        currentPage = 0;
-        lastPostId = null;
+        lastPostId = null;  // Reset cursor-based pagination
         loadFeedPosts(callback);
     }
 
