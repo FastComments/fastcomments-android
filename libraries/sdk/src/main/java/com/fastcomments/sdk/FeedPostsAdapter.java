@@ -525,75 +525,130 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         taskButtonsContainer.addView(actionButton);
                     }
                 } else {
-                    // No title/description - use original horizontal button layout
+                    // No title/description - use traditional horizontal button layout
                     linkPreviewContainer.setVisibility(View.GONE);
                     
-                    // Create a horizontal layout for the buttons
-                    LinearLayout buttonRow = new LinearLayout(context);
-                    buttonRow.setLayoutParams(new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT));
-                    buttonRow.setOrientation(LinearLayout.HORIZONTAL);
-                    
-                    // Set equal distribution of buttons
-                    int buttonWeight = 1;
+                    // For multiple buttons, we need to handle them differently depending on count
                     int buttonCount = post.getLinks().size();
                     
-                    // Add buttons horizontally with equal weight
-                    for (int i = 0; i < buttonCount; i++) {
-                        FeedPostLink link = post.getLinks().get(i);
-                        Button actionButton = new Button(context);
+                    // If we have 1-3 buttons, use a horizontal layout with equal width
+                    if (buttonCount <= 3) {
+                        // Create a horizontal layout for the buttons
+                        LinearLayout buttonRow = new LinearLayout(context);
+                        buttonRow.setLayoutParams(new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT));
+                        buttonRow.setOrientation(LinearLayout.HORIZONTAL);
                         
-                        // Create layout params with weight for equal distribution
-                        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
-                                0, // 0dp width with weight for equal distribution
-                                LinearLayout.LayoutParams.WRAP_CONTENT,
-                                buttonWeight); // Equal weight for each button
+                        // Set equal distribution of buttons
+                        int buttonWeight = 1;
                         
-                        // Add margins between buttons (but not on edges)
-                        if (i > 0) {
-                            buttonParams.setMarginStart(8); // Add margin between buttons
-                        }
-                        if (i < buttonCount - 1) {
-                            buttonParams.setMarginEnd(8); // Add margin between buttons
-                        }
-                        
-                        actionButton.setLayoutParams(buttonParams);
-                        
-                        // Apply modern styling with our custom background
-                        actionButton.setBackgroundResource(R.drawable.task_button_background);
-                        actionButton.setTextColor(context.getResources().getColor(android.R.color.black, null));
-                        actionButton.setPadding(16, 12, 16, 12); // Increased vertical padding for taller buttons
-                        actionButton.setMinHeight(48); // Set minimum height to 48dp (standard button height)
-                        
-                        // Set button text
-                        String buttonText = link.getText(); // Prefer the display text if available
-                        if (buttonText == null || buttonText.isEmpty()) {
-                            buttonText = link.getUrl() != null ?
-                                    context.getString(R.string.view_details) : 
-                                    context.getString(R.string.learn_more);
-                        }
-                        
-                        actionButton.setText(buttonText);
-                        actionButton.setTextSize(12); // Smaller text size to fit better
-                        actionButton.setEllipsize(android.text.TextUtils.TruncateAt.END);
-                        actionButton.setSingleLine(true);
-                        actionButton.setAllCaps(false); // More modern look with lowercase
-                        
-                        // Set click listener
-                        final String url = link.getUrl();
-                        actionButton.setOnClickListener(v -> {
-                            if (listener != null && url != null) {
-                                listener.onLinkClick(url);
+                        // Add buttons horizontally with equal weight
+                        for (int i = 0; i < buttonCount; i++) {
+                            FeedPostLink link = post.getLinks().get(i);
+                            Button actionButton = new Button(context);
+                            
+                            // Create layout params with weight for equal distribution
+                            LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
+                                    0, // 0dp width with weight for equal distribution
+                                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                                    buttonWeight); // Equal weight for each button
+                            
+                            // Add margins between buttons (but not on edges)
+                            if (i > 0) {
+                                buttonParams.setMarginStart(8); // Add margin between buttons
                             }
-                        });
+                            if (i < buttonCount - 1) {
+                                buttonParams.setMarginEnd(8); // Add margin between buttons
+                            }
+                            
+                            actionButton.setLayoutParams(buttonParams);
+                            
+                            // Apply modern styling with our custom background
+                            actionButton.setBackgroundResource(R.drawable.task_button_background);
+                            actionButton.setTextColor(context.getResources().getColor(android.R.color.black, null));
+                            actionButton.setPadding(16, 12, 16, 12); // Increased vertical padding for taller buttons
+                            actionButton.setMinHeight(48); // Set minimum height to 48dp (standard button height)
+                            
+                            // Set button text
+                            String buttonText = link.getText(); // Prefer the display text if available
+                            if (buttonText == null || buttonText.isEmpty()) {
+                                buttonText = link.getUrl() != null ?
+                                        context.getString(R.string.view_details) : 
+                                        context.getString(R.string.learn_more);
+                            }
+                            
+                            actionButton.setText(buttonText);
+                            actionButton.setTextSize(12); // Smaller text size to fit better
+                            actionButton.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                            actionButton.setSingleLine(true);
+                            actionButton.setAllCaps(false); // More modern look with lowercase
+                            
+                            // Set click listener
+                            final String url = link.getUrl();
+                            actionButton.setOnClickListener(v -> {
+                                if (listener != null && url != null) {
+                                    listener.onLinkClick(url);
+                                }
+                            });
+                            
+                            // Add to the horizontal row
+                            buttonRow.addView(actionButton);
+                        }
                         
-                        // Add to the horizontal row
-                        buttonRow.addView(actionButton);
+                        // Add the row to the container
+                        taskButtonsContainer.addView(buttonRow);
+                    } else {
+                        // For 4+ buttons, stack them in a vertical layout
+                        // Each button gets full width for better readability
+                        for (int i = 0; i < buttonCount; i++) {
+                            FeedPostLink link = post.getLinks().get(i);
+                            Button actionButton = new Button(context);
+                            
+                            // Full width button
+                            LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
+                                    LinearLayout.LayoutParams.MATCH_PARENT,
+                                    LinearLayout.LayoutParams.WRAP_CONTENT);
+                            
+                            // Add margin between buttons
+                            if (i > 0) {
+                                buttonParams.setMargins(0, 8, 0, 0); // Add top margin
+                            }
+                            
+                            actionButton.setLayoutParams(buttonParams);
+                            
+                            // Apply modern styling with our custom background
+                            actionButton.setBackgroundResource(R.drawable.task_button_background);
+                            actionButton.setTextColor(context.getResources().getColor(android.R.color.black, null));
+                            actionButton.setPadding(16, 12, 16, 12); // Increased vertical padding for taller buttons
+                            actionButton.setMinHeight(48); // Set minimum height to 48dp (standard button height)
+                            
+                            // Set button text
+                            String buttonText = link.getText(); // Prefer the display text if available
+                            if (buttonText == null || buttonText.isEmpty()) {
+                                buttonText = link.getUrl() != null ?
+                                        context.getString(R.string.view_details) : 
+                                        context.getString(R.string.learn_more);
+                            }
+                            
+                            actionButton.setText(buttonText);
+                            actionButton.setTextSize(12); // Smaller text size to fit better
+                            actionButton.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                            actionButton.setSingleLine(true);
+                            actionButton.setAllCaps(false); // More modern look with lowercase
+                            
+                            // Set click listener
+                            final String url = link.getUrl();
+                            actionButton.setOnClickListener(v -> {
+                                if (listener != null && url != null) {
+                                    listener.onLinkClick(url);
+                                }
+                            });
+                            
+                            // Add button directly to container (vertical stacking)
+                            taskButtonsContainer.addView(actionButton);
+                        }
                     }
-                    
-                    // Add the row to the container
-                    taskButtonsContainer.addView(buttonRow);
                 }
             } else {
                 // No links, hide the link preview container
