@@ -372,15 +372,7 @@ public class FastCommentsFeedView extends FrameLayout {
                     isLoadingMore = false;
                     loadMoreProgressBar.setVisibility(View.GONE);
 
-                    // Get the newly loaded posts
-                    List<FeedPost> allPosts = sdk.getFeedPosts();
-                    int previousSize = adapter.getItemCount();
-                    
-                    if (allPosts.size() > previousSize) {
-                        // Extract just the new posts
-                        List<FeedPost> newPosts = allPosts.subList(previousSize, allPosts.size());
-                        adapter.addPosts(newPosts);
-                    }
+                    adapter.addPosts(response.getFeedPosts());
                 });
                 return CONSUME;
             }
