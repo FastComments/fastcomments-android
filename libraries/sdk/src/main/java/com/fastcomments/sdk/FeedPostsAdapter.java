@@ -437,6 +437,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             View linkPreviewContainer = itemView.findViewById(R.id.linkPreviewContainer);
             TextView linkTitleTextView = itemView.findViewById(R.id.linkTitleTextView);
             TextView linkDescriptionTextView = itemView.findViewById(R.id.linkDescriptionTextView);
+            LinearLayout richLinkButtonsContainer = itemView.findViewById(R.id.richLinkButtonsContainer);
             
             // Handle optional media
             if (post.getMedia() != null && !post.getMedia().isEmpty()) {
@@ -487,8 +488,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 mediaContainer.setVisibility(View.GONE);
             }
             
-            // Process links for the Facebook-style display
+            // Clear button containers
             taskButtonsContainer.removeAllViews();
+            richLinkButtonsContainer.removeAllViews();
             
             if (post.getLinks() != null && !post.getLinks().isEmpty()) {
                 FeedPostLink primaryLink = post.getLinks().get(0); // Use the first link as primary
@@ -499,7 +501,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     (primaryLink.getDescription() != null && !primaryLink.getDescription().isEmpty());
                 
                 if (hasTitleOrDescription) {
-                    // Facebook-style layout with title/description + button on right
+                    // layout with title/description + button on right
                     linkPreviewContainer.setVisibility(View.VISIBLE);
                     
                     // Display link title if available
@@ -568,8 +570,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                             buttonParams.setMargins(12, 0, 12, 0); // Add side margins
                         }
                         
-                        // Add button to container
-                        taskButtonsContainer.addView(actionButton);
+                        // Add button to rich link buttons container
+                        richLinkButtonsContainer.addView(actionButton);
                     }
                 } else {
                     // No title/description - use traditional horizontal button layout
