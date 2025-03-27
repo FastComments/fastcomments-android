@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">fastcomments-example-simple</string>
+    <string name="comments">Comments</string>
+    <string name="close">Close</string>
 </resources>

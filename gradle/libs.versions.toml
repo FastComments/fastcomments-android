@@ -10,7 +10,9 @@ activityCompose = "1.8.0"
 composeBom = "2024.04.01"
 appcompat = "1.7.0"
 material = "1.12.0"
-fastcommentsClient = "0.0.1"
+fastcomments = "0.0.1"
+constraintlayout = "2.1.4"
+swiperefreshlayout = "1.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -29,10 +31,14 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
-fastcommentsClient = { group = "com.fastcomments", name = "client", version.ref = "fastcommentsClient" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
+fastcommentsCore = { group = "com.fastcomments", name = "core", version.ref = "fastcomments" }
+fastcommentsClient = { group = "com.fastcomments", name = "client", version.ref = "fastcomments" }
+fastcommentsPubsub = { group = "com.fastcomments", name = "pubsub", version.ref = "fastcomments" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-
