@@ -1,6 +1,6 @@
 # FastComments Android SDK
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.fastcomments/sdk.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.fastcomments%22%20AND%20a:%22sdk%22)
+[![Repsy](https://img.shields.io/badge/Repsy-Repository-blue)](https://repo.repsy.io/mvn/winrid/fastcomments)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 The FastComments Android SDK provides a simple way to add real-time commenting functionality to your Android applications.
@@ -32,12 +32,14 @@ dependencies {
 }
 ```
 
-Make sure you have the Maven Central repository in your project's `settings.gradle.kts`:
+Make sure you have the Repsy repository in your project's `settings.gradle.kts`:
 
 ```kotlin
 dependencyResolutionManagement {
     repositories {
-        mavenCentral()
+        maven {
+            url = uri("https://repo.repsy.io/mvn/winrid/fastcomments")
+        }
         // other repositories...
     }
 }
