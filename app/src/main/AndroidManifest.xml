@@ -46,7 +46,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ExampleFeedActivity"
+            android:name=".FeedExampleActivity"
             android:exported="true"
             android:label="FastComments Feed"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
@@ -56,7 +56,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ExampleLiveChatActivity"
+            android:name=".LiveChatExampleActivity"
             android:exported="true"
             android:label="FastComments Live Chat"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">

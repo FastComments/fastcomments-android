@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Example activity showing how to use the FastCommentsFeedView
  */
-public class ExampleFeedActivity extends AppCompatActivity {
+public class FeedExampleActivity extends AppCompatActivity {
 
     private FastCommentsFeedView feedView;
     private FastCommentsFeedSDK feedSDK;
@@ -66,7 +66,7 @@ public class ExampleFeedActivity extends AppCompatActivity {
             @Override
             public void onCommentsRequested(FeedPost post) {
                 // Show comments dialog for the post
-                CommentsDialog dialog = new CommentsDialog(ExampleFeedActivity.this, post, feedSDK);
+                CommentsDialog dialog = new CommentsDialog(FeedExampleActivity.this, post, feedSDK);
                 dialog.show();
             }
         });

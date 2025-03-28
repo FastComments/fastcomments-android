@@ -1,21 +1,17 @@
 package com.fastcomments
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.fastcomments.core.CommentWidgetConfig
 import com.fastcomments.core.sso.FastCommentsSSO
 import com.fastcomments.core.sso.SimpleSSOUserData
-import com.fastcomments.model.APIError
-import com.fastcomments.model.GetCommentsResponseWithPresencePublicComment
-import com.fastcomments.sdk.FCCallback
 import com.fastcomments.sdk.LiveChatView
 import com.fastcomments.sdk.FastCommentsSDK
 
 /**
  * Example activity showing how to use the LiveChatView
  */
-class ExampleLiveChatActivity : AppCompatActivity() {
+class LiveChatExampleActivity : AppCompatActivity() {
 
     private lateinit var liveChatView: LiveChatView
     private lateinit var sdk: FastCommentsSDK
