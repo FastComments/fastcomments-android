@@ -27,6 +27,9 @@
     <!-- Live commenting strings -->
     <string name="show_new_comments">Show %1$d New Comments</string>
     <string name="show_new_replies">Show %1$d New Replies</string>
+    <string name="load_older_messages">Load Older Messages (%1$d)</string>
+    <string name="load_all_messages">Load All %1$d Messages</string>
+    <string name="chat_hint">Type a message…</string>
     
     <!-- Voting strings -->
     <string name="upvote">Upvote</string>

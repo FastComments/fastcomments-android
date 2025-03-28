@@ -18,6 +18,14 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven { url = uri("https://jitpack.io") }
+        maven {
+            name = "repsy"
+            url = uri("https://repo.repsy.io/mvn/winrid/fastcomments")
+            credentials {
+                username = providers.gradleProperty("repsyUsername").getOrElse(System.getenv("REPSY_USERNAME") ?: "")
+                password = providers.gradleProperty("repsyPassword").getOrElse(System.getenv("REPSY_PASSWORD") ?: "")
+            }
+        }
     }
 }
 
