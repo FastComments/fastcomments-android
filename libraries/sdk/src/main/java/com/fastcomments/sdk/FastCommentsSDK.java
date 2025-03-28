@@ -852,8 +852,8 @@ public class FastCommentsSDK {
     }
 
     public void addComment(PublicComment publicComment, boolean displayNow) {
-        // Add to comments tree
-        commentsTree.addComment(publicComment, displayNow);
+        // Add to comments tree using configured sort direction
+        commentsTree.addComment(publicComment, displayNow, config.defaultSortDirection);
 
         // Increment the server comment count
         commentCountOnServer++;

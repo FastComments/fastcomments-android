@@ -30,31 +30,35 @@ class ExampleLiveChatActivity : AppCompatActivity() {
             urlId = "https://example.com/chat-room" // Use your URL ID or chat room identifier
             // Optional: Set additional configuration options
             pageTitle = "Example Chat Room"
-            showLiveRightAway = true // Show new messages immediately
         }
-        
+        LiveChatView.setupLiveChatConfig(config)
+
         // Initialize the SDK. The below uses SimpleSSO for the demo. You probably want to use SecureSSO with a backend service.
-        val userData = SimpleSSOUserData("Example User", "user@example.com", "https://staticm.fastcomments.com/1639362726066-DSC_0841.JPG");
+        val userData = SimpleSSOUserData(
+            "Example User",
+            "user@example.com",
+            "https://staticm.fastcomments.com/1639362726066-DSC_0841.JPG"
+        );
         val sso = FastCommentsSSO(userData)
         config.sso = sso.prepareToSend()
         sdk = FastCommentsSDK().configure(config)
 
         // Find the live chat view in the layout
         liveChatView = findViewById(R.id.liveChatView)
-        
+
         // Set the SDK instance for the view
         liveChatView.setSDK(sdk)
-        
+
         // Load the chat
         liveChatView.load()
     }
-    
+
     override fun onResume() {
         super.onResume()
         // Refresh live events connection when returning to the app
         sdk.refreshLiveEvents()
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
         // Clean up resources

@@ -12,11 +12,13 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 
+import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.core.VoteStyle;
 import com.fastcomments.model.APIEmptyResponse;
 import com.fastcomments.model.BlockSuccess;
 import com.fastcomments.model.PickFCommentApprovedOrCommentHTML;
 import com.fastcomments.model.PublicComment;
+import com.fastcomments.model.SortDirections;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import android.widget.FrameLayout;
@@ -177,6 +179,12 @@ public class LiveChatView extends FrameLayout {
         if (sdk != null) {
             initializeWithSDK();
         }
+    }
+
+    public static void setupLiveChatConfig(CommentWidgetConfig config) {
+        config.showLiveRightAway = true;
+        config.defaultSortDirection = SortDirections.OF;
+        config.maxReplyDepth = 0;
     }
     
     /**
@@ -825,6 +833,8 @@ public class LiveChatView extends FrameLayout {
                     ).show();
 
                     // Add the comment to the tree, display immediately
+                    // Note: For LiveChatView, comments will be added at the bottom because
+                    // we've set the sort direction to OLDEST_FIRST in setSDK()
                     sdk.addComment(comment, true);
                     
                     // Re-enable auto-scroll and scroll to the bottom to show the new comment

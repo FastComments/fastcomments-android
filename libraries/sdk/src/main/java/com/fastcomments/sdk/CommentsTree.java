@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.fastcomments.model.PublicComment;
+import com.fastcomments.model.SortDirections;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -400,12 +401,28 @@ public class CommentsTree {
     }
 
     /**
-     * Add a new comment to the tree (from live events)
-     *
-     * @param comment           The comment to add
+     * Backward-compatible method that defaults to NEWEST_FIRST sort direction
+     * 
+     * @param comment    The comment to add
      * @param displayNow Whether to show the comment immediately
      */
     public void addComment(PublicComment comment, boolean displayNow) {
+        // Default to NEWEST_FIRST for backward compatibility
+        addComment(comment, displayNow, SortDirections.NF);
+    }
+
+    private boolean isNewestFirst(SortDirections sortDirections) {
+        return sortDirections == SortDirections.NF || sortDirections == SortDirections.MR;
+    }
+    
+    /**
+     * Add a new comment to the tree (from live events) with the specified sort direction
+     *
+     * @param comment    The comment to add
+     * @param displayNow Whether to show the comment immediately
+     * @param sortDirection The direction to sort comments (newest first or oldest first)
+     */
+    public void addComment(PublicComment comment, boolean displayNow, SortDirections sortDirection) {
         if (comment == null || commentsById.containsKey(comment.getId())) {
             return;
         }
@@ -416,12 +433,28 @@ public class CommentsTree {
 
         if (comment.getParentId() == null) {
             // This is a root comment
-            allComments.add(0, renderableComment);
+            // For NEWEST_FIRST, add at index 0 (top)
+            // For OLDEST_FIRST, add at the end (bottom)
+            boolean isNewestFirst = isNewestFirst(sortDirection);
+            
+            if (isNewestFirst) {
+                allComments.add(0, renderableComment);
+            } else {
+                allComments.add(renderableComment);
+            }
 
             if (displayNow) {
-                // Show the comment right away at the top of the list
-                visibleNodes.add(0, renderableComment);
-                adapter.notifyItemInserted(0);
+                int position;
+                if (isNewestFirst) {
+                    // For newest first, add at the top
+                    position = 0;
+                    visibleNodes.add(0, renderableComment);
+                } else {
+                    // For oldest first (like chat), add at the bottom
+                    position = visibleNodes.size();
+                    visibleNodes.add(renderableComment);
+                }
+                adapter.notifyItemInserted(position);
                 
                 // Check for new user presence (optimized for single comment)
                 checkAndRequestUserPresenceStatus(renderableComment);
