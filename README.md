@@ -157,10 +157,10 @@ feedView.load();
 
 Check out these demo implementations:
 
-- [Basic Comments Example](fastcomments-android/app/src/main/java/com/fastcomments/MainActivity.kt)
-- [Secure SSO Implementation](fastcomments-android/app/src/main/java/com/fastcomments/SecureSSOExampleActivity.kt)
-- [Feed Integration Example](fastcomments-android/app/src/main/java/com/fastcomments/ExampleFeedActivity.java)
-- [Comments Dialog Implementation](fastcomments-android/app/src/main/java/com/fastcomments/CommentsDialog.java)
+- [Basic Comments Example](app/src/main/java/com/fastcomments/MainActivity.kt)
+- [Secure SSO Implementation](app/src/main/java/com/fastcomments/SecureSSOExampleActivity.kt)
+- [Feed Integration Example](app/src/main/java/com/fastcomments/FeedExampleActivity.java)
+- [Comments Dialog Implementation](app/src/main/java/com/fastcomments/CommentsDialog.java)
 
 ## Configuration Options
 
