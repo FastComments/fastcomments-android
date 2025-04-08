@@ -18,7 +18,7 @@ class SecureSSOExampleActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val config = CommentWidgetConfig(
-            "L177BUDVvSe",
+            "demo",
             "ssotest",
             "https://fastcomments.com/demo",
             "fastcomments.com",
