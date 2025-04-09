@@ -2,4 +2,5 @@
     <string name="app_name">fastcomments-example-simple</string>
     <string name="comments">Comments</string>
     <string name="close">Close</string>
+    <string name="create_new_post">Create New Post</string>
 </resources>

@@ -22,6 +22,7 @@ import com.fastcomments.model.APIError;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.FeedPostMediaItem;
 import com.fastcomments.model.GetFeedPostsResponse;
+import com.fastcomments.model.PublicFeedPostsResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -237,7 +238,7 @@ public class FastCommentsFeedView extends FrameLayout {
         showLoading(true);
         hideError();
 
-        sdk.load(new FCCallback<GetFeedPostsResponse>() {
+        sdk.load(new FCCallback<PublicFeedPostsResponse>() {
             @Override
             public boolean onFailure(APIError error) {
                 handler.post(() -> {
@@ -247,6 +248,8 @@ public class FastCommentsFeedView extends FrameLayout {
                     String errorMessage = "Error loading feed";
                     if (sdk.blockingErrorMessage != null && !sdk.blockingErrorMessage.isEmpty()) {
                         errorMessage = sdk.blockingErrorMessage;
+                    } else if (error != null && error.getTranslatedError() != null) {
+                        errorMessage = error.getTranslatedError();
                     } else if (error != null && error.getReason() != null) {
                         errorMessage = error.getReason();
                     }
@@ -261,7 +264,7 @@ public class FastCommentsFeedView extends FrameLayout {
             }
 
             @Override
-            public boolean onSuccess(GetFeedPostsResponse response) {
+            public boolean onSuccess(PublicFeedPostsResponse response) {
                 handler.post(() -> {
                     showLoading(false);
                     swipeRefreshLayout.setRefreshing(false);
@@ -291,7 +294,7 @@ public class FastCommentsFeedView extends FrameLayout {
     public void refresh() {
         hideError();
         
-        sdk.refresh(new FCCallback<GetFeedPostsResponse>() {
+        sdk.refresh(new FCCallback<PublicFeedPostsResponse>() {
             @Override
             public boolean onFailure(APIError error) {
                 handler.post(() -> {
@@ -312,7 +315,7 @@ public class FastCommentsFeedView extends FrameLayout {
             }
 
             @Override
-            public boolean onSuccess(GetFeedPostsResponse response) {
+            public boolean onSuccess(PublicFeedPostsResponse response) {
                 handler.post(() -> {
                     swipeRefreshLayout.setRefreshing(false);
                     hideError();
@@ -346,7 +349,7 @@ public class FastCommentsFeedView extends FrameLayout {
         isLoadingMore = true;
         loadMoreProgressBar.setVisibility(View.VISIBLE);
 
-        sdk.loadMore(new FCCallback<GetFeedPostsResponse>() {
+        sdk.loadMore(new FCCallback<PublicFeedPostsResponse>() {
             @Override
             public boolean onFailure(APIError error) {
                 handler.post(() -> {
@@ -367,7 +370,7 @@ public class FastCommentsFeedView extends FrameLayout {
             }
 
             @Override
-            public boolean onSuccess(GetFeedPostsResponse response) {
+            public boolean onSuccess(PublicFeedPostsResponse response) {
                 handler.post(() -> {
                     isLoadingMore = false;
                     loadMoreProgressBar.setVisibility(View.GONE);

@@ -107,4 +107,27 @@
     <string name="image_counter">%1$d/%2$d</string>
     <string name="view_details">View Details</string>
     <string name="learn_more">Learn More</string>
+    
+    <!-- Post creation strings -->
+    <string name="create_post_hint">What\'s on your mind?</string>
+    <string name="post">Post</string>
+    <string name="attach_image">Attach image</string>
+    <string name="attach_link">Attach link</string>
+    <string name="remove_image">Remove image</string>
+    <string name="remove_link">Remove link</string>
+    <string name="posting">Posting...</string>
+    <string name="post_success">Post created successfully</string>
+    <string name="post_error">Error creating post. Please try again.</string>
+    <string name="add_link">Add Link</string>
+    <string name="link_url">Link URL</string>
+    <string name="link_title">Link Title (Optional)</string>
+    <string name="link_description">Link Description (Optional)</string>
+    <string name="link_url_required">Link URL is required</string>
+    <string name="invalid_url">Please enter a valid URL</string>
+    <string name="selected_media">Selected media</string>
+    <string name="image_required">Please select an image</string>
+    <string name="max_images_reached">Maximum number of images reached</string>
+    <string name="content_required">Post content is required</string>
+    <string name="media_upload_failure">Failed to upload media</string>
+    <string name="create_new_post">Create New Post</string>
 </resources>
