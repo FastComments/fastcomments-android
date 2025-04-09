@@ -61,7 +61,7 @@ public class FastCommentsSDK {
         this.mainHandler = new Handler(Looper.getMainLooper());
         this.broadcastIdsSent = new HashSet<>(0);
         this.config = config;
-        this.api.getApiClient().setBasePath("https://fastcomments.com");
+        this.api.getApiClient().setBasePath(getAPIBasePath(config));
         this.commentsTree = new CommentsTree();
         this.currentSkip = 0;
         this.currentPage = 0;
@@ -74,6 +74,13 @@ public class FastCommentsSDK {
 
     public FastCommentsSDK() {
         this(null);
+    }
+
+    public static String getAPIBasePath(CommentWidgetConfig config) {
+        if (Objects.equals(config.region, "eu")) {
+            return "https://eu.fastcomments.com";
+        }
+        return "https://fastcomments.com";
     }
 
     /**
