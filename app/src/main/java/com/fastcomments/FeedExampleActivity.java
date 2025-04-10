@@ -131,12 +131,13 @@ public class FeedExampleActivity extends AppCompatActivity {
         postCreateView.setSDK(feedSDK);
         postCreateView.setVisibility(View.GONE);
 
-        // Create constraints for post creation view (full width at top)
+        // Create constraints for post creation view (full width at top, floating above content)
         ConstraintLayout.LayoutParams postCreateParams = new ConstraintLayout.LayoutParams(
                 ConstraintLayout.LayoutParams.MATCH_PARENT,
                 ConstraintLayout.LayoutParams.WRAP_CONTENT);
         postCreateView.setLayoutParams(postCreateParams);
-
+        postCreateView.setElevation(16f); // Elevate above other content
+        
         // Add view to parent
         parentLayout.addView(postCreateView);
 
@@ -172,32 +173,44 @@ public class FeedExampleActivity extends AppCompatActivity {
 
         // Set FAB click listener
         createPostFab.setOnClickListener(v -> {
-            // Show post creation view and hide FAB
+            // Show post creation view with animation and hide FAB
             postCreateView.setVisibility(View.VISIBLE);
             createPostFab.setVisibility(View.GONE);
             
-            // Adjust feed view constraints
-            ConstraintSet showFormConstraintSet = new ConstraintSet();
-            showFormConstraintSet.clone(parentLayout);
-            showFormConstraintSet.clear(feedView.getId(), ConstraintSet.TOP);
-            showFormConstraintSet.connect(feedView.getId(), ConstraintSet.TOP, postCreateView.getId(), ConstraintSet.BOTTOM, 0);
-            showFormConstraintSet.applyTo(parentLayout);
+            // Apply animation
+            postCreateView.startAnimation(android.view.animation.AnimationUtils.loadAnimation(
+                    FeedExampleActivity.this, com.fastcomments.sdk.R.anim.slide_down_from_top));
         });
 
         // Set post creation listener
         postCreateView.setOnPostCreateListener(new FeedPostCreateView.OnPostCreateListener() {
             @Override
             public void onPostCreated(FeedPost post) {
-                // Hide post creation view, show FAB, and refresh feed
-                postCreateView.setVisibility(View.GONE);
-                createPostFab.setVisibility(View.VISIBLE);
+                // Use our new slide up and fade animation
+                android.view.animation.Animation slideUpFade = android.view.animation.AnimationUtils.loadAnimation(
+                        FeedExampleActivity.this, com.fastcomments.sdk.R.anim.slide_up_and_fade);
                 
-                // Reset feed view constraints
-                ConstraintSet resetConstraintSet = new ConstraintSet();
-                resetConstraintSet.clone(parentLayout);
-                resetConstraintSet.clear(feedView.getId(), ConstraintSet.TOP);
-                resetConstraintSet.connect(feedView.getId(), ConstraintSet.TOP, parentLayout.getId(), ConstraintSet.TOP, 0);
-                resetConstraintSet.applyTo(parentLayout);
+                slideUpFade.setAnimationListener(new android.view.animation.Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(android.view.animation.Animation animation) {
+                        // No need to change visibility yet
+                    }
+                    
+                    @Override
+                    public void onAnimationEnd(android.view.animation.Animation animation) {
+                        // Set gone at the end of animation
+                        postCreateView.setVisibility(View.GONE);
+                        createPostFab.setVisibility(View.VISIBLE);
+                        
+                        // Refresh the feed to show the new post
+                        feedView.refresh();
+                    }
+                    
+                    @Override
+                    public void onAnimationRepeat(android.view.animation.Animation animation) {}
+                });
+                
+                postCreateView.startAnimation(slideUpFade);
                 
                 // Refresh the feed to show the new post
                 feedView.refresh();
@@ -210,16 +223,28 @@ public class FeedExampleActivity extends AppCompatActivity {
 
             @Override
             public void onPostCreateCancelled() {
-                // Hide post creation view and show FAB
-                postCreateView.setVisibility(View.GONE);
-                createPostFab.setVisibility(View.VISIBLE);
+                // Use our new slide up and fade animation
+                android.view.animation.Animation slideUpFade = android.view.animation.AnimationUtils.loadAnimation(
+                        FeedExampleActivity.this, com.fastcomments.sdk.R.anim.slide_up_and_fade);
                 
-                // Reset feed view constraints
-                ConstraintSet cancelConstraintSet = new ConstraintSet();
-                cancelConstraintSet.clone(parentLayout);
-                cancelConstraintSet.clear(feedView.getId(), ConstraintSet.TOP);
-                cancelConstraintSet.connect(feedView.getId(), ConstraintSet.TOP, parentLayout.getId(), ConstraintSet.TOP, 0);
-                cancelConstraintSet.applyTo(parentLayout);
+                slideUpFade.setAnimationListener(new android.view.animation.Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(android.view.animation.Animation animation) {
+                        // No need to change visibility yet
+                    }
+                    
+                    @Override
+                    public void onAnimationEnd(android.view.animation.Animation animation) {
+                        // Set gone at the end of animation
+                        postCreateView.setVisibility(View.GONE);
+                        createPostFab.setVisibility(View.VISIBLE);
+                    }
+                    
+                    @Override
+                    public void onAnimationRepeat(android.view.animation.Animation animation) {}
+                });
+                
+                postCreateView.startAnimation(slideUpFade);
             }
 
             @Override
