@@ -5,6 +5,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.fastcomments.api.PublicApi;
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.invoker.ApiCallback;
@@ -56,7 +58,7 @@ public class FastCommentsSDK {
     private String userIdWS;
     private String editKey;
 
-    public FastCommentsSDK(CommentWidgetConfig config) {
+    public FastCommentsSDK(@NonNull CommentWidgetConfig config) {
         this.api = new PublicApi();
         this.mainHandler = new Handler(Looper.getMainLooper());
         this.broadcastIdsSent = new HashSet<>(0);
@@ -72,26 +74,11 @@ public class FastCommentsSDK {
         this.commentsTree.setPresenceStatusListener(this::fetchPresenceForUsers);
     }
 
-    public FastCommentsSDK() {
-        this(null);
-    }
-
     public static String getAPIBasePath(CommentWidgetConfig config) {
         if (Objects.equals(config.region, "eu")) {
             return "https://eu.fastcomments.com";
         }
         return "https://fastcomments.com";
-    }
-
-    /**
-     * Configure the SDK with widget configuration
-     *
-     * @param config CommentWidgetConfig object
-     * @return FastCommentsSDK instance for chaining
-     */
-    public FastCommentsSDK configure(CommentWidgetConfig config) {
-        this.config = config;
-        return this;
     }
 
     /**

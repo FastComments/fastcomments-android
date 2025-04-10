@@ -37,7 +37,7 @@ class LiveChatExampleActivity : AppCompatActivity() {
         );
         val sso = FastCommentsSSO(userData)
         config.sso = sso.prepareToSend()
-        sdk = FastCommentsSDK().configure(config)
+        sdk = FastCommentsSDK(config)
 
         // Find the live chat view in the layout
         liveChatView = findViewById(R.id.liveChatView)
