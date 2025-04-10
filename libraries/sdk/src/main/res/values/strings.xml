@@ -49,6 +49,8 @@
     <string name="you_removed_like">You removed your like from %1$s\'s comment</string>
     <string name="login_to_vote">Please log in to vote</string>
     <string name="vote_count_zero">0</string>
+    <string name="like_count_singular">%d like</string>
+    <string name="like_count_plural">%d likes</string>
     
     <!-- User authentication dialog -->
     <string name="vote_login_title">Log in to Vote</string>

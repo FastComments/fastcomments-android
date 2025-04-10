@@ -389,11 +389,27 @@ public class FastCommentsFeedView extends FrameLayout {
      * @param position The position of the post in the adapter
      */
     private void toggleLike(FeedPost post, int position) {
-        // This is a placeholder for like functionality
-        // In a real implementation, this would call to the server API
+        if (sdk == null || post == null || post.getId() == null) {
+            return;
+        }
         
-        // For now, we just apply the state change locally
-        // No toast message - the UI update is enough feedback
+        // Call the SDK to toggle the like status
+        sdk.likePost(post.getId(), new FCCallback<FeedPost>() {
+            @Override
+            public boolean onFailure(APIError error) {
+                // Handle failure - could show error toast here
+                return CONSUME;
+            }
+
+            @Override
+            public boolean onSuccess(FeedPost updatedPost) {
+                // Update the post in the adapter
+                handler.post(() -> {
+                    adapter.updatePost(position, updatedPost);
+                });
+                return CONSUME;
+            }
+        });
     }
 
     /**

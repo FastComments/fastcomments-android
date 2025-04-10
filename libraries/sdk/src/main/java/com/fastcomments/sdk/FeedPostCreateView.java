@@ -9,6 +9,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -37,6 +38,7 @@ import com.fastcomments.model.UserSessionInfo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * A custom view for creating feed posts with text, images and links
@@ -76,8 +78,11 @@ public class FeedPostCreateView extends FrameLayout {
      */
     public interface OnPostCreateListener {
         void onPostCreated(FeedPost post);
+
         void onPostCreateError(String errorMessage);
+
         void onPostCreateCancelled();
+
         void onImagePickerRequested();
     }
 
@@ -122,7 +127,7 @@ public class FeedPostCreateView extends FrameLayout {
         cancelPostButton = findViewById(R.id.cancelPostButton);
         submitPostButton = findViewById(R.id.submitPostButton);
         postProgressBar = findViewById(R.id.postProgressBar);
-        
+
         // Make sure button texts are set explicitly
         submitPostButton.setText(R.string.post);
         cancelPostButton.setText(R.string.cancel);
@@ -176,7 +181,7 @@ public class FeedPostCreateView extends FrameLayout {
      */
     public void setSDK(FastCommentsFeedSDK sdk) {
         this.sdk = sdk;
-        
+
         // Set current user info if available
         if (sdk != null && sdk.getCurrentUser() != null) {
             UserSessionInfo userInfo = sdk.getCurrentUser();
@@ -250,12 +255,12 @@ public class FeedPostCreateView extends FrameLayout {
             // Add image to adapter
             mediaAdapter.addMedia(imageUri);
             selectedMediaUris.add(imageUri);
-            
+
             // Show media preview container and update submit button
             if (mediaPreviewContainer.getVisibility() != VISIBLE) {
                 mediaPreviewContainer.setVisibility(VISIBLE);
             }
-            
+
             updateSubmitButtonState();
         }
     }
@@ -269,12 +274,12 @@ public class FeedPostCreateView extends FrameLayout {
         if (position >= 0 && position < selectedMediaUris.size()) {
             selectedMediaUris.remove(position);
             mediaAdapter.removeMedia(position);
-            
+
             // Hide media container if no media items left
             if (selectedMediaUris.isEmpty()) {
                 mediaPreviewContainer.setVisibility(GONE);
             }
-            
+
             updateSubmitButtonState();
         }
     }
@@ -285,8 +290,8 @@ public class FeedPostCreateView extends FrameLayout {
     private void showAddLinkDialog() {
         // Don't show dialog if a link is already attached
         if (attachedLink != null) {
-            Toast.makeText(getContext(), 
-                    "A link is already attached. Remove it first to add a new one.", 
+            Toast.makeText(getContext(),
+                    "A link is already attached. Remove it first to add a new one.",
                     Toast.LENGTH_SHORT).show();
             return;
         }
@@ -303,19 +308,19 @@ public class FeedPostCreateView extends FrameLayout {
     private void addLink(FeedPostLink link) {
         if (link != null) {
             attachedLink = link;
-            
+
             // Update link preview UI
             linkPreviewContainer.setVisibility(VISIBLE);
-            
+
             if (link.getTitle() != null && !link.getTitle().isEmpty()) {
                 linkTitleTextView.setText(link.getTitle());
                 linkTitleTextView.setVisibility(VISIBLE);
             } else {
                 linkTitleTextView.setVisibility(GONE);
             }
-            
+
             linkUrlTextView.setText(link.getUrl());
-            
+
             updateSubmitButtonState();
         }
     }
@@ -340,7 +345,7 @@ public class FeedPostCreateView extends FrameLayout {
         mediaPreviewContainer.setVisibility(GONE);
         removeLink();
         postErrorTextView.setVisibility(GONE);
-        
+
         // Notify listener
         if (listener != null) {
             listener.onPostCreateCancelled();
@@ -351,12 +356,12 @@ public class FeedPostCreateView extends FrameLayout {
      * Enable/disable submit button based on content
      */
     private void updateSubmitButtonState() {
-        boolean hasContent = !TextUtils.isEmpty(postContentEditText.getText()) || 
-                !selectedMediaUris.isEmpty() || 
+        boolean hasContent = !TextUtils.isEmpty(postContentEditText.getText()) ||
+                !selectedMediaUris.isEmpty() ||
                 attachedLink != null;
-        
+
         submitPostButton.setEnabled(hasContent);
-        
+
         // Update button appearance based on state
         if (hasContent) {
             submitPostButton.setAlpha(1.0f);
@@ -369,7 +374,7 @@ public class FeedPostCreateView extends FrameLayout {
 
     /**
      * Show an error message
-     * 
+     *
      * @param errorMessage The error message to display
      */
     private void showError(String errorMessage) {
@@ -390,138 +395,151 @@ public class FeedPostCreateView extends FrameLayout {
     private void validateAndSubmitPost() {
         // Reset error state
         hideError();
-        
+
         // Check that we have content
-        String content = postContentEditText.getText() != null ? 
+        String content = postContentEditText.getText() != null ?
                 postContentEditText.getText().toString().trim() : "";
-        
+
         boolean hasContent = !content.isEmpty() || !selectedMediaUris.isEmpty() || attachedLink != null;
-        
+
         if (!hasContent) {
             showError(getContext().getString(R.string.content_required));
             return;
         }
-        
+
         // Show loading state
         setSubmitting(true);
-        
-        // Create a new post with the input data
-        FeedPost post = createPostFromInput(content);
-        
-        // Convert FeedPost to CreateFeedPostParams
-        CreateFeedPostParams params = convertToParams(post);
-        
-        // Use the SDK to create the post (which will call the API in a real implementation)
-        if (sdk != null) {
-            sdk.createPost(params, new FCCallback<FeedPost>() {
-                @Override
-                public boolean onFailure(APIError error) {
-                    mainHandler.post(() -> {
-                        // Hide loading state
-                        setSubmitting(false);
-                        
-                        // Show error message
-                        String errorMessage = error != null && error.getReason() != null ? 
-                                error.getReason() : getContext().getString(R.string.post_error);
-                        
-                        showError(errorMessage);
-                        
-                        // Notify listener
-                        if (listener != null) {
-                            listener.onPostCreateError(errorMessage);
-                        }
-                    });
-                    return CONSUME;
-                }
-                
-                @Override
-                public boolean onSuccess(FeedPost createdPost) {
-                    mainHandler.post(() -> {
-                        // Reset form and hide loading
-                        setSubmitting(false);
-                        
-                        // Show success message and reset form
-                        Toast.makeText(getContext(), R.string.post_success, Toast.LENGTH_SHORT).show();
-                        resetForm();
-                        
-                        // Notify listener
-                        if (listener != null) {
-                            listener.onPostCreated(createdPost);
-                        }
-                    });
-                    return CONSUME;
-                }
-            });
-        } else {
-            // SDK not available, show error
-            setSubmitting(false);
-            showError(getContext().getString(R.string.post_error));
-            
-            if (listener != null) {
-                listener.onPostCreateError(getContext().getString(R.string.post_error));
+
+        createPostFromInput(content, new FCCallback<FeedPost>() {
+            @Override
+            public boolean onFailure(APIError error) {
+                mainHandler.post(() -> {
+                    // Hide loading state
+                    setSubmitting(false);
+
+                    // Show error message
+                    String errorMessage = error != null && error.getTranslatedError() != null ?
+                            error.getTranslatedError() : getContext().getString(R.string.post_error);
+
+                    showError(errorMessage);
+
+                    // Notify listener
+                    if (listener != null) {
+                        listener.onPostCreateError(errorMessage);
+                    }
+                });
+                return CONSUME;
             }
-        }
+
+            @Override
+            public boolean onSuccess(FeedPost feedPost) {
+                final CreateFeedPostParams params = convertToParams(feedPost);
+
+                if (sdk != null) {
+                    sdk.createPost(params, new FCCallback<FeedPost>() {
+                        @Override
+                        public boolean onFailure(APIError error) {
+                            mainHandler.post(() -> {
+                                // Hide loading state
+                                setSubmitting(false);
+
+                                // Show error message
+                                String errorMessage = error != null && error.getTranslatedError() != null ?
+                                        error.getTranslatedError() : getContext().getString(R.string.post_error);
+
+                                showError(errorMessage);
+
+                                // Notify listener
+                                if (listener != null) {
+                                    listener.onPostCreateError(errorMessage);
+                                }
+                            });
+                            return CONSUME;
+                        }
+
+                        @Override
+                        public boolean onSuccess(FeedPost createdPost) {
+                            mainHandler.post(() -> {
+                                // Reset form and hide loading
+                                setSubmitting(false);
+
+                                // Show success message and reset form
+                                Toast.makeText(getContext(), R.string.post_success, Toast.LENGTH_SHORT).show();
+                                resetForm();
+
+                                // Notify listener
+                                if (listener != null) {
+                                    listener.onPostCreated(createdPost);
+                                }
+                            });
+                            return CONSUME;
+                        }
+                    });
+                } else {
+                    // SDK not available, show error
+                    setSubmitting(false);
+                    showError(getContext().getString(R.string.post_error));
+
+                    if (listener != null) {
+                        listener.onPostCreateError(getContext().getString(R.string.post_error));
+                    }
+                }
+                return CONSUME;
+            }
+        });
     }
 
     /**
      * Create a FeedPost object from the user input
-     * 
-     * @param content The text content
-     * @return A new FeedPost object
      */
-    private FeedPost createPostFromInput(String content) {
+    private void createPostFromInput(String content, FCCallback<FeedPost> feedPostCallback) {
         FeedPost post = new FeedPost();
-        
+
         // Set basic post information
         post.setContentHTML(content);
-        
+
         // Set user information if available
-        if (sdk != null && sdk.getCurrentUser() != null) {
+        if (sdk.getCurrentUser() != null) {
             UserSessionInfo userInfo = sdk.getCurrentUser();
             post.setFromUserDisplayName(userInfo.getDisplayName());
             post.setFromUserAvatar(userInfo.getAvatarSrc());
         }
-        
+
         // Add link if available
         if (attachedLink != null) {
             post.setLinks(Collections.singletonList(attachedLink));
         }
-        
-        // For media, we'd normally upload the images and then attach their URLs
-        // Since we're not implementing the actual API calls, we'll just create placeholder media items
+
+        // Upload media items and attach them to the post
         if (!selectedMediaUris.isEmpty()) {
-            List<FeedPostMediaItem> mediaItems = new ArrayList<>();
-            
-            for (Uri uri : selectedMediaUris) {
-                FeedPostMediaItem mediaItem = new FeedPostMediaItem();
-                // In a real implementation, we'd set the media URL after uploading
-                // For now, just use the local URI as a placeholder
-                List<FeedPostMediaItemAsset> sizes = new ArrayList<>();
-                FeedPostMediaItemAsset asset = new FeedPostMediaItemAsset();
-                asset.setSrc(uri.toString());
-                asset.setW(800.0); // Width
-                asset.setH(600.0); // Height
-                sizes.add(asset);
-                
-                mediaItem.setSizes(sizes);
-                mediaItems.add(mediaItem);
-            }
-            
-            post.setMedia(mediaItems);
+            sdk.uploadImages(getContext(), selectedMediaUris, new FCCallback<List<FeedPostMediaItem>>() {
+                @Override
+                public boolean onFailure(APIError error) {
+                    mainHandler.post(() -> feedPostCallback.onFailure(error));
+                    return CONSUME;
+                }
+
+                @Override
+                public boolean onSuccess(List<FeedPostMediaItem> response) {
+                    post.setMedia(response);
+                    mainHandler.post(() -> feedPostCallback.onSuccess(post));
+                    return CONSUME;
+                }
+            });
+        } else {
+            feedPostCallback.onSuccess(post);
         }
-        
-        return post;
     }
-    
+
     /**
      * Convert FeedPost to CreateFeedPostParams
-     * 
+     *
      * @param post The FeedPost to convert
      * @return A new CreateFeedPostParams object
      */
     private CreateFeedPostParams convertToParams(FeedPost post) {
         CreateFeedPostParams params = new CreateFeedPostParams();
-        
+
         params.setTitle(post.getTitle());
         params.setContentHTML(post.getContentHTML());
         params.setMedia(post.getMedia());
@@ -530,7 +548,7 @@ public class FeedPostCreateView extends FrameLayout {
         params.setFromUserDisplayName(post.getFromUserDisplayName());
         params.setTags(post.getTags());
         params.setMeta(post.getMeta());
-        
+
         return params;
     }
 
@@ -549,7 +567,7 @@ public class FeedPostCreateView extends FrameLayout {
 
     /**
      * Set the submitting state (loading)
-     * 
+     *
      * @param submitting True if submitting, false otherwise
      */
     private void setSubmitting(boolean submitting) {
@@ -559,7 +577,7 @@ public class FeedPostCreateView extends FrameLayout {
         attachLinkButton.setEnabled(!submitting);
         cancelPostButton.setEnabled(!submitting);
         submitPostButton.setEnabled(!submitting);
-        
+
         // Disable remove buttons during submission
         removeLinkButton.setEnabled(!submitting);
     }

@@ -6,7 +6,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.fastcomments.api.DefaultApi;
 import com.fastcomments.api.PublicApi;
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.invoker.ApiCallback;
@@ -16,20 +15,40 @@ import com.fastcomments.model.CreateFeedPostParams;
 import com.fastcomments.model.CreateFeedPostPublic200Response;
 import com.fastcomments.model.CreateFeedPostResponse;
 import com.fastcomments.model.FeedPost;
+import com.fastcomments.model.FeedPostMediaItem;
+import com.fastcomments.model.FeedPostMediaItemAsset;
+import com.fastcomments.model.MediaAsset;
+import com.fastcomments.model.SizePreset;
+import com.fastcomments.model.UploadImageResponse;
 import com.fastcomments.model.GetFeedPostsPublic200Response;
-import com.fastcomments.model.GetFeedPostsResponse;
 import com.fastcomments.model.LiveEvent;
 import com.fastcomments.model.LiveEventType;
 import com.fastcomments.model.PublicFeedPostsResponse;
+import com.fastcomments.model.ReactBodyParams;
+import com.fastcomments.model.ReactFeedPostPublic200Response;
 import com.fastcomments.model.UserSessionInfo;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+
+import android.net.Uri;
+import android.content.Context;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+
+import android.provider.OpenableColumns;
+import android.database.Cursor;
 
 /**
  * SDK class for handling FastComments Feed functionality
@@ -42,12 +61,15 @@ public class FastCommentsFeedSDK {
     private final Handler mainHandler;
 
     private List<FeedPost> feedPosts = new ArrayList<>();
+    private Map<String, FeedPost> postsById = new HashMap<>(); // Map for quick lookup by ID
+    private Map<String, Integer> likeCounts = new HashMap<>(); // Map for tracking like counts
     public boolean hasMore = false;
     public String lastPostId = null; // Used for cursor-based pagination with afterId
     public int pageSize = 10;
     public String blockingErrorMessage = null;
     public Set<String> broadcastIdsSent;
     public int newPostsCount = 0;
+    private Map<String, Map<String, Boolean>> myReacts = new HashMap<>(); // Map of postId to reaction types
 
     private com.fastcomments.pubsub.SubscribeToChangesResult liveEventSubscription;
     private final com.fastcomments.pubsub.LiveEventSubscriber liveEventSubscriber;
@@ -170,6 +192,7 @@ public class FastCommentsFeedSDK {
             api.getFeedPostsPublic(config.tenantId)
                     .afterId(lastPostId)
                     .limit(pageSize)
+                    .sso(config.sso)
                     .executeAsync(new ApiCallback<GetFeedPostsPublic200Response>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
@@ -196,13 +219,41 @@ public class FastCommentsFeedSDK {
                                 mainHandler.post(() -> {
                                     final List<FeedPost> posts = response.getPublicFeedPostsResponse().getFeedPosts();
 
+                                    // Process the myReacts from the response if available
+                                    if (response.getPublicFeedPostsResponse().getMyReacts() != null) {
+                                        // Only clear reactions if this is an initial load
+                                        if (lastPostId == null) {
+                                            myReacts.clear();
+                                        }
+                                        // Add all the myReacts for the posts
+                                        myReacts.putAll(response.getPublicFeedPostsResponse().getMyReacts());
+                                    }
+
                                     // Only clear the list if this is an initial load (no lastPostId)
                                     // This ensures we don't clear when paginating or loading more
                                     if (lastPostId == null) {
                                         feedPosts.clear();
+                                        postsById.clear();
+                                        likeCounts.clear();
                                     }
 
                                     if (!posts.isEmpty()) {
+                                        // Add posts to list and maps
+                                        for (FeedPost post : posts) {
+                                            if (post.getId() != null) {
+                                                // Store post by ID for quick lookup
+                                                postsById.put(post.getId(), post);
+
+                                                // Calculate initial like count from post's reacts
+                                                if (post.getReacts() != null && post.getReacts().containsKey("l")) {
+                                                    likeCounts.put(post.getId(), post.getReacts().get("l").intValue());
+                                                } else {
+                                                    likeCounts.put(post.getId(), 0);
+                                                }
+                                            }
+                                        }
+
+                                        // Add to main post list
                                         feedPosts.addAll(posts);
 
                                         // Update lastPostId for pagination if we have posts
@@ -272,18 +323,153 @@ public class FastCommentsFeedSDK {
     }
 
     /**
+     * Check if the current user has reacted to a post with a specific reaction type
+     *
+     * @param postId    The ID of the post to check
+     * @param reactType The reaction type to check for (e.g., "l" for like)
+     * @return true if the user has reacted with the specified type, false otherwise
+     */
+    public boolean hasUserReactedToPost(String postId, String reactType) {
+        if (postId == null || reactType == null || myReacts.isEmpty()) {
+            return false;
+        }
+
+        Map<String, Boolean> reactions = myReacts.get(postId);
+        return reactions != null && reactions.containsKey(reactType) && Boolean.TRUE.equals(reactions.get(reactType));
+    }
+
+    /**
+     * Get the like count for a post
+     *
+     * @param postId ID of the post
+     * @return Like count or 0 if not found
+     */
+    public int getPostLikeCount(String postId) {
+        if (postId == null) {
+            return 0;
+        }
+
+        Integer count = likeCounts.get(postId);
+        return count != null ? count : 0;
+    }
+
+    /**
      * Like a feed post
      *
      * @param postId   The ID of the post to like
      * @param callback Callback to receive the response
      */
-    public void likePost(String postId, FCCallback<APIError> callback) {
-        // This is a placeholder for the like functionality
-        // In a real implementation, this would call the API to like a post
-        // For now, we'll just return success
-        mainHandler.post(() -> {
-            callback.onSuccess(null);
-        });
+    public void likePost(String postId, FCCallback<FeedPost> callback) {
+        try {
+            // Get post from lookup map
+            FeedPost post = postsById.get(postId);
+
+            if (post != null) {
+                // Check if user has already liked the post to toggle
+                boolean isUndo = hasUserReactedToPost(postId, "l");
+
+                // Optimistically update UI while API call is in progress
+                int currentLikes = getPostLikeCount(postId);
+                if (isUndo) {
+                    // Remove like - decrement count
+                    if (currentLikes > 0) {
+                        likeCounts.put(postId, currentLikes - 1);
+                    }
+
+                    // Update reaction status
+                    Map<String, Boolean> reactions = myReacts.get(postId);
+                    if (reactions != null) {
+                        reactions.put("l", false);
+                    }
+                } else {
+                    // Add like - increment count
+                    likeCounts.put(postId, currentLikes + 1);
+
+                    // Update reaction status
+                    Map<String, Boolean> reactions = myReacts.get(postId);
+                    if (reactions == null) {
+                        reactions = new HashMap<>();
+                        myReacts.put(postId, reactions);
+                    }
+                    reactions.put("l", true);
+                }
+
+                // Make a copy of the updated post to return
+                final FeedPost updatedPost = post;
+
+                // Now call the actual API to make the server-side update
+                try {
+                    ReactBodyParams reactParams = new ReactBodyParams();
+                    reactParams.reactType("l");
+
+                    api.reactFeedPostPublic(config.tenantId, postId, reactParams)
+                            .sso(config.sso)
+                            .isUndo(isUndo)
+                            .executeAsync(new ApiCallback<ReactFeedPostPublic200Response>() {
+                                @Override
+                                public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                                    // API call failed - revert the optimistic update
+                                    if (isUndo) {
+                                        // Revert back to liked state
+                                        likeCounts.put(postId, currentLikes);
+                                        Map<String, Boolean> reactions = myReacts.get(postId);
+                                        if (reactions != null) {
+                                            reactions.put("l", true);
+                                        }
+                                    } else {
+                                        // Revert back to unliked state
+                                        likeCounts.put(postId, currentLikes);
+                                        Map<String, Boolean> reactions = myReacts.get(postId);
+                                        if (reactions != null) {
+                                            reactions.put("l", false);
+                                        }
+                                    }
+
+                                    mainHandler.post(() -> {
+                                        APIError error = CallbackWrapper.createErrorFromException(e);
+                                        callback.onFailure(error);
+                                    });
+                                }
+
+                                @Override
+                                public void onSuccess(ReactFeedPostPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                    // API call succeeded, our optimistic update was correct
+                                    mainHandler.post(() -> {
+                                        callback.onSuccess(updatedPost);
+                                    });
+                                }
+
+                                @Override
+                                public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                                    // Not needed for this API call
+                                }
+
+                                @Override
+                                public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                                    // Not needed for this API call
+                                }
+                            });
+                } catch (ApiException e) {
+                    // Handle API exception
+                    CallbackWrapper.handleAPIException(mainHandler, callback, e);
+                }
+
+                return;
+            }
+
+            // Post not found in the map
+            mainHandler.post(() -> {
+                APIError error = new APIError();
+                error.setReason("Post not found");
+                callback.onFailure(error);
+            });
+        } catch (Exception e) {
+            mainHandler.post(() -> {
+                APIError error = new APIError();
+                error.setReason("Error toggling like: " + e.getMessage());
+                callback.onFailure(error);
+            });
+        }
     }
 
     /**
@@ -332,6 +518,252 @@ public class FastCommentsFeedSDK {
 
         // Create a new FastCommentsSDK with this config
         return new FastCommentsSDK(config);
+    }
+
+
+    /**
+     * Uploads an image to the server with CrossPlatform preset
+     *
+     * @param context  Android context needed for file operations
+     * @param imageUri URI of the image to upload
+     * @param callback Callback to receive the uploaded media item
+     */
+    public void uploadImage(Context context, Uri imageUri, FCCallback<FeedPostMediaItem> callback) {
+        try {
+            if (imageUri == null) {
+                APIError error = new APIError();
+                error.setReason("Invalid image URI");
+                callback.onFailure(error);
+                return;
+            }
+
+            if (context == null) {
+                APIError error = new APIError();
+                error.setReason("Context must not be null");
+                callback.onFailure(error);
+                return;
+            }
+
+            // Create a temporary file from the URI
+            final File imageFile;
+            try {
+                // Get filename from URI
+                String fileName = getFileNameFromUri(context, imageUri);
+                if (fileName == null) {
+                    fileName = "image_" + System.currentTimeMillis();
+                }
+
+                // Get extension
+                String extension = getFileExtension(fileName);
+                if (extension == null || extension.isEmpty()) {
+                    extension = "jpg"; // Default extension
+                }
+
+                // Create temp file
+                File tempFile = File.createTempFile("upload_", "." + extension, context.getCacheDir());
+                imageFile = tempFile;
+
+                // Copy the image content from URI to the file
+                copyUriToFile(context, imageUri, imageFile);
+            } catch (IOException e) {
+                APIError error = new APIError();
+                error.setReason("Failed to prepare image for upload: " + e.getMessage());
+                callback.onFailure(error);
+                return;
+            }
+
+            if (!imageFile.exists()) {
+                APIError error = new APIError();
+                error.setReason("Failed to create image file for upload");
+                callback.onFailure(error);
+                return;
+            }
+
+            try {
+                api.uploadImage(config.tenantId, imageFile)
+                        .urlId("FEEDS")
+                        .sizePreset(SizePreset.CROSS_PLATFORM)
+                        .executeAsync(new ApiCallback<UploadImageResponse>() {
+                            @Override
+                            public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                                // Clean up the temp file
+                                imageFile.delete();
+
+                                APIError error = CallbackWrapper.createErrorFromException(e);
+                                callback.onFailure(error);
+                            }
+
+                            @Override
+                            public void onSuccess(UploadImageResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                // Clean up the temp file
+                                imageFile.delete();
+
+                                mainHandler.post(() -> {
+                                    if (result == null) {
+                                        APIError error = new APIError();
+                                        error.setReason("Empty response from server");
+                                        callback.onFailure(error);
+                                        return;
+                                    }
+
+                                    try {
+                                        FeedPostMediaItem mediaItem = new FeedPostMediaItem();
+                                        List<FeedPostMediaItemAsset> assets = new ArrayList<>();
+                                        if (result.getMedia() != null) {
+                                            for (MediaAsset media : result.getMedia()) {
+                                                assets.add(
+                                                        new FeedPostMediaItemAsset()
+                                                                .h(media.getH())
+                                                                .w(media.getW())
+                                                                .src(media.getSrc())
+                                                );
+                                            }
+                                        } else if (result.getUrl() != null) {
+                                            assets.add(
+                                                    new FeedPostMediaItemAsset()
+                                                            .h(1000)
+                                                            .w(1000)
+                                                            .src(result.getUrl())
+                                            );
+                                        }
+
+                                        mediaItem.setSizes(assets);
+
+                                        callback.onSuccess(mediaItem);
+                                    } catch (Exception e) {
+                                        APIError error = new APIError();
+                                        error.setReason("Failed to parse upload response: " + e.getMessage());
+                                        callback.onFailure(error);
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                                // Could notify about upload progress if needed
+                            }
+
+                            @Override
+                            public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                                // Not needed for upload
+                            }
+                        });
+            } catch (ApiException e) {
+                // Clean up the temp file
+                imageFile.delete();
+
+                CallbackWrapper.handleAPIException(mainHandler, callback, e);
+            }
+        } catch (Exception e) {
+            APIError error = new APIError();
+            error.setReason("Failed to upload image: " + e.getMessage());
+            callback.onFailure(error);
+        }
+    }
+
+    /**
+     * Uploads multiple images with CrossPlatform preset
+     *
+     * @param context   Android context needed for file operations
+     * @param imageUris List of image URIs to upload
+     * @param callback  Callback to receive the uploaded media items
+     */
+    public void uploadImages(Context context, List<Uri> imageUris, FCCallback<List<FeedPostMediaItem>> callback) {
+        if (imageUris == null || imageUris.isEmpty()) {
+            APIError error = new APIError();
+            error.setReason("No images to upload");
+            callback.onFailure(error);
+            return;
+        }
+
+        final List<FeedPostMediaItem> uploadedItems = new ArrayList<>();
+        final AtomicReference<APIError> uploadError = new AtomicReference<>();
+        int[] countRemaining = new int[]{imageUris.size()};
+
+        for (Uri uri : imageUris) {
+            uploadImage(context, uri, new FCCallback<FeedPostMediaItem>() {
+                @Override
+                public boolean onFailure(APIError error) {
+                    uploadError.set(error);
+                    countRemaining[0]--;
+                    if (countRemaining[0] == 0) {
+                        mainHandler.post(() -> callback.onFailure(error));
+                    }
+                    return CONSUME;
+                }
+
+                @Override
+                public boolean onSuccess(FeedPostMediaItem mediaItem) {
+                    synchronized (uploadedItems) {
+                        uploadedItems.add(mediaItem);
+                    }
+                    countRemaining[0]--;
+                    if (countRemaining[0] == 0) {
+                        mainHandler.post(() -> callback.onSuccess(uploadedItems));
+                    }
+                    return CONSUME;
+                }
+            });
+        }
+    }
+
+    /**
+     * Get filename from URI
+     */
+    private String getFileNameFromUri(Context context, Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            try (Cursor cursor = context.getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (nameIndex != -1) {
+                        result = cursor.getString(nameIndex);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e("FastCommentsFeedSDK", "Failed to get filename from URI", e);
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Get file extension from filename
+     */
+    private String getFileExtension(String fileName) {
+        if (fileName == null) {
+            return null;
+        }
+        int lastDot = fileName.lastIndexOf('.');
+        if (lastDot >= 0) {
+            return fileName.substring(lastDot + 1).toLowerCase();
+        }
+        return null;
+    }
+
+    /**
+     * Copy content from URI to file
+     */
+    private void copyUriToFile(Context context, Uri uri, File destFile) throws IOException {
+        try (InputStream inputStream = context.getContentResolver().openInputStream(uri);
+             OutputStream outputStream = new FileOutputStream(destFile)) {
+            if (inputStream == null) {
+                throw new IOException("Failed to open input stream from URI");
+            }
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            outputStream.flush();
+        }
     }
 
     /**

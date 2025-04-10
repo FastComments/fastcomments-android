@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -171,6 +172,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         private final TextView contentTextView;
         private final ImageView avatarImageView;
         private final ChipGroup tagsChipGroup;
+        private final TextView likeCountTextView;
         private final Button commentButton;
         private final Button likeButton;
         private final Button shareButton;
@@ -182,6 +184,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         
         // Multi-image layout elements
         private FrameLayout mediaGalleryContainer;
+        private GridLayout imageGridLayout;
         private androidx.viewpager2.widget.ViewPager2 imageViewPager;
         private TextView imageCounterTextView;
         private List<FeedPostMediaItem> mediaItems;
@@ -201,6 +204,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             contentTextView = itemView.findViewById(R.id.contentTextView);
             avatarImageView = itemView.findViewById(R.id.avatarImageView);
             tagsChipGroup = itemView.findViewById(R.id.tagsChipGroup);
+            likeCountTextView = itemView.findViewById(R.id.likeCountTextView);
             commentButton = itemView.findViewById(R.id.commentButton);
             likeButton = itemView.findViewById(R.id.likeButton);
             shareButton = itemView.findViewById(R.id.shareButton);
@@ -215,6 +219,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     
                 case MULTI_IMAGE:
                     mediaGalleryContainer = itemView.findViewById(R.id.mediaGalleryContainer);
+                    imageGridLayout = itemView.findViewById(R.id.imageGridLayout);
                     imageViewPager = itemView.findViewById(R.id.imageViewPager);
                     imageCounterTextView = itemView.findViewById(R.id.imageCounterTextView);
                     break;
@@ -277,6 +282,30 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             // Set tags if available
             setupTags(post);
 
+            // Handle like count display
+            int likeCount = sdk.getPostLikeCount(post.getId());
+            if (likeCount > 0) {
+                likeCountTextView.setVisibility(View.VISIBLE);
+                String likesText = likeCount == 1 ? 
+                    context.getString(R.string.like_count_singular, likeCount) : 
+                    context.getString(R.string.like_count_plural, likeCount);
+                likeCountTextView.setText(likesText);
+            } else {
+                likeCountTextView.setVisibility(View.GONE);
+            }
+            
+            // Handle like button state based on user's reactions from SDK
+            boolean userHasLiked = sdk.hasUserReactedToPost(post.getId(), "l");
+            if (userHasLiked) {
+                likeButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.heart_filled, 0, 0, 0);
+                likeButton.setTextColor(context.getResources().getColor(android.R.color.holo_red_light, null));
+                likeButton.setText(R.string.liked);
+            } else {
+                likeButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.like_icon, 0, 0, 0);
+                likeButton.setTextColor(likeButton.getContext().getResources().getColor(android.R.color.darker_gray, null));
+                likeButton.setText(R.string.like);
+            }
+            
             // Set common button actions
             commentButton.setOnClickListener(v -> {
                 if (listener != null) {
@@ -390,33 +419,148 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             if (post.getMedia() != null && !post.getMedia().isEmpty()) {
                 mediaItems = post.getMedia();
                 
-                // Create and set up the images adapter
-                imagesAdapter = new PostImagesAdapter(context, mediaItems, mediaItem -> {
-                    if (listener != null) {
-                        listener.onMediaClick(mediaItem);
+                // For posts with 1-3 images, use a grid layout
+                if (mediaItems.size() <= 3) {
+                    imageGridLayout.setVisibility(View.VISIBLE);
+                    imageViewPager.setVisibility(View.GONE);
+                    imageCounterTextView.setVisibility(View.GONE);
+                    
+                    // Clear existing views
+                    imageGridLayout.removeAllViews();
+                    
+                    // Set up grid layout based on number of images
+                    setupImageGrid(mediaItems);
+                } else {
+                    // For 4+ images, use the ViewPager
+                    imageGridLayout.setVisibility(View.GONE);
+                    imageViewPager.setVisibility(View.VISIBLE);
+                    imageCounterTextView.setVisibility(View.VISIBLE);
+                    
+                    // Create and set up the images adapter
+                    imagesAdapter = new PostImagesAdapter(context, mediaItems, mediaItem -> {
+                        if (listener != null) {
+                            listener.onMediaClick(mediaItem);
+                        }
+                    });
+                    
+                    // Set up the ViewPager
+                    imageViewPager.setAdapter(imagesAdapter);
+                    
+                    // Initial counter update
+                    updateImageCounter(0);
+                    
+                    // Clean up any existing callback
+                    if (pageChangeCallback != null) {
+                        imageViewPager.unregisterOnPageChangeCallback(pageChangeCallback);
                     }
-                });
+                    
+                    // Create and register new callback
+                    pageChangeCallback = new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+                        @Override
+                        public void onPageSelected(int position) {
+                            updateImageCounter(position);
+                        }
+                    };
+                    imageViewPager.registerOnPageChangeCallback(pageChangeCallback);
+                }
+            }
+        }
+        
+        /**
+         * Set up the grid layout for 1-3 images
+         * 
+         * @param mediaItems The list of media items
+         */
+        private void setupImageGrid(List<FeedPostMediaItem> mediaItems) {
+            int count = mediaItems.size();
+            
+            if (count == 1) {
+                // Single image takes full size
+                ImageView imageView = createImageView(mediaItems.get(0));
+                GridLayout.LayoutParams params = new GridLayout.LayoutParams(
+                        GridLayout.spec(0, 2, 1f), 
+                        GridLayout.spec(0, 2, 1f));
+                params.width = GridLayout.LayoutParams.MATCH_PARENT;
+                params.height = GridLayout.LayoutParams.MATCH_PARENT;
+                imageGridLayout.addView(imageView, params);
+            } else if (count == 2) {
+                // Two images side by side
+                for (int i = 0; i < count; i++) {
+                    ImageView imageView = createImageView(mediaItems.get(i));
+                    GridLayout.LayoutParams params = new GridLayout.LayoutParams(
+                            GridLayout.spec(0, 2, 1f), 
+                            GridLayout.spec(i, 1, 1f));
+                    params.width = 0;
+                    params.height = GridLayout.LayoutParams.MATCH_PARENT;
+                    params.setMargins(i > 0 ? 2 : 0, 0, i > 0 ? 0 : 2, 0);
+                    imageGridLayout.addView(imageView, params);
+                }
+            } else if (count == 3) {
+                // First image takes full width on top row
+                ImageView firstImageView = createImageView(mediaItems.get(0));
+                GridLayout.LayoutParams firstParams = new GridLayout.LayoutParams(
+                        GridLayout.spec(0, 1, 0.6f), 
+                        GridLayout.spec(0, 2, 1f));
+                firstParams.width = GridLayout.LayoutParams.MATCH_PARENT;
+                firstParams.height = 0;
+                firstParams.setMargins(0, 0, 0, 2);
+                imageGridLayout.addView(firstImageView, firstParams);
                 
-                // Set up the ViewPager
-                imageViewPager.setAdapter(imagesAdapter);
+                // Two smaller images on bottom row
+                for (int i = 1; i < 3; i++) {
+                    ImageView imageView = createImageView(mediaItems.get(i));
+                    GridLayout.LayoutParams params = new GridLayout.LayoutParams(
+                            GridLayout.spec(1, 1, 0.4f), 
+                            GridLayout.spec(i - 1, 1, 1f));
+                    params.width = 0;
+                    params.height = 0;
+                    params.setMargins(i > 1 ? 2 : 0, 0, i > 1 ? 0 : 2, 0);
+                    imageGridLayout.addView(imageView, params);
+                }
+            }
+        }
+        
+        /**
+         * Create an ImageView for a media item
+         * 
+         * @param mediaItem The media item to display
+         * @return A configured ImageView
+         */
+        private ImageView createImageView(FeedPostMediaItem mediaItem) {
+            ImageView imageView = new ImageView(context);
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setBackgroundColor(context.getResources().getColor(android.R.color.darker_gray, null));
+            
+            // Load image using Glide if media item has sizes
+            if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
+                FeedPostMediaItemAsset bestSizeAsset = selectBestImageSize(mediaItem.getSizes());
                 
-                // Initial counter update
-                updateImageCounter(0);
+                if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
+                    Glide.with(context)
+                            .load(bestSizeAsset.getSrc())
+                            .transition(DrawableTransitionOptions.withCrossFade())
+                            .error(R.drawable.image_placeholder)
+                            .into(imageView);
+                }
+            }
+            
+            // Set click listener
+            imageView.setOnClickListener(v -> {
+                // Get best quality image URL
+                String fullImageUrl = getBestQualityImageUrl(mediaItem);
                 
-                // Clean up any existing callback
-                if (pageChangeCallback != null) {
-                    imageViewPager.unregisterOnPageChangeCallback(pageChangeCallback);
+                if (fullImageUrl != null) {
+                    // Show the full image dialog
+                    new FullImageDialog(context, fullImageUrl).show();
                 }
                 
-                // Create and register new callback
-                pageChangeCallback = new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
-                    @Override
-                    public void onPageSelected(int position) {
-                        updateImageCounter(position);
-                    }
-                };
-                imageViewPager.registerOnPageChangeCallback(pageChangeCallback);
-            }
+                // Also notify the listener if set
+                if (listener != null) {
+                    listener.onMediaClick(mediaItem);
+                }
+            });
+            
+            return imageView;
         }
         
         /**
