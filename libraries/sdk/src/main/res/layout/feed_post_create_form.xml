@@ -144,14 +144,6 @@
                     android:contentDescription="@string/attach_image"
                     android:src="@android:drawable/ic_menu_gallery" />
 
-                <ImageButton
-                    android:id="@+id/attachLinkButton"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="8dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/attach_link"
-                    android:src="@drawable/link_icon" />
             </LinearLayout>
 
             <!-- Right side buttons -->

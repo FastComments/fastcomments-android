@@ -60,7 +60,7 @@ public class FeedPostCreateView extends FrameLayout {
     private ImageButton removeLinkButton;
     private TextView postErrorTextView;
     private ImageButton attachImageButton;
-    private ImageButton attachLinkButton;
+    // private ImageButton attachLinkButton; // Removed link button
     private Button cancelPostButton;
     private Button submitPostButton;
     private ProgressBar postProgressBar;
@@ -123,7 +123,7 @@ public class FeedPostCreateView extends FrameLayout {
         removeLinkButton = findViewById(R.id.removeLinkButton);
         postErrorTextView = findViewById(R.id.postErrorTextView);
         attachImageButton = findViewById(R.id.attachImageButton);
-        attachLinkButton = findViewById(R.id.attachLinkButton);
+        // attachLinkButton = findViewById(R.id.attachLinkButton); // Removed link button
         cancelPostButton = findViewById(R.id.cancelPostButton);
         submitPostButton = findViewById(R.id.submitPostButton);
         postProgressBar = findViewById(R.id.postProgressBar);
@@ -159,7 +159,7 @@ public class FeedPostCreateView extends FrameLayout {
 
         // Set up button click listeners
         attachImageButton.setOnClickListener(v -> requestImagePicker());
-        attachLinkButton.setOnClickListener(v -> showAddLinkDialog());
+        // attachLinkButton.setOnClickListener(v -> showAddLinkDialog()); // Removed link button
         removeLinkButton.setOnClickListener(v -> removeLink());
         cancelPostButton.setOnClickListener(v -> cancelPost());
         submitPostButton.setOnClickListener(v -> validateAndSubmitPost());
@@ -574,7 +574,7 @@ public class FeedPostCreateView extends FrameLayout {
         postProgressBar.setVisibility(submitting ? VISIBLE : GONE);
         postContentEditText.setEnabled(!submitting);
         attachImageButton.setEnabled(!submitting);
-        attachLinkButton.setEnabled(!submitting);
+        // attachLinkButton.setEnabled(!submitting); // Removed link button
         cancelPostButton.setEnabled(!submitting);
         submitPostButton.setEnabled(!submitting);
 
