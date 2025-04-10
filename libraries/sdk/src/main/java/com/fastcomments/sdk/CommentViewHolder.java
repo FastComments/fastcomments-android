@@ -46,7 +46,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private final TextView displayLabelTextView; // Display label above username
     private final com.google.android.flexbox.FlexboxLayout badgesContainer; // Badges container
     private final Button toggleRepliesButton;
-    private final Button replyButton;
+    public final Button replyButton; // Made public for access from adapter
     private final ImageButton upVoteButton;
     private final ImageButton downVoteButton;
     private final TextView upVoteCountTextView;

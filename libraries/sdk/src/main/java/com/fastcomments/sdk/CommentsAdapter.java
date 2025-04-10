@@ -113,12 +113,18 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             });
         });
 
-        // Set up reply button click listener
-        holder.setReplyClickListener(v -> {
-            if (replyListener != null) {
-                replyListener.call(comment);
-            }
-        });
+        // Set up reply button click listener - check if maxReplyDepth is 0 (live chat mode)
+        if (sdk.getConfig().maxReplyDepth != null && sdk.getConfig().maxReplyDepth == 0) {
+            // Hide reply button in live chat mode
+            holder.replyButton.setVisibility(View.GONE);
+        } else {
+            // Set up reply button click listener for regular comment mode
+            holder.setReplyClickListener(v -> {
+                if (replyListener != null) {
+                    replyListener.call(comment);
+                }
+            });
+        }
         
         // Set up vote button click listeners
         holder.setUpVoteClickListener(v -> {
