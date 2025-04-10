@@ -173,11 +173,13 @@ public class FeedExampleActivity extends AppCompatActivity {
 
         // Set FAB click listener
         createPostFab.setOnClickListener(v -> {
-            // Show post creation view with animation and hide FAB
+            // Configure post creation view and prepare it for showing
             postCreateView.setVisibility(View.VISIBLE);
+            postCreateView.setClickable(true); 
+            postCreateView.setEnabled(true);
             createPostFab.setVisibility(View.GONE);
             
-            // Apply animation
+            // Apply animation to slide it down
             postCreateView.startAnimation(android.view.animation.AnimationUtils.loadAnimation(
                     FeedExampleActivity.this, com.fastcomments.sdk.R.anim.slide_down_from_top));
         });
@@ -198,8 +200,13 @@ public class FeedExampleActivity extends AppCompatActivity {
                     
                     @Override
                     public void onAnimationEnd(android.view.animation.Animation animation) {
-                        // Set gone at the end of animation
+                        // Make form completely gone and unclickable
+                        postCreateView.clearAnimation();
                         postCreateView.setVisibility(View.GONE);
+                        postCreateView.setClickable(false);
+                        postCreateView.setEnabled(false);
+                        
+                        // Show FAB button
                         createPostFab.setVisibility(View.VISIBLE);
                         
                         // Refresh the feed to show the new post
@@ -235,8 +242,13 @@ public class FeedExampleActivity extends AppCompatActivity {
                     
                     @Override
                     public void onAnimationEnd(android.view.animation.Animation animation) {
-                        // Set gone at the end of animation
+                        // Make form completely gone and unclickable
+                        postCreateView.clearAnimation();
                         postCreateView.setVisibility(View.GONE);
+                        postCreateView.setClickable(false);
+                        postCreateView.setEnabled(false);
+                        
+                        // Show FAB button
                         createPostFab.setVisibility(View.VISIBLE);
                     }
                     
