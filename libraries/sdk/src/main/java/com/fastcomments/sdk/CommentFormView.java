@@ -122,7 +122,16 @@ public class CommentFormView extends LinearLayout {
      * @param userInfo UserSessionInfo
      */
     public void setCurrentUser(@NonNull UserSessionInfo userInfo) {
-        userNameTextView.setText(userInfo.getDisplayName());
+        // Try displayName first, then fallback to username, then Anonymous
+        String nameToShow = userInfo.getDisplayName();
+        if (nameToShow == null || nameToShow.isEmpty()) {
+            nameToShow = userInfo.getUsername();
+            if (nameToShow == null || nameToShow.isEmpty()) {
+                nameToShow = getContext().getString(R.string.anonymous);
+            }
+        }
+        userNameTextView.setText(nameToShow);
+        
         if (userInfo.getAvatarSrc() != null) {
             AvatarFetcher.fetchTransformInto(getContext(), userInfo.getAvatarSrc(), avatarImageView);
         } else {
