@@ -3,6 +3,7 @@ package com.fastcomments
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.fastcomments.core.CommentWidgetConfig
+import com.fastcomments.core.VoteStyle
 import com.fastcomments.core.sso.FastCommentsSSO
 import com.fastcomments.core.sso.SimpleSSOUserData
 import com.fastcomments.sdk.FastCommentsSDK
@@ -23,6 +24,10 @@ class SimpleSSOExampleActivity : AppCompatActivity() {
             "fastcomments.com",
             "Demo"
         )
+
+        // Optional configuration
+//         config.voteStyle = VoteStyle.Heart
+//         config.enableInfiniteScrolling = true
 
         val userData = SimpleSSOUserData("Example User", "user@example.com", "https://staticm.fastcomments.com/1639362726066-DSC_0841.JPG");
         val sso = FastCommentsSSO(userData)
