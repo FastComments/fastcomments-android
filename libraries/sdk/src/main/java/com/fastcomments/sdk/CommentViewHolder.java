@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -103,24 +104,14 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private boolean liveChatStyle = false;
     
     /**
-     * Set whether to use live chat styling (smaller avatars, hidden dates)
+     * Set whether this view is using live chat styling
      * @param liveChatStyle True for live chat style
      */
     public void setLiveChatStyle(boolean liveChatStyle) {
         this.liveChatStyle = liveChatStyle;
         
-        // Update avatar size
-        ViewGroup.LayoutParams avatarParams = avatarImageView.getLayoutParams();
-        if (liveChatStyle) {
-            // Smaller avatar for live chat
-            avatarParams.width = (int) (context.getResources().getDisplayMetrics().density * 28);
-            avatarParams.height = (int) (context.getResources().getDisplayMetrics().density * 28);
-        } else {
-            // Regular avatar size
-            avatarParams.width = (int) (context.getResources().getDisplayMetrics().density * 40);
-            avatarParams.height = (int) (context.getResources().getDisplayMetrics().density * 40);
-        }
-        avatarImageView.setLayoutParams(avatarParams);
+        // No need to modify the view since we're using different layouts
+        // Just store the flag for other behavior adjustments
     }
     
     public void setComment(final RenderableComment comment, boolean disableUnverifiedLabel, final CommentsAdapter.OnToggleRepliesListener listener) {
@@ -189,6 +180,8 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         // Display the comment content with clickable links
         String htmlContent = comment.getComment().getCommentHTML();
         contentTextView.setText(HtmlLinkHandler.parseHtml(context, htmlContent, contentTextView));
+        
+        // No need for special handling for live chat - we're using a dedicated layout
 
         // Indent child comments to reflect hierarchy
         ViewGroup.MarginLayoutParams itemViewLayoutParams = (ViewGroup.MarginLayoutParams) itemView.getLayoutParams();

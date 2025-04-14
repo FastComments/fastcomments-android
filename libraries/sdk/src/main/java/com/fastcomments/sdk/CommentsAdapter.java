@@ -92,7 +92,11 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         if (viewType == VIEW_TYPE_COMMENT) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_comment, parent, false);
+            // Use compact layout for live chat mode
+            int layoutResId = commentsTree.liveChatStyle ? 
+                    R.layout.item_comment_compact : R.layout.item_comment;
+                    
+            View view = LayoutInflater.from(parent.getContext()).inflate(layoutResId, parent, false);
             return new CommentViewHolder(context, sdk, view);
         } else if (viewType == VIEW_TYPE_DATE_SEPARATOR) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.date_separator, parent, false);
@@ -122,7 +126,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private void bindCommentViewHolder(CommentViewHolder holder, int position) {
         final RenderableComment comment = (RenderableComment) commentsTree.visibleNodes.get(position);
         
-        // Set live chat style for smaller avatars and hidden dates
+        // Inform the holder whether we're in live chat mode
         holder.setLiveChatStyle(commentsTree.liveChatStyle);
         
         // Pass config setting for unverified label
