@@ -212,11 +212,19 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             heartVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_zero_color));
         }
 
-        // Show the appropriate vote style based on configuration
-        boolean useHeartStyle = Objects.equals(sdk.getConfig().voteStyle, VoteStyle.Heart);
-
-        standardVoteContainer.setVisibility(useHeartStyle ? View.GONE : View.VISIBLE);
-        heartVoteContainer.setVisibility(useHeartStyle ? View.VISIBLE : View.GONE);
+        // Check if voting is disabled first
+        boolean disableVoting = Boolean.TRUE.equals(sdk.getConfig().disableVoting);
+        
+        if (disableVoting) {
+            // Hide all voting UI elements if voting is disabled
+            standardVoteContainer.setVisibility(View.GONE);
+            heartVoteContainer.setVisibility(View.GONE);
+        } else {
+            // Only calculate vote style if voting is enabled
+            boolean useHeartStyle = Objects.equals(sdk.getConfig().voteStyle, VoteStyle.Heart);
+            standardVoteContainer.setVisibility(useHeartStyle ? View.GONE : View.VISIBLE);
+            heartVoteContainer.setVisibility(useHeartStyle ? View.VISIBLE : View.GONE);
+        }
 
         // Show the toggle replies button only if there are replies
         final Integer childCount = comment.getComment().getChildCount();
@@ -350,23 +358,6 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             );
             dateTextView.setText(relativeTime);
         }
-
-        // Also update vote buttons and counts if necessary
-        // This is needed for the heart button to stay in sync when vote counts update
-        Boolean isVotedUp = currentComment.getComment().getIsVotedUp();
-        heartButton.setSelected(isVotedUp != null && isVotedUp);
-        
-        // Update heart count with abbreviated format
-        Integer upVotes = currentComment.getComment().getVotesUp();
-        if (upVotes != null && upVotes > 0) {
-            heartVoteCountTextView.setText(formatAbbreviatedCount(upVotes));
-        }
-
-        // Show the appropriate vote style based on configuration
-        boolean useHeartStyle = Objects.equals(sdk.getConfig().voteStyle, VoteStyle.Heart);
-
-        standardVoteContainer.setVisibility(useHeartStyle ? View.GONE : View.VISIBLE);
-        heartVoteContainer.setVisibility(useHeartStyle ? View.VISIBLE : View.GONE);
     }
     
     /**

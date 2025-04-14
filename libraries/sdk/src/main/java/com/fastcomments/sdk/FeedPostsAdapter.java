@@ -302,7 +302,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             // Handle like button state based on user's reactions from SDK
             boolean userHasLiked = sdk.hasUserReactedToPost(post.getId(), "l");
             if (userHasLiked) {
-                likeButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.heart_filled, 0, 0, 0);
+                likeButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.like_filled_icon, 0, 0, 0);
                 likeButton.setTextColor(context.getResources().getColor(android.R.color.holo_red_light, null));
                 likeButton.setText(R.string.liked);
             } else {

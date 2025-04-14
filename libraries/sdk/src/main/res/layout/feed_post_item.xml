@@ -121,7 +121,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:drawablePadding="4dp"
-            android:drawableStart="@drawable/heart_filled"
+            android:drawableStart="@drawable/heart_filled_small"
             android:textSize="12sp"
             android:visibility="gone"
             tools:text="42 likes"
