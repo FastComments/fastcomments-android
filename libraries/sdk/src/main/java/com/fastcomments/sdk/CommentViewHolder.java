@@ -100,6 +100,29 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         childPaginationProgressBar = itemView.findViewById(R.id.childPaginationProgressBar);
     }
 
+    private boolean liveChatStyle = false;
+    
+    /**
+     * Set whether to use live chat styling (smaller avatars, hidden dates)
+     * @param liveChatStyle True for live chat style
+     */
+    public void setLiveChatStyle(boolean liveChatStyle) {
+        this.liveChatStyle = liveChatStyle;
+        
+        // Update avatar size
+        ViewGroup.LayoutParams avatarParams = avatarImageView.getLayoutParams();
+        if (liveChatStyle) {
+            // Smaller avatar for live chat
+            avatarParams.width = (int) (context.getResources().getDisplayMetrics().density * 28);
+            avatarParams.height = (int) (context.getResources().getDisplayMetrics().density * 28);
+        } else {
+            // Regular avatar size
+            avatarParams.width = (int) (context.getResources().getDisplayMetrics().density * 40);
+            avatarParams.height = (int) (context.getResources().getDisplayMetrics().density * 40);
+        }
+        avatarImageView.setLayoutParams(avatarParams);
+    }
+    
     public void setComment(final RenderableComment comment, boolean disableUnverifiedLabel, final CommentsAdapter.OnToggleRepliesListener listener) {
         //noinspection ConstantValue
         if (comment.getComment().getCommenterName() != null) {
@@ -144,8 +167,15 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         // Store current comment reference first, so updateDateDisplay has the correct reference
         this.currentComment = comment;
 
-        // Format and display the date
-        updateDateDisplay();
+        // In live chat mode, we hide individual comment dates
+        // Dates will be shown as separators between comments instead
+        if (liveChatStyle) {
+            dateTextView.setVisibility(View.GONE);
+        } else {
+            dateTextView.setVisibility(View.VISIBLE);
+            // Format and display the date
+            updateDateDisplay();
+        }
 
         ViewGroup.LayoutParams textViewLayout = contentTextView.getLayoutParams();
         textViewLayout.height = ViewGroup.LayoutParams.WRAP_CONTENT;

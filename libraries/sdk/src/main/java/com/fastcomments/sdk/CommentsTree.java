@@ -31,6 +31,7 @@ public class CommentsTree {
     public List<RenderableComment> allComments = new ArrayList<>(0); // in any order
     public List<RenderableNode> visibleNodes = new ArrayList<>(0); // in view order - can include comments and buttons
     private CommentsAdapter adapter;
+    public boolean liveChatStyle = false;
 
     // Separate collections for easier lookup
     private RenderableButton newRootCommentsButton; // Only one of these at most
@@ -56,6 +57,14 @@ public class CommentsTree {
     public Context getContext() {
         return adapter != null ? adapter.getContext() : null;
     }
+    
+    /**
+     * Set whether this tree should use live chat style rendering (with date separators)
+     * @param liveChatStyle true for live chat style
+     */
+    public void setLiveChatStyle(boolean liveChatStyle) {
+        this.liveChatStyle = liveChatStyle;
+    }
 
     public void notifyItemChanged(RenderableNode node) {
         final int index = this.visibleNodes.indexOf(node);
@@ -72,14 +81,44 @@ public class CommentsTree {
             return;
         }
 
-        // Process all comments and create RenderableComment objects
-        for (PublicComment comment : comments) {
-            final RenderableComment renderableComment = new RenderableComment(comment);
-            addToMapAndRelated(renderableComment);
-            allComments.add(renderableComment);
-            visibleNodes.add(renderableComment);
-            if (comment.getChildren() != null) {
-                handleChildren(allComments, visibleNodes, comment.getChildren(), renderableComment.isRepliesShown);
+        if (!liveChatStyle) {
+            // Standard mode - process all comments and create RenderableComment objects
+            for (PublicComment comment : comments) {
+                final RenderableComment renderableComment = new RenderableComment(comment);
+                addToMapAndRelated(renderableComment);
+                allComments.add(renderableComment);
+                visibleNodes.add(renderableComment);
+                if (comment.getChildren() != null) {
+                    handleChildren(allComments, visibleNodes, comment.getChildren(), renderableComment.isRepliesShown);
+                }
+            }
+        } else {
+            // Live chat mode - insert date separators
+            java.time.LocalDate currentDate = null;
+
+            for (PublicComment comment : comments) {
+                final RenderableComment renderableComment = new RenderableComment(comment);
+                addToMapAndRelated(renderableComment);
+                allComments.add(renderableComment);
+                
+                // Check if we need a date separator
+                if (comment.getDate() != null) {
+                    java.time.LocalDate commentDate = comment.getDate().toLocalDate();
+                    
+                    if (currentDate == null || !currentDate.equals(commentDate)) {
+                        // Add date separator for this new date
+                        currentDate = commentDate;
+                        visibleNodes.add(new RenderableNode.DateSeparator(currentDate));
+                    }
+                }
+                
+                visibleNodes.add(renderableComment);
+                
+                // In live chat, we typically don't show children/replies
+                // But process them anyway in case this changes
+                if (comment.getChildren() != null) {
+                    handleChildren(allComments, visibleNodes, comment.getChildren(), renderableComment.isRepliesShown);
+                }
             }
         }
 
@@ -452,6 +491,41 @@ public class CommentsTree {
                 } else {
                     // For oldest first (like chat), add at the bottom
                     position = visibleNodes.size();
+                    
+                    // Check if we need to add a date separator in live chat mode
+                    if (liveChatStyle && comment.getDate() != null) {
+                        java.time.LocalDate commentDate = comment.getDate().toLocalDate();
+                        boolean needDateSeparator = true;
+                        
+                        // Check if there are any comments already with the same date
+                        for (int i = visibleNodes.size() - 1; i >= 0; i--) {
+                            RenderableNode node = visibleNodes.get(i);
+                            if (node instanceof RenderableNode.DateSeparator) {
+                                RenderableNode.DateSeparator separator = (RenderableNode.DateSeparator) node;
+                                if (separator.getDate().equals(commentDate)) {
+                                    // We already have a separator for this date
+                                    needDateSeparator = false;
+                                }
+                                break; // Exit after finding the most recent date separator
+                            } else if (node instanceof RenderableComment) {
+                                RenderableComment lastComment = (RenderableComment) node;
+                                if (lastComment.getComment().getDate() != null && 
+                                    lastComment.getComment().getDate().toLocalDate().equals(commentDate)) {
+                                    // The previous comment is from the same date
+                                    needDateSeparator = false;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (needDateSeparator) {
+                            RenderableNode.DateSeparator separator = new RenderableNode.DateSeparator(commentDate);
+                            visibleNodes.add(separator);
+                            adapter.notifyItemInserted(position);
+                            position++;
+                        }
+                    }
+                    
                     visibleNodes.add(renderableComment);
                 }
                 adapter.notifyItemInserted(position);

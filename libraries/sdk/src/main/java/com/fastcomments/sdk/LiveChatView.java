@@ -213,6 +213,9 @@ public class LiveChatView extends FrameLayout {
         adapter = new CommentsAdapter(getContext(), sdk);
         recyclerView.setAdapter(adapter);
         
+        // Enable live chat style in the comment tree
+        sdk.commentsTree.setLiveChatStyle(true);
+        
         // Set up infinite scrolling (in reverse) for chat mode
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override

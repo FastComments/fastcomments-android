@@ -5,18 +5,26 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.fastcomments.model.PublicComment;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int VIEW_TYPE_COMMENT = 0;
     private static final int VIEW_TYPE_BUTTON = 1;
+    private static final int VIEW_TYPE_DATE_SEPARATOR = 2;
 
     private final Context context;
     private final CommentsTree commentsTree;
@@ -73,6 +81,8 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         RenderableNode node = commentsTree.visibleNodes.get(position);
         if (node instanceof RenderableComment) {
             return VIEW_TYPE_COMMENT;
+        } else if (node instanceof RenderableNode.DateSeparator) {
+            return VIEW_TYPE_DATE_SEPARATOR;
         } else {
             return VIEW_TYPE_BUTTON;
         }
@@ -84,6 +94,9 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         if (viewType == VIEW_TYPE_COMMENT) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_comment, parent, false);
             return new CommentViewHolder(context, sdk, view);
+        } else if (viewType == VIEW_TYPE_DATE_SEPARATOR) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.date_separator, parent, false);
+            return new DateSeparatorViewHolder(view);
         } else {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_button, parent, false);
             return new ButtonViewHolder(view);
@@ -94,13 +107,23 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof CommentViewHolder) {
             bindCommentViewHolder((CommentViewHolder) holder, position);
+        } else if (holder instanceof DateSeparatorViewHolder) {
+            bindDateSeparatorViewHolder((DateSeparatorViewHolder) holder, position);
         } else if (holder instanceof ButtonViewHolder) {
             bindButtonViewHolder((ButtonViewHolder) holder, position);
         }
     }
     
+    private void bindDateSeparatorViewHolder(DateSeparatorViewHolder holder, int position) {
+        final RenderableNode.DateSeparator separator = (RenderableNode.DateSeparator) commentsTree.visibleNodes.get(position);
+        holder.setDate(separator);
+    }
+    
     private void bindCommentViewHolder(CommentViewHolder holder, int position) {
         final RenderableComment comment = (RenderableComment) commentsTree.visibleNodes.get(position);
+        
+        // Set live chat style for smaller avatars and hidden dates
+        holder.setLiveChatStyle(commentsTree.liveChatStyle);
         
         // Pass config setting for unverified label
         boolean disableUnverifiedLabel = Boolean.TRUE.equals(sdk.getConfig().disableUnverifiedLabel);
@@ -248,6 +271,22 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         
         public void setButtonClickListener(View.OnClickListener listener) {
             button.setOnClickListener(listener);
+        }
+    }
+    
+    /**
+     * Date separator view holder for the live chat view
+     */
+    static class DateSeparatorViewHolder extends RecyclerView.ViewHolder {
+        private final TextView dateText;
+        
+        public DateSeparatorViewHolder(@NonNull View itemView) {
+            super(itemView);
+            dateText = itemView.findViewById(R.id.dateSeparatorText);
+        }
+        
+        public void setDate(RenderableNode.DateSeparator separator) {
+            dateText.setText(separator.getFormattedDate());
         }
     }
 }
