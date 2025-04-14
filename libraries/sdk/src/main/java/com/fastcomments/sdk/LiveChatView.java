@@ -185,6 +185,7 @@ public class LiveChatView extends FrameLayout {
         config.showLiveRightAway = true;
         config.defaultSortDirection = SortDirections.OF;
         config.maxReplyDepth = 0;
+        config.disableVoting = true;
     }
     
     /**
