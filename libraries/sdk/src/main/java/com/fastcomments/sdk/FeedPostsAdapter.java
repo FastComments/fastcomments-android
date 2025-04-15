@@ -18,6 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.FeedPostLink;
@@ -61,6 +62,22 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         this.sdk = sdk;
         // Set date format based on SDK configuration
         this.useAbsoluteDates = Boolean.TRUE.equals(sdk.getConfig().absoluteDates);
+    }
+    
+    /**
+     * Get the standard image height from resources
+     * @return Standard image height in pixels
+     */
+    private int getDefaultImageHeight() {
+        return context.getResources().getDimensionPixelSize(R.dimen.feed_image_height);
+    }
+    
+    /**
+     * Get the half-size image height from resources
+     * @return Half image height in pixels
+     */
+    private int getHalfImageHeight() {
+        return context.getResources().getDimensionPixelSize(R.dimen.feed_image_half_height);
     }
 
     @Override
@@ -146,12 +163,49 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         this.feedPosts.clear();
         this.feedPosts.addAll(newPosts);
         notifyDataSetChanged();
+        
+        // Preload the first few images to reduce pop-in effect
+        preloadImages(0, Math.min(5, newPosts.size()));
+    }
+    
+    /**
+     * Preload images for a range of posts to prevent pop-in during scrolling
+     *
+     * @param startPosition Starting position to preload
+     * @param count Number of posts to preload
+     */
+    public void preloadImages(int startPosition, int count) {
+        if (startPosition >= feedPosts.size() || count <= 0) {
+            return;
+        }
+        
+        int endPosition = Math.min(startPosition + count, feedPosts.size());
+        
+        for (int i = startPosition; i < endPosition; i++) {
+            FeedPost post = feedPosts.get(i);
+            if (post.getMedia() != null && !post.getMedia().isEmpty()) {
+                FeedPostMediaItem mediaItem = post.getMedia().get(0);
+                if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
+                    FeedPostMediaItemAsset bestAsset = selectBestImageSize(mediaItem.getSizes());
+                    if (bestAsset != null && bestAsset.getSrc() != null) {
+                        // Preload image into memory cache
+                        Glide.with(context)
+                                .load(bestAsset.getSrc())
+                                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                .preload();
+                    }
+                }
+            }
+        }
     }
 
     public void addPosts(List<FeedPost> morePosts) {
         int startPosition = this.feedPosts.size();
         this.feedPosts.addAll(morePosts);
         notifyItemRangeInserted(startPosition, morePosts.size());
+        
+        // Preload the newly added images
+        preloadImages(startPosition, Math.min(5, morePosts.size()));
     }
 
     public void updatePost(int position, FeedPost updatedPost) {
@@ -159,6 +213,82 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             feedPosts.set(position, updatedPost);
             notifyItemChanged(position);
         }
+    }
+    
+    /**
+     * Select the best image size based on device display metrics
+     * Prioritizes images that fit well on the screen while maintaining quality
+     *
+     * @param sizes List of available image sizes
+     * @return The most appropriate FeedPostMediaItemAsset or the first one if no optimal size is found
+     */
+    private FeedPostMediaItemAsset selectBestImageSize(List<FeedPostMediaItemAsset> sizes) {
+        if (sizes == null || sizes.isEmpty()) {
+            return null;
+        }
+
+        // If there's only one size, use it
+        if (sizes.size() == 1) {
+            return sizes.get(0);
+        }
+
+        // Get screen width for comparison
+        int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+
+        // Target a size that's close to the screen width for optimal display
+        // We'll tolerate images up to 1.5x screen width to maintain quality
+        double optimalWidth = screenWidth;
+        double maxAcceptableWidth = screenWidth * 1.5;
+
+        FeedPostMediaItemAsset bestMatch = null;
+        double smallestDiff = Double.MAX_VALUE;
+
+        // First pass: find close matches to optimal width
+        for (FeedPostMediaItemAsset asset : sizes) {
+            if (asset == null || asset.getW() == null || asset.getSrc() == null) {
+                continue;
+            }
+
+            double width = asset.getW();
+            double diff = Math.abs(width - optimalWidth);
+
+            // If width is within acceptable range and has smaller difference than current best match
+            if (width <= maxAcceptableWidth && diff < smallestDiff) {
+                bestMatch = asset;
+                smallestDiff = diff;
+            }
+        }
+
+        // If no match found in optimal range, just use the largest that's not excessively large
+        if (bestMatch == null) {
+            double largestAcceptableWidth = 0;
+
+            for (FeedPostMediaItemAsset asset : sizes) {
+                if (asset == null || asset.getW() == null || asset.getSrc() == null) {
+                    continue;
+                }
+
+                double width = asset.getW();
+
+                // Find largest image that's not too oversized
+                if (width > largestAcceptableWidth && width <= maxAcceptableWidth * 2) {
+                    bestMatch = asset;
+                    largestAcceptableWidth = width;
+                }
+            }
+
+            // If still no match, use the first valid asset
+            if (bestMatch == null) {
+                for (FeedPostMediaItemAsset asset : sizes) {
+                    if (asset != null && asset.getSrc() != null) {
+                        return asset;
+                    }
+                }
+            }
+        }
+
+        // Return best match or first asset if no match found
+        return bestMatch != null ? bestMatch : sizes.get(0);
     }
 
     enum FeedPostType {
@@ -358,9 +488,15 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
                         mediaContainer.setVisibility(View.VISIBLE);
 
+                        // Pre-set a placeholder with a fixed height before loading the image
+                        // This prevents the layout from jumping when the image loads
+                        mediaImageView.setMinimumHeight(getDefaultImageHeight()); // Match the 300dp in layout
+                        
+                        // Use Glide's preload to cache the image before displaying it
                         Glide.with(context)
                                 .load(bestSizeAsset.getSrc())
-                                .transition(DrawableTransitionOptions.withCrossFade())
+                                .centerCrop()
+                                .transition(DrawableTransitionOptions.withCrossFade(300))
                                 .error(R.drawable.image_placeholder)
                                 .into(mediaImageView);
 
@@ -593,9 +729,13 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
                 FeedPostMediaItemAsset bestAsset = selectBestImageSize(mediaItem.getSizes());
                 if (bestAsset != null && bestAsset.getSrc() != null) {
+                    // Set a minimum height to prevent layout jumps
+                    imageView.setMinimumHeight(getHalfImageHeight()); // Half height for smaller images
+                    
                     Glide.with(context)
                             .load(bestAsset.getSrc())
-                            .transition(DrawableTransitionOptions.withCrossFade())
+                            .centerCrop()
+                            .transition(DrawableTransitionOptions.withCrossFade(300))
                             .error(R.drawable.image_placeholder)
                             .into(imageView);
                 } else {
@@ -616,6 +756,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             ImageView imageView = new ImageView(context);
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             imageView.setBackgroundColor(context.getResources().getColor(android.R.color.darker_gray, null));
+            imageView.setMinimumHeight(getDefaultImageHeight()); // Set a minimum height to prevent layout jumps
 
             // Load image using Glide if media item has sizes
             if (!mediaItem.getSizes().isEmpty()) {
@@ -624,6 +765,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 if (bestSizeAsset != null) {
                     Glide.with(context)
                             .load(bestSizeAsset.getSrc())
+                            .centerCrop()
                             .transition(DrawableTransitionOptions.withCrossFade())
                             .error(R.drawable.image_placeholder)
                             .into(imageView);
@@ -678,9 +820,15 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
                     if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
                         mediaContainer.setVisibility(View.VISIBLE);
+                        // Pre-set a placeholder with a fixed height before loading the image
+                        // This prevents the layout from jumping when the image loads
+                        mediaImageView.setMinimumHeight(getDefaultImageHeight()); // Match the 300dp in layout
+                        
+                        // Use Glide's preload to cache the image before displaying it
                         Glide.with(context)
                                 .load(bestSizeAsset.getSrc())
-                                .transition(DrawableTransitionOptions.withCrossFade())
+                                .centerCrop()
+                                .transition(DrawableTransitionOptions.withCrossFade(300))
                                 .error(R.drawable.image_placeholder)
                                 .into(mediaImageView);
 
@@ -1012,82 +1160,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 );
                 return relativeTime.toString();
             }
-        }
-
-        /**
-         * Select the best image size based on device display metrics
-         * Prioritizes images that fit well on the screen while maintaining quality
-         *
-         * @param sizes List of available image sizes
-         * @return The most appropriate FeedPostMediaItemAsset or the first one if no optimal size is found
-         */
-        private FeedPostMediaItemAsset selectBestImageSize(List<FeedPostMediaItemAsset> sizes) {
-            if (sizes == null || sizes.isEmpty()) {
-                return null;
-            }
-
-            // If there's only one size, use it
-            if (sizes.size() == 1) {
-                return sizes.get(0);
-            }
-
-            // Get screen width for comparison
-            int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
-
-            // Target a size that's close to the screen width for optimal display
-            // We'll tolerate images up to 1.5x screen width to maintain quality
-            double optimalWidth = screenWidth;
-            double maxAcceptableWidth = screenWidth * 1.5;
-
-            FeedPostMediaItemAsset bestMatch = null;
-            double smallestDiff = Double.MAX_VALUE;
-
-            // First pass: find close matches to optimal width
-            for (FeedPostMediaItemAsset asset : sizes) {
-                if (asset == null || asset.getW() == null || asset.getSrc() == null) {
-                    continue;
-                }
-
-                double width = asset.getW();
-                double diff = Math.abs(width - optimalWidth);
-
-                // If width is within acceptable range and has smaller difference than current best match
-                if (width <= maxAcceptableWidth && diff < smallestDiff) {
-                    bestMatch = asset;
-                    smallestDiff = diff;
-                }
-            }
-
-            // If no match found in optimal range, just use the largest that's not excessively large
-            if (bestMatch == null) {
-                double largestAcceptableWidth = 0;
-
-                for (FeedPostMediaItemAsset asset : sizes) {
-                    if (asset == null || asset.getW() == null || asset.getSrc() == null) {
-                        continue;
-                    }
-
-                    double width = asset.getW();
-
-                    // Find largest image that's not too oversized
-                    if (width > largestAcceptableWidth && width <= maxAcceptableWidth * 2) {
-                        bestMatch = asset;
-                        largestAcceptableWidth = width;
-                    }
-                }
-
-                // If still no match, use the first valid asset
-                if (bestMatch == null) {
-                    for (FeedPostMediaItemAsset asset : sizes) {
-                        if (asset != null && asset.getSrc() != null) {
-                            return asset;
-                        }
-                    }
-                }
-            }
-
-            // Return best match or first asset if no match found
-            return bestMatch != null ? bestMatch : sizes.get(0);
         }
     }
 }

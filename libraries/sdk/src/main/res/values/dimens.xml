@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Standard image heights -->
+    <dimen name="feed_image_height">300dp</dimen>
+    <dimen name="feed_image_half_height">150dp</dimen>
+</resources>

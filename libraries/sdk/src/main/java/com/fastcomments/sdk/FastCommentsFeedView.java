@@ -121,6 +121,17 @@ public class FastCommentsFeedView extends FrameLayout {
      * Initialize the adapter with the SDK
      */
     private void initAdapter(Context context) {
+        // Configure RecyclerView for smoother scrolling with image preloading
+        recyclerView.setItemViewCacheSize(20); // Cache more items
+        recyclerView.setDrawingCacheEnabled(true);
+        recyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+        
+        // Set larger prefetch to load images ahead of time
+        LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+        if (layoutManager != null) {
+            layoutManager.setInitialPrefetchItemCount(5); // Prefetch 5 items
+        }
+        
         // Initialize adapter
         adapter = new FeedPostsAdapter(context, feedPosts, sdk, new FeedPostsAdapter.OnFeedPostInteractionListener() {
             @Override
@@ -198,6 +209,12 @@ public class FastCommentsFeedView extends FrameLayout {
                         // Load more when user is near the end (last 5 items)
                         if ((visibleItemCount + firstVisibleItemPosition + 5) >= totalItemCount) {
                             loadMore();
+                        }
+                        
+                        // Preload next set of images
+                        int lastVisiblePosition = layoutManager.findLastVisibleItemPosition();
+                        if (adapter != null && lastVisiblePosition + 5 < totalItemCount) {
+                            adapter.preloadImages(lastVisiblePosition + 1, 5);
                         }
                     }
                 }

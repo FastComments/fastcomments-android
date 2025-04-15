@@ -92,9 +92,13 @@ public class PostImagesAdapter extends RecyclerView.Adapter<PostImagesAdapter.Im
                 FeedPostMediaItemAsset bestSizeAsset = selectBestImageSize(mediaItem.getSizes());
                 
                 if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
+                    // Pre-set a minimum height for consistency
+                    imageView.setMinimumHeight(context.getResources().getDimensionPixelSize(R.dimen.feed_image_height));
+                    
                     Glide.with(context)
                             .load(bestSizeAsset.getSrc())
-                            .transition(DrawableTransitionOptions.withCrossFade())
+                            .centerCrop()
+                            .transition(DrawableTransitionOptions.withCrossFade(300))
                             .error(R.drawable.image_placeholder)
                             .into(imageView);
                 }

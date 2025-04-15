@@ -64,6 +64,8 @@ public class FullImageDialog extends Dialog {
                     .load(imageUrl)
                     .error(R.drawable.image_placeholder)
                     .into(photoView);
+            // Note: we intentionally don't use centerCrop() here as this is a full-screen
+            // image view with zoom capabilities via PhotoView
         }
     }
 }
