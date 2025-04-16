@@ -80,14 +80,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:padding="0dp">
 
             <ImageView
                 android:id="@+id/mediaImageView"
-                android:layout_width="match_parent"
+                android:layout_width="match_parent" 
                 android:layout_height="wrap_content"
                 android:clickable="true"
                 android:focusable="true"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
                 android:foreground="?attr/selectableItemBackground"
                 android:contentDescription="@string/post_image" />
 
