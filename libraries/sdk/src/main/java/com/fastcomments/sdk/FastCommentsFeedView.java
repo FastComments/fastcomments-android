@@ -210,12 +210,6 @@ public class FastCommentsFeedView extends FrameLayout {
                         if ((visibleItemCount + firstVisibleItemPosition + 5) >= totalItemCount) {
                             loadMore();
                         }
-                        
-                        // Preload next set of images
-                        int lastVisiblePosition = layoutManager.findLastVisibleItemPosition();
-                        if (adapter != null && lastVisiblePosition + 5 < totalItemCount) {
-                            adapter.preloadImages(lastVisiblePosition + 1, 5);
-                        }
                     }
                 }
             }

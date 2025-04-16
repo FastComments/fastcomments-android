@@ -164,48 +164,14 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         this.feedPosts.addAll(newPosts);
         notifyDataSetChanged();
         
-        // Preload the first few images to reduce pop-in effect
-        preloadImages(0, Math.min(5, newPosts.size()));
     }
     
-    /**
-     * Preload images for a range of posts to prevent pop-in during scrolling
-     *
-     * @param startPosition Starting position to preload
-     * @param count Number of posts to preload
-     */
-    public void preloadImages(int startPosition, int count) {
-        if (startPosition >= feedPosts.size() || count <= 0) {
-            return;
-        }
-        
-        int endPosition = Math.min(startPosition + count, feedPosts.size());
-        
-        for (int i = startPosition; i < endPosition; i++) {
-            FeedPost post = feedPosts.get(i);
-            if (post.getMedia() != null && !post.getMedia().isEmpty()) {
-                FeedPostMediaItem mediaItem = post.getMedia().get(0);
-                if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
-                    FeedPostMediaItemAsset bestAsset = selectBestImageSize(mediaItem.getSizes());
-                    if (bestAsset != null && bestAsset.getSrc() != null) {
-                        // Preload image into memory cache
-                        Glide.with(context)
-                                .load(bestAsset.getSrc())
-                                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                                .preload();
-                    }
-                }
-            }
-        }
-    }
 
     public void addPosts(List<FeedPost> morePosts) {
         int startPosition = this.feedPosts.size();
         this.feedPosts.addAll(morePosts);
         notifyItemRangeInserted(startPosition, morePosts.size());
         
-        // Preload the newly added images
-        preloadImages(startPosition, Math.min(5, morePosts.size()));
     }
 
     public void updatePost(int position, FeedPost updatedPost) {
@@ -289,6 +255,38 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
         // Return best match or first asset if no match found
         return bestMatch != null ? bestMatch : sizes.get(0);
+    }
+    
+    /**
+     * Calculate the aspect ratio-based height for an image that will be displayed at the given width
+     * 
+     * @param asset The media asset containing width and height information
+     * @param displayWidth The width at which the image will be displayed
+     * @return The calculated height based on aspect ratio, or default height if dimensions are missing
+     */
+    private int calculateImageHeight(FeedPostMediaItemAsset asset, int displayWidth) {
+        if (asset == null || asset.getW() == null || asset.getH() == null || 
+            asset.getW() <= 0 || asset.getH() <= 0) {
+            return getDefaultImageHeight(); // Fall back to default height
+        }
+        
+        // Calculate aspect ratio (width / height)
+        double aspectRatio = (double) asset.getW() / (double) asset.getH();
+        
+        // If aspect ratio is invalid, use default height
+        if (aspectRatio <= 0) {
+            return getDefaultImageHeight();
+        }
+        
+        // Calculate height based on aspect ratio and display width
+        int calculatedHeight = (int) (displayWidth / aspectRatio);
+        
+        // Set minimum and maximum bounds to prevent extreme values
+        int minHeight = context.getResources().getDimensionPixelSize(R.dimen.feed_image_half_height);
+        int maxHeight = context.getResources().getDimensionPixelSize(R.dimen.feed_image_height) * 2;
+        
+        // Ensure the height is within reasonable bounds
+        return Math.max(minHeight, Math.min(calculatedHeight, maxHeight));
     }
 
     enum FeedPostType {
@@ -488,14 +486,21 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
                         mediaContainer.setVisibility(View.VISIBLE);
 
-                        // Pre-set a placeholder with a fixed height before loading the image
-                        // This prevents the layout from jumping when the image loads
-                        mediaImageView.setMinimumHeight(getDefaultImageHeight()); // Match the 300dp in layout
+                        // Get the screen width for calculating the appropriate height
+                        int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
                         
-                        // Use Glide's preload to cache the image before displaying it
+                        // Calculate the image height based on the aspect ratio
+                        int calculatedHeight = calculateImageHeight(bestSizeAsset, screenWidth);
+
+                        // Set the calculated height before loading the image
+                        // This prevents the layout from jumping when the image loads
+                        mediaImageView.getLayoutParams().height = calculatedHeight;
+                        mediaImageView.requestLayout();
+                        
+                        // Load image with exact calculated dimensions to prevent scaling issues
                         Glide.with(context)
                                 .load(bestSizeAsset.getSrc())
-                                .centerCrop()
+                                .override(screenWidth, calculatedHeight)
                                 .transition(DrawableTransitionOptions.withCrossFade(300))
                                 .error(R.drawable.image_placeholder)
                                 .into(mediaImageView);
@@ -729,20 +734,46 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
                 FeedPostMediaItemAsset bestAsset = selectBestImageSize(mediaItem.getSizes());
                 if (bestAsset != null && bestAsset.getSrc() != null) {
-                    // Set a minimum height to prevent layout jumps
-                    imageView.setMinimumHeight(getHalfImageHeight()); // Half height for smaller images
+                    // Get parent width for calculating the appropriate height
+                    int parentWidth;
+                    if (imageView.getParent() instanceof View) {
+                        View parent = (View) imageView.getParent();
+                        parentWidth = parent.getWidth();
+                        // If parent width is zero (not yet measured), use screen width
+                        if (parentWidth == 0) {
+                            parentWidth = context.getResources().getDisplayMetrics().widthPixels;
+                            // Adjust for multi-image layouts where images may not take full width
+                            if (imageView != topImageView) {
+                                parentWidth = parentWidth / 2; // Rough estimate for side-by-side images
+                            }
+                        }
+                    } else {
+                        // Fallback to screen width if no parent
+                        parentWidth = context.getResources().getDisplayMetrics().widthPixels;
+                    }
+                    
+                    // Calculate height based on aspect ratio
+                    int calculatedHeight = calculateImageHeight(bestAsset, parentWidth);
+                    
+                    // Set the calculated height
+                    imageView.getLayoutParams().height = calculatedHeight;
+                    imageView.requestLayout();
                     
                     Glide.with(context)
                             .load(bestAsset.getSrc())
-                            .centerCrop()
+                            .override(parentWidth, calculatedHeight)
                             .transition(DrawableTransitionOptions.withCrossFade(300))
                             .error(R.drawable.image_placeholder)
                             .into(imageView);
                 } else {
                     imageView.setImageResource(R.drawable.image_placeholder);
+                    imageView.getLayoutParams().height = getHalfImageHeight();
+                    imageView.requestLayout();
                 }
             } else {
                 imageView.setImageResource(R.drawable.image_placeholder);
+                imageView.getLayoutParams().height = getHalfImageHeight();
+                imageView.requestLayout();
             }
         }
 
@@ -754,22 +785,45 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
          */
         private ImageView createImageView(FeedPostMediaItem mediaItem) {
             ImageView imageView = new ImageView(context);
-            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             imageView.setBackgroundColor(context.getResources().getColor(android.R.color.darker_gray, null));
-            imageView.setMinimumHeight(getDefaultImageHeight()); // Set a minimum height to prevent layout jumps
-
+            
+            // Calculate initial image height based on screen width and estimated grid column width
+            int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+            int estimatedWidth = screenWidth / 2; // Grid images usually take about half the screen width
+            int initialHeight = getDefaultImageHeight(); // Default fallback height
+            
             // Load image using Glide if media item has sizes
-            if (!mediaItem.getSizes().isEmpty()) {
+            if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
                 FeedPostMediaItemAsset bestSizeAsset = selectBestImageSize(mediaItem.getSizes());
 
-                if (bestSizeAsset != null) {
+                if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
+                    // Calculate height based on aspect ratio before loading
+                    if (bestSizeAsset.getW() != null && bestSizeAsset.getH() != null) {
+                        initialHeight = calculateImageHeight(bestSizeAsset, estimatedWidth);
+                    }
+                    
+                    // Set the calculated height
+                    ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, initialHeight);
+                    imageView.setLayoutParams(layoutParams);
+                    
                     Glide.with(context)
                             .load(bestSizeAsset.getSrc())
-                            .centerCrop()
+                            .override(estimatedWidth, initialHeight)
                             .transition(DrawableTransitionOptions.withCrossFade())
                             .error(R.drawable.image_placeholder)
                             .into(imageView);
+                } else {
+                    // Set default height if no valid asset
+                    ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, initialHeight);
+                    imageView.setLayoutParams(layoutParams);
                 }
+            } else {
+                // Set default height if no sizes
+                ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, initialHeight);
+                imageView.setLayoutParams(layoutParams);
             }
 
             // Set click listener
@@ -820,14 +874,21 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
                     if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
                         mediaContainer.setVisibility(View.VISIBLE);
-                        // Pre-set a placeholder with a fixed height before loading the image
-                        // This prevents the layout from jumping when the image loads
-                        mediaImageView.setMinimumHeight(getDefaultImageHeight()); // Match the 300dp in layout
+                        // Get the screen width for calculating the appropriate height
+                        int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
                         
-                        // Use Glide's preload to cache the image before displaying it
+                        // Calculate the image height based on the aspect ratio
+                        int calculatedHeight = calculateImageHeight(bestSizeAsset, screenWidth);
+                        
+                        // Set the calculated height before loading the image
+                        // This prevents the layout from jumping when the image loads
+                        mediaImageView.getLayoutParams().height = calculatedHeight;
+                        mediaImageView.requestLayout();
+                        
+                        // Load image with exact calculated dimensions to prevent scaling issues
                         Glide.with(context)
                                 .load(bestSizeAsset.getSrc())
-                                .centerCrop()
+                                .override(screenWidth, calculatedHeight)
                                 .transition(DrawableTransitionOptions.withCrossFade(300))
                                 .error(R.drawable.image_placeholder)
                                 .into(mediaImageView);
