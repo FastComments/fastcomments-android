@@ -126,6 +126,106 @@ public class FastCommentsFeedSDK {
     public List<FeedPost> getFeedPosts() {
         return feedPosts;
     }
+    
+    /**
+     * A strongly typed class to hold feed pagination and state information
+     */
+    public static class FeedState implements Serializable {
+        private static final long serialVersionUID = 1L;
+        
+        private String lastPostId;
+        private boolean hasMore;
+        private int pageSize;
+        private int newPostsCount;
+        private List<FeedPost> feedPosts;
+        private Map<String, Map<String, Boolean>> myReacts;
+        private Map<String, Integer> likeCounts;
+        
+        public FeedState() {
+            // Default constructor
+        }
+        
+        // Getters and setters
+        public String getLastPostId() { return lastPostId; }
+        public void setLastPostId(String lastPostId) { this.lastPostId = lastPostId; }
+        
+        public boolean isHasMore() { return hasMore; }
+        public void setHasMore(boolean hasMore) { this.hasMore = hasMore; }
+        
+        public int getPageSize() { return pageSize; }
+        public void setPageSize(int pageSize) { this.pageSize = pageSize; }
+        
+        public int getNewPostsCount() { return newPostsCount; }
+        public void setNewPostsCount(int newPostsCount) { this.newPostsCount = newPostsCount; }
+        
+        public List<FeedPost> getFeedPosts() { return feedPosts; }
+        public void setFeedPosts(List<FeedPost> feedPosts) { this.feedPosts = feedPosts; }
+        
+        public Map<String, Map<String, Boolean>> getMyReacts() { return myReacts; }
+        public void setMyReacts(Map<String, Map<String, Boolean>> myReacts) { this.myReacts = myReacts; }
+        
+        public Map<String, Integer> getLikeCounts() { return likeCounts; }
+        public void setLikeCounts(Map<String, Integer> likeCounts) { this.likeCounts = likeCounts; }
+    }
+    
+    /**
+     * Save the current pagination state for later restoration
+     * 
+     * @return FeedState containing all pagination and content state
+     */
+    public FeedState savePaginationState() {
+        FeedState state = new FeedState();
+        state.setLastPostId(lastPostId);
+        state.setHasMore(hasMore);
+        state.setPageSize(pageSize);
+        state.setNewPostsCount(newPostsCount);
+        state.setFeedPosts(new ArrayList<>(feedPosts));
+        state.setMyReacts(new HashMap<>(myReacts));
+        state.setLikeCounts(new HashMap<>(likeCounts));
+        return state;
+    }
+    
+    /**
+     * Restore the pagination state from a previously saved state
+     * 
+     * @param state The FeedState to restore from
+     */
+    public void restorePaginationState(FeedState state) {
+        if (state == null) {
+            return;
+        }
+        
+        this.lastPostId = state.getLastPostId();
+        this.hasMore = state.isHasMore();
+        this.pageSize = state.getPageSize();
+        this.newPostsCount = state.getNewPostsCount();
+        
+        // Restore feed posts if available
+        if (state.getFeedPosts() != null) {
+            this.feedPosts.clear();
+            this.feedPosts.addAll(state.getFeedPosts());
+            
+            // Rebuild postsById map
+            this.postsById.clear();
+            for (FeedPost post : state.getFeedPosts()) {
+                if (post.getId() != null) {
+                    this.postsById.put(post.getId(), post);
+                }
+            }
+        }
+        
+        // Restore reaction states if available
+        if (state.getMyReacts() != null) {
+            this.myReacts.clear();
+            this.myReacts.putAll(state.getMyReacts());
+        }
+        
+        // Restore like counts if available  
+        if (state.getLikeCounts() != null) {
+            this.likeCounts.clear();
+            this.likeCounts.putAll(state.getLikeCounts());
+        }
+    }
 
     /**
      * Initial load method that fetches the first page of feed posts

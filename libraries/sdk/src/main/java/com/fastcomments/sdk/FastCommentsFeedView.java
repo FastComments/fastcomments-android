@@ -24,13 +24,35 @@ import com.fastcomments.model.FeedPostMediaItem;
 import com.fastcomments.model.GetFeedPostsResponse;
 import com.fastcomments.model.PublicFeedPostsResponse;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * FastCommentsFeedView displays a feed of posts from FastComments with infinite scrolling
+ * Includes support for scroll position retention and state restoration
  */
 public class FastCommentsFeedView extends FrameLayout {
+    
+    /**
+     * Class to store view state information
+     */
+    public static class ViewState implements Serializable {
+        private static final long serialVersionUID = 1L;
+        
+        private int scrollPosition;
+        private FastCommentsFeedSDK.FeedState feedState;
+        
+        public ViewState() {
+            // Default constructor
+        }
+        
+        public int getScrollPosition() { return scrollPosition; }
+        public void setScrollPosition(int position) { this.scrollPosition = position; }
+        
+        public FastCommentsFeedSDK.FeedState getFeedState() { return feedState; }
+        public void setFeedState(FastCommentsFeedSDK.FeedState state) { this.feedState = state; }
+    }
 
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerView;
@@ -227,6 +249,76 @@ public class FastCommentsFeedView extends FrameLayout {
             initAdapter(getContext());
         }
     }
+    
+    /**
+     * Save the complete view state including scroll position and feed data
+     * @return A ViewState object containing all state information
+     */
+    public ViewState saveViewState() {
+        ViewState state = new ViewState();
+        
+        // Save scroll position
+        LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+        if (layoutManager != null) {
+            state.setScrollPosition(layoutManager.findFirstVisibleItemPosition());
+        }
+        
+        // Save SDK state
+        if (sdk != null) {
+            state.setFeedState(sdk.savePaginationState());
+        }
+        
+        return state;
+    }
+    
+    /**
+     * Restore the complete view state
+     * @param state The ViewState object to restore from
+     */
+    public void restoreViewState(ViewState state) {
+        if (state == null) {
+            return;
+        }
+        
+        // Restore SDK state first
+        if (sdk != null && state.getFeedState() != null) {
+            sdk.restorePaginationState(state.getFeedState());
+            
+            // Update adapter with restored posts
+            if (adapter != null && sdk.getFeedPosts() != null && !sdk.getFeedPosts().isEmpty()) {
+                adapter.updatePosts(sdk.getFeedPosts());
+            }
+        }
+        
+        // Restore scroll position
+        final int position = state.getScrollPosition();
+        if (position >= 0 && recyclerView != null) {
+            // Use post to make sure this runs after layout
+            recyclerView.post(() -> recyclerView.scrollToPosition(position));
+        }
+    }
+    
+    /**
+     * Save just the scroll position (use saveViewState for complete state)
+     * @return The first visible item position
+     */
+    public int saveScrollPosition() {
+        LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+        if (layoutManager != null) {
+            return layoutManager.findFirstVisibleItemPosition();
+        }
+        return 0;
+    }
+    
+    /**
+     * Restore just the scroll position (use restoreViewState for complete state)
+     * @param position The position to scroll to
+     */
+    public void restoreScrollPosition(int position) {
+        if (position >= 0 && recyclerView != null) {
+            recyclerView.scrollToPosition(position);
+        }
+    }
 
     /**
      * Set a listener for feed interactions
@@ -287,7 +379,17 @@ public class FastCommentsFeedView extends FrameLayout {
                         showEmptyState(true);
                     } else {
                         showEmptyState(false);
+                        int firstVisiblePosition = -1;
+                        if (recyclerView != null && recyclerView.getLayoutManager() != null) {
+                            firstVisiblePosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+                        }
+                        
                         adapter.updatePosts(posts);
+                        
+                        // Restore position if we had one
+                        if (firstVisiblePosition >= 0 && firstVisiblePosition < posts.size()) {
+                            recyclerView.scrollToPosition(firstVisiblePosition);
+                        }
                     }
 
                     if (listener != null) {
@@ -337,7 +439,17 @@ public class FastCommentsFeedView extends FrameLayout {
                         showEmptyState(true);
                     } else {
                         showEmptyState(false);
+                        int firstVisiblePosition = -1;
+                        if (recyclerView != null && recyclerView.getLayoutManager() != null) {
+                            firstVisiblePosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+                        }
+                        
                         adapter.updatePosts(posts);
+                        
+                        // Restore position if we had one
+                        if (firstVisiblePosition >= 0 && firstVisiblePosition < posts.size()) {
+                            recyclerView.scrollToPosition(firstVisiblePosition);
+                        }
                     }
 
                     if (listener != null) {
