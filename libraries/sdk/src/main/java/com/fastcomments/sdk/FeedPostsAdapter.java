@@ -422,24 +422,39 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             if (likeCount > 0 || (commentCount != null && commentCount > 0)) {
                 likeCountTextView.setVisibility(View.VISIBLE);
                 
-                String likesText = likeCount == 1 ?
-                        context.getString(R.string.like_count_singular, likeCount) :
-                        context.getString(R.string.like_count_plural, likeCount);
-                        
-                String commentsText = commentCount != null && commentCount == 1 ?
-                        context.getString(R.string.comment_count_singular, commentCount) :
-                        context.getString(R.string.comment_count_plural, commentCount);
+                StringBuilder displayText = new StringBuilder();
                 
-                if (likeCount > 0 && commentCount != null && commentCount > 0) {
-                    // Show both like count and comment count
-                    likeCountTextView.setText(context.getString(R.string.like_comment_count, likesText, commentsText));
-                } else if (likeCount > 0) {
-                    // Show only like count
-                    likeCountTextView.setText(likesText);
+                // Add likes text if there are likes
+                if (likeCount > 0) {
+                    // Show heart icon only when there are likes
+                    likeCountTextView.setCompoundDrawablesWithIntrinsicBounds(
+                            context.getResources().getDrawable(R.drawable.heart_filled_small, null), 
+                            null, null, null);
+                            
+                    String likesText = likeCount == 1 ?
+                            context.getString(R.string.like_count_singular, likeCount) :
+                            context.getString(R.string.like_count_plural, likeCount);
+                    displayText.append(likesText);
                 } else {
-                    // Show only comment count
-                    likeCountTextView.setText(commentsText);
+                    // No likes, so don't show heart icon
+                    likeCountTextView.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
                 }
+                
+                // Add comment count if there are comments
+                if (commentCount != null && commentCount > 0) {
+                    // Add separator if needed
+                    if (likeCount > 0) {
+                        displayText.append(" · ");
+                    }
+                    
+                    String commentsText = commentCount == 1 ?
+                            context.getString(R.string.comment_count_singular, commentCount) :
+                            context.getString(R.string.comment_count_plural, commentCount);
+                    displayText.append(commentsText);
+                }
+                
+                // Set the text
+                likeCountTextView.setText(displayText.toString());
             } else {
                 likeCountTextView.setVisibility(View.GONE);
             }
