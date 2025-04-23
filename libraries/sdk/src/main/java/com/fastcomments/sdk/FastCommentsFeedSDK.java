@@ -28,6 +28,7 @@ import com.fastcomments.model.ReactBodyParams;
 import com.fastcomments.model.ReactFeedPostPublic200Response;
 import com.fastcomments.model.UserSessionInfo;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -128,7 +129,7 @@ public class FastCommentsFeedSDK {
     }
     
     /**
-     * A strongly typed class to hold feed pagination and state information
+     * A class to hold feed pagination and state information
      */
     public static class FeedState implements Serializable {
         private static final long serialVersionUID = 1L;
