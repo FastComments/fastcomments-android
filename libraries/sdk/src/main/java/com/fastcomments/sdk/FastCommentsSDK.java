@@ -846,6 +846,9 @@ public class FastCommentsSDK {
     }
 
     public void addComment(PublicComment publicComment, boolean displayNow) {
+        // Check if this is the first visible comment
+        boolean wasEmpty = commentsTree.visibleSize() == 0;
+        
         // Add to comments tree using configured sort direction
         commentsTree.addComment(publicComment, displayNow, config.defaultSortDirection);
 

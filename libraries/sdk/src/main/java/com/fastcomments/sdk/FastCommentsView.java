@@ -878,6 +878,11 @@ public class FastCommentsView extends FrameLayout {
                     // Add the comment to the tree, display immediately
                     sdk.addComment(comment, true);
                     
+                    // If this was the first comment, update empty state to show the comments
+                    if (sdk.commentsTree.visibleSize() == 1) {
+                        setIsEmpty(false);
+                    }
+                    
                     // Get the position of the newly added comment and scroll to it
                     final RenderableComment renderableComment = sdk.commentsTree.commentsById.get(comment.getId());
                     if (renderableComment != null) {
