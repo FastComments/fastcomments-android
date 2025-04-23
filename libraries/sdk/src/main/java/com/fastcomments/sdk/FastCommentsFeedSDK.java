@@ -10,10 +10,12 @@ import com.fastcomments.api.PublicApi;
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.invoker.ApiCallback;
 import com.fastcomments.invoker.ApiException;
+import com.fastcomments.model.APIEmptyResponse;
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.CreateFeedPostParams;
 import com.fastcomments.model.CreateFeedPostPublic200Response;
 import com.fastcomments.model.CreateFeedPostResponse;
+import com.fastcomments.model.DeleteFeedPostPublic200Response;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.FeedPostMediaItem;
 import com.fastcomments.model.FeedPostMediaItemAsset;
@@ -91,17 +93,9 @@ public class FastCommentsFeedSDK {
         this.mainHandler = new Handler(Looper.getMainLooper());
         this.config = config;
         this.api.getApiClient().setBasePath(FastCommentsSDK.getAPIBasePath(config));
+        this.api.getApiClient().setLenientOnJson(true);
         this.broadcastIdsSent = new HashSet<>(0);
         this.liveEventSubscriber = new com.fastcomments.pubsub.LiveEventSubscriber();
-    }
-
-    /**
-     * When user information is available, this method should be called to set the current user
-     *
-     * @param userInfo The user information to set
-     */
-    public void setCurrentUser(UserSessionInfo userInfo) {
-        this.currentUser = userInfo;
     }
 
     /**
@@ -130,13 +124,13 @@ public class FastCommentsFeedSDK {
     public List<FeedPost> getFeedPosts() {
         return feedPosts;
     }
-    
+
     /**
      * A class to hold feed pagination and state information
      */
     public static class FeedState implements Serializable {
         private static final long serialVersionUID = 1L;
-        
+
         private String lastPostId;
         private boolean hasMore;
         private int pageSize;
@@ -144,37 +138,72 @@ public class FastCommentsFeedSDK {
         private List<FeedPost> feedPosts;
         private Map<String, Map<String, Boolean>> myReacts;
         private Map<String, Integer> likeCounts;
-        
+
         public FeedState() {
             // Default constructor
         }
-        
+
         // Getters and setters
-        public String getLastPostId() { return lastPostId; }
-        public void setLastPostId(String lastPostId) { this.lastPostId = lastPostId; }
-        
-        public boolean isHasMore() { return hasMore; }
-        public void setHasMore(boolean hasMore) { this.hasMore = hasMore; }
-        
-        public int getPageSize() { return pageSize; }
-        public void setPageSize(int pageSize) { this.pageSize = pageSize; }
-        
-        public int getNewPostsCount() { return newPostsCount; }
-        public void setNewPostsCount(int newPostsCount) { this.newPostsCount = newPostsCount; }
-        
-        public List<FeedPost> getFeedPosts() { return feedPosts; }
-        public void setFeedPosts(List<FeedPost> feedPosts) { this.feedPosts = feedPosts; }
-        
-        public Map<String, Map<String, Boolean>> getMyReacts() { return myReacts; }
-        public void setMyReacts(Map<String, Map<String, Boolean>> myReacts) { this.myReacts = myReacts; }
-        
-        public Map<String, Integer> getLikeCounts() { return likeCounts; }
-        public void setLikeCounts(Map<String, Integer> likeCounts) { this.likeCounts = likeCounts; }
+        public String getLastPostId() {
+            return lastPostId;
+        }
+
+        public void setLastPostId(String lastPostId) {
+            this.lastPostId = lastPostId;
+        }
+
+        public boolean isHasMore() {
+            return hasMore;
+        }
+
+        public void setHasMore(boolean hasMore) {
+            this.hasMore = hasMore;
+        }
+
+        public int getPageSize() {
+            return pageSize;
+        }
+
+        public void setPageSize(int pageSize) {
+            this.pageSize = pageSize;
+        }
+
+        public int getNewPostsCount() {
+            return newPostsCount;
+        }
+
+        public void setNewPostsCount(int newPostsCount) {
+            this.newPostsCount = newPostsCount;
+        }
+
+        public List<FeedPost> getFeedPosts() {
+            return feedPosts;
+        }
+
+        public void setFeedPosts(List<FeedPost> feedPosts) {
+            this.feedPosts = feedPosts;
+        }
+
+        public Map<String, Map<String, Boolean>> getMyReacts() {
+            return myReacts;
+        }
+
+        public void setMyReacts(Map<String, Map<String, Boolean>> myReacts) {
+            this.myReacts = myReacts;
+        }
+
+        public Map<String, Integer> getLikeCounts() {
+            return likeCounts;
+        }
+
+        public void setLikeCounts(Map<String, Integer> likeCounts) {
+            this.likeCounts = likeCounts;
+        }
     }
-    
+
     /**
      * Save the current pagination state for later restoration
-     * 
+     *
      * @return FeedState containing all pagination and content state
      */
     public FeedState savePaginationState() {
@@ -188,27 +217,27 @@ public class FastCommentsFeedSDK {
         state.setLikeCounts(new HashMap<>(likeCounts));
         return state;
     }
-    
+
     /**
      * Restore the pagination state from a previously saved state
-     * 
+     *
      * @param state The FeedState to restore from
      */
     public void restorePaginationState(FeedState state) {
         if (state == null) {
             return;
         }
-        
+
         this.lastPostId = state.getLastPostId();
         this.hasMore = state.isHasMore();
         this.pageSize = state.getPageSize();
         this.newPostsCount = state.getNewPostsCount();
-        
+
         // Restore feed posts if available
         if (state.getFeedPosts() != null) {
             this.feedPosts.clear();
             this.feedPosts.addAll(state.getFeedPosts());
-            
+
             // Rebuild postsById map
             this.postsById.clear();
             for (FeedPost post : state.getFeedPosts()) {
@@ -217,13 +246,13 @@ public class FastCommentsFeedSDK {
                 }
             }
         }
-        
+
         // Restore reaction states if available
         if (state.getMyReacts() != null) {
             this.myReacts.clear();
             this.myReacts.putAll(state.getMyReacts());
         }
-        
+
         // Restore like counts if available  
         if (state.getLikeCounts() != null) {
             this.likeCounts.clear();
@@ -246,44 +275,7 @@ public class FastCommentsFeedSDK {
         // Reset new posts count
         newPostsCount = 0;
 
-        loadFeedPosts(new FCCallback<PublicFeedPostsResponse>() {
-            @Override
-            public boolean onFailure(APIError error) {
-                callback.onFailure(error);
-                return CONSUME;
-            }
-
-            @Override
-            public boolean onSuccess(PublicFeedPostsResponse response) {
-                boolean needsWebsocketReconnect = false;
-
-                if (response.getTenantIdWS() != null) {
-                    tenantIdWS = response.getTenantIdWS();
-                }
-
-                if (response.getUrlIdWS() != null) {
-                    urlIdWS = response.getUrlIdWS();
-                }
-
-                if (response.getUserIdWS() != null) {
-                    // Check if userIdWS has changed, which requires WebSocket reconnection
-                    if (userIdWS != null && !Objects.equals(response.getUserIdWS(), userIdWS)) {
-                        needsWebsocketReconnect = true;
-                    }
-                    userIdWS = response.getUserIdWS();
-                }
-
-                // Subscribe to live events if we have all required parameters
-                // or if we need to reconnect due to userIdWS change
-                if ((tenantIdWS != null && urlIdWS != null && userIdWS != null) &&
-                        (liveEventSubscription == null || needsWebsocketReconnect)) {
-                    subscribeToLiveEvents();
-                }
-                callback.onSuccess(response);
-
-                return CONSUME;
-            }
-        });
+        loadFeedPosts(callback);
     }
 
     /**
@@ -297,6 +289,7 @@ public class FastCommentsFeedSDK {
                     .afterId(lastPostId)
                     .limit(pageSize)
                     .sso(config.sso)
+                    .includeUserInfo(lastPostId == null) // only include for initial req
                     .executeAsync(new ApiCallback<GetFeedPostsPublic200Response>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
@@ -306,6 +299,17 @@ public class FastCommentsFeedSDK {
                             } else if (error.getReason() != null && !error.getReason().isEmpty()) {
                                 blockingErrorMessage = "Feed could not load! Details: " + error.getReason();
                             }
+
+                            // Log the error, particularly for JsonSyntaxException
+                            String errorMessage = "API Error: " + (e.getMessage() != null ? e.getMessage() : "Unknown error");
+                            if (e.getCause() != null) {
+                                errorMessage += " Cause: " + e.getCause().getClass().getSimpleName();
+                                if (e.getCause().getMessage() != null) {
+                                    errorMessage += " (" + e.getCause().getMessage() + ")";
+                                }
+                            }
+                            Log.e("FastCommentsFeedSDK", errorMessage, e);
+
                             callback.onFailure(error);
                         }
 
@@ -318,19 +322,55 @@ public class FastCommentsFeedSDK {
                                 } else if (error.getReason() != null && !error.getReason().isEmpty()) {
                                     blockingErrorMessage = "Feed could not load! Details: " + error.getReason();
                                 }
+
+                                // Log this error case (API returned success but with error object)
+                                Log.e("FastCommentsFeedSDK", "API returned success status but with error object: " +
+                                        (error.getReason() != null ? error.getReason() : "unknown reason"));
+
                                 callback.onFailure(error);
                             } else {
                                 mainHandler.post(() -> {
-                                    final List<FeedPost> posts = response.getPublicFeedPostsResponse().getFeedPosts();
+                                    final PublicFeedPostsResponse publicResponse = response.getPublicFeedPostsResponse();
+
+                                    boolean needsWebsocketReconnect = false;
+
+                                    if (publicResponse.getUser() != null) {
+                                        currentUser = publicResponse.getUser();
+                                    }
+
+                                    if (publicResponse.getTenantIdWS() != null) {
+                                        tenantIdWS = publicResponse.getTenantIdWS();
+                                    }
+
+                                    if (publicResponse.getUrlIdWS() != null) {
+                                        urlIdWS = publicResponse.getUrlIdWS();
+                                    }
+
+                                    if (publicResponse.getUserIdWS() != null) {
+                                        // Check if userIdWS has changed, which requires WebSocket reconnection
+                                        if (userIdWS != null && !Objects.equals(publicResponse.getUserIdWS(), userIdWS)) {
+                                            needsWebsocketReconnect = true;
+                                        }
+                                        userIdWS = publicResponse.getUserIdWS();
+                                    }
+
+                                    // Subscribe to live events if we have all required parameters
+                                    // or if we need to reconnect due to userIdWS change
+                                    if ((tenantIdWS != null && urlIdWS != null && userIdWS != null) &&
+                                            (liveEventSubscription == null || needsWebsocketReconnect)) {
+                                        subscribeToLiveEvents();
+                                    }
+
+                                    final List<FeedPost> posts = publicResponse.getFeedPosts();
 
                                     // Process the myReacts from the response if available
-                                    if (response.getPublicFeedPostsResponse().getMyReacts() != null) {
+                                    if (publicResponse.getMyReacts() != null) {
                                         // Only clear reactions if this is an initial load
                                         if (lastPostId == null) {
                                             myReacts.clear();
                                         }
                                         // Add all the myReacts for the posts
-                                        myReacts.putAll(response.getPublicFeedPostsResponse().getMyReacts());
+                                        myReacts.putAll(publicResponse.getMyReacts());
                                     }
 
                                     // Only clear the list if this is an initial load (no lastPostId)
@@ -369,7 +409,7 @@ public class FastCommentsFeedSDK {
                                     // If we got posts back and size equals page size, assume more posts are available
                                     hasMore = !posts.isEmpty() && posts.size() >= pageSize;
 
-                                    callback.onSuccess(response.getPublicFeedPostsResponse());
+                                    callback.onSuccess(publicResponse);
                                 });
                             }
                         }
@@ -1045,8 +1085,8 @@ public class FastCommentsFeedSDK {
 
     /**
      * Fetch post stats for specific posts to get updated comment counts and reactions
-     * 
-     * @param postIds List of post IDs to fetch stats for
+     *
+     * @param postIds  List of post IDs to fetch stats for
      * @param callback Callback to receive the response
      */
     public void getFeedPostsStats(List<String> postIds, FCCallback<GetFeedPostsStats200Response> callback) {
@@ -1056,67 +1096,67 @@ public class FastCommentsFeedSDK {
             callback.onFailure(error);
             return;
         }
-        
+
         try {
             api.getFeedPostsStats(config.tenantId, postIds)
-                .sso(config.sso)
-                .executeAsync(new ApiCallback<GetFeedPostsStats200Response>() {
-                    @Override
-                    public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
-                        callback.onFailure(CallbackWrapper.createErrorFromException(e));
-                    }
-                    
-                    @Override
-                    public void onSuccess(GetFeedPostsStats200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                        if (result.getActualInstance() instanceof APIError) {
-                            callback.onFailure((APIError) result.getActualInstance());
-                        } else {
-                            // Update cached posts with the new stats
-                            final FeedPostsStatsResponse statsResponse = result.getFeedPostsStatsResponse();
-                            Map<String, FeedPostStats> statsMap = statsResponse.getStats();
+                    .sso(config.sso)
+                    .executeAsync(new ApiCallback<GetFeedPostsStats200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                        }
 
-                            // Update posts in our cache
-                            for (Map.Entry<String, FeedPostStats> entry : statsMap.entrySet()) {
-                                String postId = entry.getKey();
-                                FeedPostStats updatedStats = entry.getValue();
-                                
-                                // Find the post in our cache
-                                FeedPost cachedPost = postsById.get(postId);
-                                if (cachedPost != null) {
-                                    // Update comment count
-                                    cachedPost.setCommentCount(updatedStats.getCommentCount());
-                                    
-                                    // Update reactions
-                                    cachedPost.setReacts(updatedStats.getReacts());
-                                    
-                                    // Update like count in our tracking map
-                                    if (updatedStats.getReacts() != null && updatedStats.getReacts().containsKey("l")) {
-                                        likeCounts.put(postId, updatedStats.getReacts().get("l").intValue());
-                                    } else {
-                                        likeCounts.put(postId, 0);
+                        @Override
+                        public void onSuccess(GetFeedPostsStats200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                            } else {
+                                // Update cached posts with the new stats
+                                final FeedPostsStatsResponse statsResponse = result.getFeedPostsStatsResponse();
+                                Map<String, FeedPostStats> statsMap = statsResponse.getStats();
+
+                                // Update posts in our cache
+                                for (Map.Entry<String, FeedPostStats> entry : statsMap.entrySet()) {
+                                    String postId = entry.getKey();
+                                    FeedPostStats updatedStats = entry.getValue();
+
+                                    // Find the post in our cache
+                                    FeedPost cachedPost = postsById.get(postId);
+                                    if (cachedPost != null) {
+                                        // Update comment count
+                                        cachedPost.setCommentCount(updatedStats.getCommentCount());
+
+                                        // Update reactions
+                                        cachedPost.setReacts(updatedStats.getReacts());
+
+                                        // Update like count in our tracking map
+                                        if (updatedStats.getReacts() != null && updatedStats.getReacts().containsKey("l")) {
+                                            likeCounts.put(postId, updatedStats.getReacts().get("l").intValue());
+                                        } else {
+                                            likeCounts.put(postId, 0);
+                                        }
                                     }
                                 }
+
+                                callback.onSuccess(result);
                             }
-                            
-                            callback.onSuccess(result);
                         }
-                    }
-                    
-                    @Override
-                    public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
-                        // Not used
-                    }
-                    
-                    @Override
-                    public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
-                        // Not used
-                    }
-                });
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                            // Not used
+                        }
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                            // Not used
+                        }
+                    });
         } catch (ApiException e) {
             CallbackWrapper.handleAPIException(mainHandler, callback, e);
         }
     }
-    
+
     /**
      * Handle a deleted feed post event
      */
@@ -1173,5 +1213,67 @@ public class FastCommentsFeedSDK {
                 return CONSUME;
             }
         });
+    }
+
+    /**
+     * Delete a feed post
+     *
+     * @param postId   The ID of the post to delete
+     * @param callback Callback to receive the response
+     */
+    public void deleteFeedPost(String postId, FCCallback<APIEmptyResponse> callback) {
+        if (postId == null || postId.isEmpty()) {
+            APIError error = new APIError();
+            error.setReason("Post ID is required");
+            callback.onFailure(error);
+            return;
+        }
+
+        try {
+            api.deleteFeedPostPublic(config.tenantId, postId)
+                    .sso(config.sso)
+                    .executeAsync(new ApiCallback<DeleteFeedPostPublic200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            APIError error = CallbackWrapper.createErrorFromException(e);
+                            callback.onFailure(error);
+                        }
+
+                        @Override
+                        public void onSuccess(DeleteFeedPostPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                APIError error = (APIError) result.getActualInstance();
+                                callback.onFailure(error);
+                            } else {
+                                mainHandler.post(() -> {
+                                    // Remove the post from our local list
+                                    for (int i = 0; i < feedPosts.size(); i++) {
+                                        FeedPost post = feedPosts.get(i);
+                                        if (post != null && post.getId() != null && post.getId().equals(postId)) {
+                                            feedPosts.remove(i);
+                                            postsById.remove(postId);
+                                            likeCounts.remove(postId);
+                                            break;
+                                        }
+                                    }
+
+                                    callback.onSuccess(new APIEmptyResponse());
+                                });
+                            }
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                            // Not used
+                        }
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                            // Not used
+                        }
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
     }
 }

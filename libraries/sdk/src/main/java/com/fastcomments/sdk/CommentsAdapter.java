@@ -254,6 +254,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
      */
     public interface OnCommentMenuItemListener {
         void onEdit(String commentId, String commentText);
+        void onDelete(String commentId);
         void onFlag(String commentId);
         void onBlock(String commentId, String userName);
     }

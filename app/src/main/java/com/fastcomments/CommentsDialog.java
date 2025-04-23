@@ -54,6 +54,22 @@ public class CommentsDialog extends Dialog {
         this.commentAddedListener = listener;
     }
     
+    /**
+     * Get the current comment added listener
+     * @return The current listener
+     */
+    public OnCommentAddedListener getOnCommentAddedListener() {
+        return commentAddedListener;
+    }
+    
+    /**
+     * Get the post ID for this dialog
+     * @return The post ID
+     */
+    public String getPostId() {
+        return post != null ? post.getId() : null;
+    }
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

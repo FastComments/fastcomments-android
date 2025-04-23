@@ -65,6 +65,33 @@ public class LiveChatView extends FrameLayout {
     private boolean autoScrollToBottom = true;
     private LinearLayoutManager layoutManager;
 
+    /**
+     * Interface for comment action callbacks
+     */
+    public interface CommentActionListener {
+        /**
+         * Called when a comment is posted
+         * @param comment The posted comment
+         */
+        void onCommentPosted(com.fastcomments.model.PublicComment comment);
+        
+        /**
+         * Called when a comment is deleted
+         * @param commentId The ID of the deleted comment
+         */
+        void onCommentDeleted(String commentId);
+    }
+    
+    private CommentActionListener commentActionListener;
+    
+    /**
+     * Set a listener to be notified of comment actions
+     * @param listener The listener to set
+     */
+    public void setCommentActionListener(CommentActionListener listener) {
+        this.commentActionListener = listener;
+    }
+
     // Standard View constructors for inflation from XML
     public LiveChatView(Context context) {
         super(context);
@@ -623,6 +650,62 @@ public class LiveChatView extends FrameLayout {
                     });
                 }).show(commentText);
             }
+            
+            @Override
+            public void onDelete(String commentId) {
+                // Confirm before deleting
+                android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+                builder.setTitle(R.string.delete_comment_title)
+                        .setMessage(R.string.delete_comment_confirm)
+                        .setPositiveButton(R.string.delete, (dialog, which) -> {
+                            // Call API to delete the comment
+                            sdk.deleteComment(commentId, new FCCallback<APIEmptyResponse>() {
+                                @Override
+                                public boolean onFailure(APIError error) {
+                                    // Show error message
+                                    getHandler().post(() -> {
+                                        String errorMessage;
+                                        if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                                            errorMessage = error.getTranslatedError();
+                                        } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                                            errorMessage = error.getReason();
+                                        } else {
+                                            errorMessage = getContext().getString(R.string.error_deleting_comment);
+                                        }
+
+                                        android.widget.Toast.makeText(
+                                                getContext(),
+                                                errorMessage,
+                                                android.widget.Toast.LENGTH_SHORT
+                                        ).show();
+                                    });
+                                    return CONSUME;
+                                }
+
+                                @Override
+                                public boolean onSuccess(APIEmptyResponse success) {
+                                    // Show success message
+                                    getHandler().post(() -> {
+                                        android.widget.Toast.makeText(
+                                                getContext(),
+                                                R.string.comment_deleted_successfully,
+                                                android.widget.Toast.LENGTH_SHORT
+                                        ).show();
+                                        
+                                        // Notify listener if set
+                                        if (commentActionListener != null) {
+                                            commentActionListener.onCommentDeleted(commentId);
+                                        }
+                                    });
+                                    return CONSUME;
+                                }
+                            });
+                        })
+                        .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                            dialog.dismiss();
+                        })
+                        .show();
+            }
 
             @Override
             public void onFlag(String commentId) {
@@ -844,6 +927,11 @@ public class LiveChatView extends FrameLayout {
                     // Re-enable auto-scroll and scroll to the bottom to show the new comment
                     autoScrollToBottom = true;
                     scrollToBottom();
+                    
+                    // Notify listener if set
+                    if (commentActionListener != null) {
+                        commentActionListener.onCommentPosted(comment);
+                    }
                 });
                 return CONSUME;
             }

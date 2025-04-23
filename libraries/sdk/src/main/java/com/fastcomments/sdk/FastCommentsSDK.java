@@ -63,6 +63,7 @@ public class FastCommentsSDK {
         this.mainHandler = new Handler(Looper.getMainLooper());
         this.broadcastIdsSent = new HashSet<>(0);
         this.config = config;
+        this.api.getApiClient().setLenientOnJson(true);
         this.api.getApiClient().setBasePath(getAPIBasePath(config));
         this.commentsTree = new CommentsTree();
         this.currentSkip = 0;
@@ -622,6 +623,65 @@ public class FastCommentsSDK {
      */
     public void voteComment(String commentId, boolean isUpvote, final FCCallback<VoteResponse> callback) {
         voteComment(commentId, isUpvote, null, null, callback);
+    }
+    
+    /**
+     * Delete a comment
+     *
+     * @param commentId The ID of the comment to delete
+     * @param callback  Callback to receive the response
+     */
+    public void deleteComment(String commentId, final FCCallback<APIEmptyResponse> callback) {
+        if (commentId == null || commentId.isEmpty()) {
+            APIError error = new APIError();
+            error.setReason("Comment ID is required");
+            callback.onFailure(error);
+            return;
+        }
+        
+        // Create a unique broadcast ID to identify this deletion in live events
+        String broadcastId = UUID.randomUUID().toString();
+        
+        // Track broadcast ID before sending
+        broadcastIdsSent.add(broadcastId);
+        
+        try {
+            api.deleteCommentPublic(config.tenantId, commentId, broadcastId)
+                .sso(config.getSSOToken())
+                .executeAsync(new ApiCallback<DeleteCommentPublic200Response>() {
+                    @Override
+                    public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                        APIError error = CallbackWrapper.createErrorFromException(e);
+                        callback.onFailure(error);
+                    }
+                    
+                    @Override
+                    public void onSuccess(DeleteCommentPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                        if (result.getActualInstance() instanceof APIError) {
+                            APIError error = (APIError) result.getActualInstance();
+                            callback.onFailure(error);
+                        } else {
+                            mainHandler.post(() -> {
+                                // Remove the comment from the local tree
+                                commentsTree.removeComment(commentId);
+                                callback.onSuccess(new APIEmptyResponse());
+                            });
+                        }
+                    }
+                    
+                    @Override
+                    public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                        // Not used
+                    }
+                    
+                    @Override
+                    public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                        // Not used
+                    }
+                });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
     }
 
     /**

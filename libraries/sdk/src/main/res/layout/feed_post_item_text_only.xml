@@ -54,6 +54,18 @@
                     android:textColor="@android:color/darker_gray"
                     tools:text="2 hours ago" />
             </LinearLayout>
+            
+            <!-- Menu Button -->
+            <ImageButton
+                android:id="@+id/postMenuButton"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center_vertical"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/menu_button"
+                android:src="@drawable/ic_more_vertical"
+                android:scaleType="fitCenter"
+                android:padding="2dp" />
         </LinearLayout>
 
         <!-- Post Content - Text Only -->

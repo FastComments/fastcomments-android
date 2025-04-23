@@ -4,6 +4,9 @@
         android:id="@+id/menu_edit_comment"
         android:title="@string/edit_comment" />
     <item
+        android:id="@+id/menu_delete_comment"
+        android:title="@string/delete_comment" />
+    <item
         android:id="@+id/menu_flag_comment"
         android:title="@string/flag_comment" />
     <item

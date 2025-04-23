@@ -74,6 +74,7 @@
     <string name="badge_awarded">Badge Awarded!</string>
     <string name="close">Close</string>
     <string name="edit_comment">Edit Comment</string>
+    <string name="delete_comment">Delete Comment</string>
     <string name="flag_comment">Flag Comment</string>
     <string name="block_user">Block User</string>
     <string name="menu_button">Menu Button</string>
@@ -91,6 +92,15 @@
     <string name="block_user_title">Block User</string>
     <string name="block_user_confirm">Are you sure you want to block %1$s and hide their comments?</string>
     <string name="block">Block</string>
+    <string name="delete_comment_title">Delete Comment</string>
+    <string name="delete_comment_confirm">Are you sure you want to delete this comment?</string>
+    <string name="delete">Delete</string>
+    <string name="error_deleting_comment">Error deleting comment. Please try again.</string>
+    <string name="comment_deleted_successfully">Comment deleted successfully</string>
+    <string name="delete_post_title">Delete Post</string>
+    <string name="delete_post_confirm">Are you sure you want to delete this post?</string>
+    <string name="error_deleting_post">Error deleting post. Please try again.</string>
+    <string name="post_deleted_successfully">Post deleted successfully</string>
     
     <!-- Feed view strings -->
     <string name="no_posts_yet">No posts to display.</string>

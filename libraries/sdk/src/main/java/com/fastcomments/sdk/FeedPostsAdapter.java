@@ -12,6 +12,7 @@ import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -53,6 +54,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         void onLinkClick(String url);
 
         void onMediaClick(FeedPostMediaItem mediaItem);
+        
+        void onDeletePost(FeedPost post);
     }
 
     public FeedPostsAdapter(Context context, List<FeedPost> feedPosts, FastCommentsFeedSDK sdk, OnFeedPostInteractionListener listener) {
@@ -309,6 +312,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         private final Button commentButton;
         private final Button likeButton;
         private final Button shareButton;
+        private final ImageButton postMenuButton;
 
         // Single image layout elements
         private FrameLayout mediaContainer;
@@ -341,6 +345,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             commentButton = itemView.findViewById(R.id.commentButton);
             likeButton = itemView.findViewById(R.id.likeButton);
             shareButton = itemView.findViewById(R.id.shareButton);
+            postMenuButton = itemView.findViewById(R.id.postMenuButton);
 
             // Type-specific elements
             switch (postType) {
@@ -489,6 +494,23 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     listener.onShareClick(post);
                 }
             });
+            
+            // Post menu button setup
+            if (postMenuButton != null) {
+                // Determine if this is the current user's post
+                boolean isCurrentUserPost = false;
+                String currentUserId = sdk.getCurrentUser() != null ? sdk.getCurrentUser().getId() : null;
+                String postUserId = post.getFromUserId();
+                
+                if (currentUserId != null && postUserId != null && currentUserId.equals(postUserId)) {
+                    isCurrentUserPost = true;
+                    postMenuButton.setVisibility(View.VISIBLE);
+                    
+                    postMenuButton.setOnClickListener(v -> showPostMenu(post));
+                } else {
+                    postMenuButton.setVisibility(View.GONE);
+                }
+            }
 
             // Handle type-specific bindings
             switch (postType) {
@@ -1208,6 +1230,35 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             return highestQualityAsset != null ? highestQualityAsset.getSrc() : null;
         }
 
+        /**
+         * Shows the post menu with options
+         * 
+         * @param post The post to show menu for
+         */
+        private void showPostMenu(FeedPost post) {
+            // Create popup menu
+            PopupMenu popupMenu = new PopupMenu(context, postMenuButton);
+            popupMenu.inflate(R.menu.feed_post_menu);
+            
+            // Set item click listener
+            popupMenu.setOnMenuItemClickListener(item -> {
+                int itemId = item.getItemId();
+                
+                if (itemId == R.id.menu_delete_post) {
+                    // Handle delete post
+                    if (listener != null) {
+                        listener.onDeletePost(post);
+                        return true;
+                    }
+                }
+                
+                return false;
+            });
+            
+            // Show the popup menu
+            popupMenu.show();
+        }
+        
         /**
          * Format timestamp based on SDK configuration
          * Uses the same logic as CommentViewHolder.updateDateDisplay()

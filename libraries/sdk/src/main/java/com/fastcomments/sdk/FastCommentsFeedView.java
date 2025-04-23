@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -18,6 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.fastcomments.model.APIEmptyResponse;
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.FeedPostMediaItem;
@@ -205,6 +207,22 @@ public class FastCommentsFeedView extends FrameLayout {
                     openUrl(mediaItem.getLinkUrl());
                 }
             }
+            
+            @Override
+            public void onDeletePost(FeedPost post) {
+                // Confirm before deleting
+                android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+                builder.setTitle(R.string.delete_post_title)
+                        .setMessage(R.string.delete_post_confirm)
+                        .setPositiveButton(R.string.delete, (dialog, which) -> {
+                            // Call API to delete the post
+                            deletePost(post);
+                        })
+                        .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                            dialog.dismiss();
+                        })
+                        .show();
+            }
         });
         
         recyclerView.setAdapter(adapter);
@@ -364,6 +382,13 @@ public class FastCommentsFeedView extends FrameLayout {
                     } else if (error != null && error.getReason() != null) {
                         errorMessage = error.getReason();
                     }
+                    
+                    // Log the error for debugging
+                    Log.e("FastCommentsFeedView", "Feed loading error: " + errorMessage);
+                    if (error != null && error.getReason() != null && error.getReason().contains("JsonSyntax")) {
+                        Log.e("FastCommentsFeedView", "JsonSyntaxException detected in API response", 
+                            new Exception("JSON parsing error occurred in API response"));
+                    }
 
                     showError(errorMessage);
 
@@ -425,8 +450,19 @@ public class FastCommentsFeedView extends FrameLayout {
                     swipeRefreshLayout.setRefreshing(false);
 
                     String errorMessage = "Error refreshing feed";
-                    if (error != null && error.getReason() != null) {
+                    if (sdk.blockingErrorMessage != null && !sdk.blockingErrorMessage.isEmpty()) {
+                        errorMessage = sdk.blockingErrorMessage;
+                    } else if (error != null && error.getTranslatedError() != null) {
+                        errorMessage = error.getTranslatedError();
+                    } else if (error != null && error.getReason() != null) {
                         errorMessage = error.getReason();
+                    }
+                    
+                    // Log the error for debugging
+                    Log.e("FastCommentsFeedView", "Feed refresh error: " + errorMessage);
+                    if (error != null && error.getReason() != null && error.getReason().contains("JsonSyntax")) {
+                        Log.e("FastCommentsFeedView", "JsonSyntaxException detected in API response during refresh", 
+                            new Exception("JSON parsing error occurred in API response"));
                     }
 
                     showError(errorMessage);
@@ -494,8 +530,17 @@ public class FastCommentsFeedView extends FrameLayout {
                     loadMoreProgressBar.setVisibility(View.GONE);
 
                     String errorMessage = "Error loading more posts";
-                    if (error != null && error.getReason() != null) {
+                    if (error != null && error.getTranslatedError() != null) {
+                        errorMessage = error.getTranslatedError();
+                    } else if (error != null && error.getReason() != null) {
                         errorMessage = error.getReason();
+                    }
+                    
+                    // Log the error for debugging
+                    Log.e("FastCommentsFeedView", "Error loading more posts: " + errorMessage);
+                    if (error != null && error.getReason() != null && error.getReason().contains("JsonSyntax")) {
+                        Log.e("FastCommentsFeedView", "JsonSyntaxException detected when loading more posts", 
+                            new Exception("JSON parsing error occurred in API response"));
                     }
 
                     // Notify listener of error (if set)
@@ -632,6 +677,9 @@ public class FastCommentsFeedView extends FrameLayout {
     private void showError(String errorMessage) {
         errorStateView.setText(errorMessage);
         errorStateView.setVisibility(View.VISIBLE);
+        
+        // Log the error to help with debugging
+        Log.e("FastCommentsFeedView", "Displaying error: " + errorMessage);
     }
 
     /**
@@ -808,6 +856,56 @@ public class FastCommentsFeedView extends FrameLayout {
                             }
                         }
                     }
+                });
+                return CONSUME;
+            }
+        });
+    }
+    
+    /**
+     * Delete a feed post
+     * 
+     * @param post The post to delete
+     */
+    private void deletePost(FeedPost post) {
+        if (sdk == null || post == null || post.getId() == null) {
+            return;
+        }
+        
+        sdk.deleteFeedPost(post.getId(), new FCCallback<APIEmptyResponse>() {
+            @Override
+            public boolean onFailure(APIError error) {
+                handler.post(() -> {
+                    String errorMessage;
+                    if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                        errorMessage = error.getTranslatedError();
+                    } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                        errorMessage = error.getReason();
+                    } else {
+                        errorMessage = getContext().getString(R.string.error_deleting_post);
+                    }
+                    
+                    android.widget.Toast.makeText(
+                            getContext(),
+                            errorMessage,
+                            android.widget.Toast.LENGTH_SHORT
+                    ).show();
+                });
+                return CONSUME;
+            }
+            
+            @Override
+            public boolean onSuccess(APIEmptyResponse response) {
+                handler.post(() -> {
+                    // Success message
+                    android.widget.Toast.makeText(
+                            getContext(),
+                            R.string.post_deleted_successfully,
+                            android.widget.Toast.LENGTH_SHORT
+                    ).show();
+                    
+                    // Update adapter - removal happens in the SDK
+                    adapter.notifyDataSetChanged();
                 });
                 return CONSUME;
             }

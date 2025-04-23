@@ -473,8 +473,9 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             }
         }
         
-        // Show/hide edit option based on ownership
+        // Show/hide edit and delete options based on ownership
         menu.findItem(R.id.menu_edit_comment).setVisible(isCurrentUserComment);
+        menu.findItem(R.id.menu_delete_comment).setVisible(isCurrentUserComment);
         
         // Set item click listener
         popupMenu.setOnMenuItemClickListener(item -> {
@@ -486,6 +487,13 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
                     String commentId = currentComment.getComment().getId();
                     String commentText = currentComment.getComment().getCommentHTML();
                     commentMenuListener.onEdit(commentId, commentText);
+                    return true;
+                }
+            } else if (itemId == R.id.menu_delete_comment) {
+                // Handle delete comment
+                if (currentComment != null && commentMenuListener != null) {
+                    String commentId = currentComment.getComment().getId();
+                    commentMenuListener.onDelete(commentId);
                     return true;
                 }
             } else if (itemId == R.id.menu_flag_comment) {

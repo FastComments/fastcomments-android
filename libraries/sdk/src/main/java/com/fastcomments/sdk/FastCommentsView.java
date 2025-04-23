@@ -640,7 +640,7 @@ public class FastCommentsView extends FrameLayout {
             // scrolling is handled by the CommentsTree
         });
 
-        // Set up comment menu listener for edit, flag, and block actions
+        // Set up comment menu listener for edit, delete, flag, and block actions
         adapter.setCommentMenuListener(new CommentsAdapter.OnCommentMenuItemListener() {
             @Override
             public void onEdit(String commentId, String commentText) {
@@ -692,6 +692,67 @@ public class FastCommentsView extends FrameLayout {
                         }
                     });
                 }).show(commentText);
+            }
+            
+            @Override
+            public void onDelete(String commentId) {
+                // Confirm before deleting
+                android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+                builder.setTitle(R.string.delete_comment_title)
+                        .setMessage(R.string.delete_comment_confirm)
+                        .setPositiveButton(R.string.delete, (dialog, which) -> {
+                            // Call API to delete the comment
+                            sdk.deleteComment(commentId, new FCCallback<APIEmptyResponse>() {
+                                @Override
+                                public boolean onFailure(APIError error) {
+                                    // Show error message
+                                    getHandler().post(() -> {
+                                        String errorMessage;
+                                        if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                                            errorMessage = error.getTranslatedError();
+                                        } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                                            errorMessage = error.getReason();
+                                        } else {
+                                            errorMessage = getContext().getString(R.string.error_deleting_comment);
+                                        }
+
+                                        android.widget.Toast.makeText(
+                                                getContext(),
+                                                errorMessage,
+                                                android.widget.Toast.LENGTH_SHORT
+                                        ).show();
+                                    });
+                                    return CONSUME;
+                                }
+
+                                @Override
+                                public boolean onSuccess(APIEmptyResponse success) {
+                                    // Show success message
+                                    getHandler().post(() -> {
+                                        android.widget.Toast.makeText(
+                                                getContext(),
+                                                R.string.comment_deleted_successfully,
+                                                android.widget.Toast.LENGTH_SHORT
+                                        ).show();
+
+                                        // UI is updated from the SDK on success
+                                        adapter.notifyDataSetChanged();
+                                        
+                                        // Notify listener that a comment was deleted (to update post stats)
+                                        if (commentPostListener != null) {
+                                            // We use the same listener as when adding a comment
+                                            // since the action needed is the same: update post stats
+                                            commentPostListener.onCommentPosted(null);
+                                        }
+                                    });
+                                    return CONSUME;
+                                }
+                            });
+                        })
+                        .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                            dialog.dismiss();
+                        })
+                        .show();
             }
 
             @Override
