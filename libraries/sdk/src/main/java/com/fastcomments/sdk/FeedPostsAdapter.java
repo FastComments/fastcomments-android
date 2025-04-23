@@ -415,20 +415,37 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             // Set tags if available
             setupTags(post);
 
-            // Handle like count display
-            int likeCount = sdk.getPostLikeCount(post.getId());
-            if (likeCount > 0) {
+            // Handle like count and comment count display
+            final int likeCount = sdk.getPostLikeCount(post.getId());
+            final Integer commentCount = post.getCommentCount();
+            
+            if (likeCount > 0 || (commentCount != null && commentCount > 0)) {
                 likeCountTextView.setVisibility(View.VISIBLE);
+                
                 String likesText = likeCount == 1 ?
                         context.getString(R.string.like_count_singular, likeCount) :
                         context.getString(R.string.like_count_plural, likeCount);
-                likeCountTextView.setText(likesText);
+                        
+                String commentsText = commentCount != null && commentCount == 1 ?
+                        context.getString(R.string.comment_count_singular, commentCount) :
+                        context.getString(R.string.comment_count_plural, commentCount);
+                
+                if (likeCount > 0 && commentCount != null && commentCount > 0) {
+                    // Show both like count and comment count
+                    likeCountTextView.setText(context.getString(R.string.like_comment_count, likesText, commentsText));
+                } else if (likeCount > 0) {
+                    // Show only like count
+                    likeCountTextView.setText(likesText);
+                } else {
+                    // Show only comment count
+                    likeCountTextView.setText(commentsText);
+                }
             } else {
                 likeCountTextView.setVisibility(View.GONE);
             }
 
             // Handle like button state based on user's reactions from SDK
-            boolean userHasLiked = sdk.hasUserReactedToPost(post.getId(), "l");
+            final boolean userHasLiked = sdk.hasUserReactedToPost(post.getId(), "l");
             if (userHasLiked) {
                 likeButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.like_filled_icon, 0, 0, 0);
                 likeButton.setTextColor(context.getResources().getColor(android.R.color.holo_red_light, null));

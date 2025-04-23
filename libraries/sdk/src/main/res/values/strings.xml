@@ -51,6 +51,9 @@
     <string name="vote_count_zero">0</string>
     <string name="like_count_singular">%d like</string>
     <string name="like_count_plural">%d likes</string>
+    <string name="comment_count_singular">%d comment</string>
+    <string name="comment_count_plural">%d comments</string>
+    <string name="like_comment_count">%1$s • %2$s</string>
     
     <!-- User authentication dialog -->
     <string name="vote_login_title">Log in to Vote</string>
