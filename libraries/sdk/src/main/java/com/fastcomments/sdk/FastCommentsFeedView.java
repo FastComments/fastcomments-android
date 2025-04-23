@@ -22,11 +22,14 @@ import com.fastcomments.model.APIError;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.FeedPostMediaItem;
 import com.fastcomments.model.GetFeedPostsResponse;
+import com.fastcomments.model.GetFeedPostsStats200Response;
 import com.fastcomments.model.PublicFeedPostsResponse;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * FastCommentsFeedView displays a feed of posts from FastComments with infinite scrolling
@@ -66,6 +69,11 @@ public class FastCommentsFeedView extends FrameLayout {
     private Handler handler;
     private List<FeedPost> feedPosts = new ArrayList<>();
     private OnFeedViewInteractionListener listener;
+    
+    // Polling for post stats
+    private static final long POLLING_INTERVAL_MS = 30 * 1000; // 30 seconds
+    private boolean isPollingEnabled = true;
+    private Runnable pollStatsRunnable;
 
     /**
      * Interface for feed view interaction callbacks
@@ -395,6 +403,9 @@ public class FastCommentsFeedView extends FrameLayout {
                     if (listener != null) {
                         listener.onFeedLoaded(posts);
                     }
+                    
+                    // Start polling for stats updates
+                    startPolling();
                 });
                 return CONSUME;
             }
@@ -455,6 +466,9 @@ public class FastCommentsFeedView extends FrameLayout {
                     if (listener != null) {
                         listener.onFeedLoaded(posts);
                     }
+                    
+                    // Start polling for stats updates
+                    startPolling();
                 });
                 return CONSUME;
             }
@@ -681,11 +695,132 @@ public class FastCommentsFeedView extends FrameLayout {
     }
     
     /**
+     * Initialize polling for post stats
+     */
+    private void initPolling() {
+        pollStatsRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (isPollingEnabled && sdk != null && !feedPosts.isEmpty()) {
+                    refreshVisiblePostStats();
+                }
+                
+                // Schedule next run
+                if (isPollingEnabled) {
+                    handler.postDelayed(this, POLLING_INTERVAL_MS);
+                }
+            }
+        };
+    }
+    
+    /**
+     * Start polling for post stats
+     */
+    public void startPolling() {
+        if (pollStatsRunnable == null) {
+            initPolling();
+        }
+        
+        isPollingEnabled = true;
+        // Remove any existing callbacks to prevent duplicates
+        handler.removeCallbacks(pollStatsRunnable);
+        // Start polling
+        handler.postDelayed(pollStatsRunnable, POLLING_INTERVAL_MS);
+    }
+    
+    /**
+     * Stop polling for post stats
+     */
+    public void stopPolling() {
+        isPollingEnabled = false;
+        if (handler != null && pollStatsRunnable != null) {
+            handler.removeCallbacks(pollStatsRunnable);
+        }
+    }
+    
+    /**
+     * Refresh stats for currently visible posts
+     */
+    private void refreshVisiblePostStats() {
+        if (sdk == null || feedPosts.isEmpty() || recyclerView == null) {
+            return;
+        }
+        
+        // Get visible post IDs
+        LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+        if (layoutManager == null) {
+            return;
+        }
+        
+        // Find visible items range
+        int firstVisible = layoutManager.findFirstVisibleItemPosition();
+        int lastVisible = layoutManager.findLastVisibleItemPosition();
+        
+        // Safety check
+        if (firstVisible < 0 || lastVisible < 0 || firstVisible > lastVisible) {
+            return;
+        }
+        
+        // Get post IDs for visible posts
+        List<String> visiblePostIds = new ArrayList<>();
+        
+        // Limit the range to valid indices
+        firstVisible = Math.max(0, firstVisible);
+        lastVisible = Math.min(feedPosts.size() - 1, lastVisible);
+        
+        // Get post IDs for visible posts
+        for (int i = firstVisible; i <= lastVisible; i++) {
+            if (i < feedPosts.size()) {
+                FeedPost post = feedPosts.get(i);
+                if (post != null && post.getId() != null) {
+                    visiblePostIds.add(post.getId());
+                }
+            }
+        }
+        
+        // If no visible posts with IDs, return
+        if (visiblePostIds.isEmpty()) {
+            return;
+        }
+        
+        // Fetch stats for visible posts
+        final List<String> finalVisiblePostIds = visiblePostIds;
+        sdk.getFeedPostsStats(visiblePostIds, new FCCallback<GetFeedPostsStats200Response>() {
+            @Override
+            public boolean onFailure(APIError error) {
+                // Silent failure - we'll try again next time
+                return CONSUME;
+            }
+            
+            @Override
+            public boolean onSuccess(GetFeedPostsStats200Response response) {
+                // The SDK has already updated the post objects with new stats
+                // Now we need to update the UI for each visible post
+                handler.post(() -> {
+                    // For each post ID, find its current position in the adapter
+                    for (String postId : finalVisiblePostIds) {
+                        for (int i = 0; i < feedPosts.size(); i++) {
+                            FeedPost post = feedPosts.get(i);
+                            if (post != null && postId.equals(post.getId())) {
+                                // Update this item in the adapter
+                                adapter.notifyItemChanged(i);
+                                break;
+                            }
+                        }
+                    }
+                });
+                return CONSUME;
+            }
+        });
+    }
+    
+    /**
      * Clean up resources when the view is detached
      */
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        stopPolling();
         if (sdk != null) {
             sdk.cleanup();
         }
