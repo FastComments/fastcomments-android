@@ -646,6 +646,41 @@ public class FastCommentsFeedView extends FrameLayout {
     }
 
     /**
+     * Refreshes a specific post in the feed after comment is added
+     * 
+     * @param postId The ID of the post to refresh
+     */
+    public void refreshPost(String postId) {
+        if (sdk == null || postId == null || adapter == null) {
+            return;
+        }
+        
+        // Get the updated posts list from SDK
+        List<FeedPost> posts = sdk.getFeedPosts();
+        if (posts == null || posts.isEmpty()) {
+            return;
+        }
+        
+        // Find the post in the posts list
+        int position = -1;
+        FeedPost updatedPost = null;
+        
+        for (int i = 0; i < posts.size(); i++) {
+            FeedPost post = posts.get(i);
+            if (post != null && postId.equals(post.getId())) {
+                position = i;
+                updatedPost = post;
+                break;
+            }
+        }
+        
+        // If post is found, update it in the adapter with the refreshed data
+        if (position >= 0 && updatedPost != null) {
+            adapter.updatePost(position, updatedPost);
+        }
+    }
+    
+    /**
      * Clean up resources when the view is detached
      */
     @Override

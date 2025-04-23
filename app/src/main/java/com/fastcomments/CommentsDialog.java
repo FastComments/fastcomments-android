@@ -13,7 +13,13 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fastcomments.model.APIError;
 import com.fastcomments.model.FeedPost;
+import com.fastcomments.model.GetFeedPostsStats200Response;
+import com.fastcomments.sdk.FCCallback;
 import com.fastcomments.sdk.FastCommentsFeedSDK;
 import com.fastcomments.sdk.FastCommentsSDK;
 import com.fastcomments.sdk.FastCommentsView;
@@ -26,11 +32,26 @@ public class CommentsDialog extends Dialog {
     private final FeedPost post;
     private final FastCommentsFeedSDK feedSDK;
     private FastCommentsView commentsView;
+    private OnCommentAddedListener commentAddedListener;
+    
+    /**
+     * Interface for notifying when a comment is added
+     */
+    public interface OnCommentAddedListener {
+        void onCommentAdded(String postId);
+    }
 
     public CommentsDialog(@NonNull Context context, FeedPost post, FastCommentsFeedSDK feedSDK) {
         super(context);
         this.post = post;
         this.feedSDK = feedSDK;
+    }
+    
+    /**
+     * Set a listener to be notified when a comment is added
+     */
+    public void setOnCommentAddedListener(OnCommentAddedListener listener) {
+        this.commentAddedListener = listener;
     }
     
     @Override
@@ -61,6 +82,37 @@ public class CommentsDialog extends Dialog {
         // Create the comments SDK and view
         FastCommentsSDK commentsSDK = feedSDK.createCommentsSDKForPost(post);
         commentsView = new FastCommentsView(getContext(), commentsSDK);
+        
+        // Set up comment form listener to know when a comment is posted
+        commentsView.setCommentPostListener((comment) -> {
+            // Update post stats to refresh comment count
+            if (post.getId() != null) {
+                List<String> postIds = new ArrayList<>(1);
+                postIds.add(post.getId());
+                feedSDK.getFeedPostsStats(postIds, new FCCallback<GetFeedPostsStats200Response>() {
+                    @Override
+                    public boolean onFailure(APIError error) {
+                        // Silently fail - not critical
+                        return CONSUME;
+                    }
+                    
+                    @Override
+                    public boolean onSuccess(GetFeedPostsStats200Response response) {
+                        // Stats updated in the SDK's cache
+                        
+                        // Notify the listener that a comment was added
+                        if (commentAddedListener != null) {
+                            commentAddedListener.onCommentAdded(post.getId());
+                        }
+                        
+                        return CONSUME;
+                    }
+                });
+            } else if (commentAddedListener != null && post.getId() != null) {
+                // Fallback if we can't get stats
+                commentAddedListener.onCommentAdded(post.getId());
+            }
+        });
         
         // Add comments view to container
         FrameLayout container = findViewById(R.id.commentsContainer);

@@ -17,6 +17,9 @@ import com.fastcomments.model.CreateFeedPostResponse;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.FeedPostMediaItem;
 import com.fastcomments.model.FeedPostMediaItemAsset;
+import com.fastcomments.model.FeedPostStats;
+import com.fastcomments.model.FeedPostsStatsResponse;
+import com.fastcomments.model.GetFeedPostsStats200Response;
 import com.fastcomments.model.MediaAsset;
 import com.fastcomments.model.SizePreset;
 import com.fastcomments.model.UploadImageResponse;
@@ -1040,6 +1043,80 @@ public class FastCommentsFeedSDK {
         }
     }
 
+    /**
+     * Fetch post stats for specific posts to get updated comment counts and reactions
+     * 
+     * @param postIds List of post IDs to fetch stats for
+     * @param callback Callback to receive the response
+     */
+    public void getFeedPostsStats(List<String> postIds, FCCallback<GetFeedPostsStats200Response> callback) {
+        if (postIds == null || postIds.isEmpty()) {
+            APIError error = new APIError();
+            error.setReason("Post IDs are required");
+            callback.onFailure(error);
+            return;
+        }
+        
+        try {
+            api.getFeedPostsStats(config.tenantId, postIds)
+                .sso(config.sso)
+                .executeAsync(new ApiCallback<GetFeedPostsStats200Response>() {
+                    @Override
+                    public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                        callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                    }
+                    
+                    @Override
+                    public void onSuccess(GetFeedPostsStats200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                        if (result.getActualInstance() instanceof APIError) {
+                            callback.onFailure((APIError) result.getActualInstance());
+                        } else {
+                            // Update cached posts with the new stats
+                            final FeedPostsStatsResponse statsResponse = result.getFeedPostsStatsResponse();
+                            Map<String, FeedPostStats> statsMap = statsResponse.getStats();
+
+                            // Update posts in our cache
+                            for (Map.Entry<String, FeedPostStats> entry : statsMap.entrySet()) {
+                                String postId = entry.getKey();
+                                FeedPostStats updatedStats = entry.getValue();
+                                
+                                // Find the post in our cache
+                                FeedPost cachedPost = postsById.get(postId);
+                                if (cachedPost != null) {
+                                    // Update comment count
+                                    cachedPost.setCommentCount(updatedStats.getCommentCount());
+                                    
+                                    // Update reactions
+                                    cachedPost.setReacts(updatedStats.getReacts());
+                                    
+                                    // Update like count in our tracking map
+                                    if (updatedStats.getReacts() != null && updatedStats.getReacts().containsKey("l")) {
+                                        likeCounts.put(postId, updatedStats.getReacts().get("l").intValue());
+                                    } else {
+                                        likeCounts.put(postId, 0);
+                                    }
+                                }
+                            }
+                            
+                            callback.onSuccess(result);
+                        }
+                    }
+                    
+                    @Override
+                    public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                        // Not used
+                    }
+                    
+                    @Override
+                    public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                        // Not used
+                    }
+                });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+    
     /**
      * Handle a deleted feed post event
      */

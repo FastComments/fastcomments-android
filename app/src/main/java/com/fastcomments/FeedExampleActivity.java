@@ -108,6 +108,16 @@ public class FeedExampleActivity extends AppCompatActivity {
             public void onCommentsRequested(FeedPost post) {
                 // Show comments dialog for the post
                 CommentsDialog dialog = new CommentsDialog(FeedExampleActivity.this, post, feedSDK);
+                
+                // Set comment added listener to update the post in the feed
+                dialog.setOnCommentAddedListener(postId -> {
+                    // Post stats already updated in feedSDK, just need to refresh UI
+                    runOnUiThread(() -> {
+                        // Find position of post in adapter and update it
+                        feedView.refreshPost(postId);
+                    });
+                });
+                
                 dialog.show();
             }
         });

@@ -55,6 +55,22 @@ public class FastCommentsView extends FrameLayout {
     private Handler dateUpdateHandler;
     private Runnable dateUpdateRunnable;
     private static final long DATE_UPDATE_INTERVAL = 60000; // Update every minute
+    private CommentPostListener commentPostListener; // Callback for when a comment is posted
+    
+    /**
+     * Interface for comment post callbacks
+     */
+    public interface CommentPostListener {
+        void onCommentPosted(com.fastcomments.model.PublicComment comment);
+    }
+    
+    /**
+     * Set a listener to be notified when a comment is posted
+     * @param listener The listener to set
+     */
+    public void setCommentPostListener(CommentPostListener listener) {
+        this.commentPostListener = listener;
+    }
 
     // Standard View constructors for inflation from XML
     public FastCommentsView(Context context) {
@@ -881,6 +897,11 @@ public class FastCommentsView extends FrameLayout {
                     // If this was the first comment, update empty state to show the comments
                     if (sdk.commentsTree.visibleSize() == 1) {
                         setIsEmpty(false);
+                    }
+                    
+                    // Notify listener that a comment has been posted
+                    if (commentPostListener != null) {
+                        commentPostListener.onCommentPosted(comment);
                     }
                     
                     // Get the position of the newly added comment and scroll to it
