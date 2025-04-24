@@ -62,12 +62,6 @@ public class FeedExampleActivity extends AppCompatActivity {
 
         // Initialize the Feed SDK
         feedSDK = new FastCommentsFeedSDK(config);
-        
-        // Set user info for the example
-        UserSessionInfo userInfo = new UserSessionInfo();
-        userInfo.setDisplayName("Example User");
-        userInfo.setAvatarSrc("https://staticm.fastcomments.com/1639362726066-DSC_0841.JPG");
-        feedSDK.setCurrentUser(userInfo);
 
         // Find the feed view in the layout
         feedView = findViewById(R.id.feedView);
@@ -182,9 +176,7 @@ public class FeedExampleActivity extends AppCompatActivity {
         // Set FAB click listener
         createPostFab.setOnClickListener(v -> {
             // Configure post creation view and prepare it for showing
-            postCreateView.setVisibility(View.VISIBLE);
-            postCreateView.setClickable(true); 
-            postCreateView.setEnabled(true);
+            postCreateView.show();
             createPostFab.setVisibility(View.GONE);
             
             // Apply animation to slide it down

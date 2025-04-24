@@ -274,6 +274,18 @@ public class FastCommentsFeedView extends FrameLayout {
         if (adapter == null) {
             initAdapter(getContext());
         }
+        
+        // Register for post deletion events from live WebSocket
+        sdk.setOnPostDeletedListener(postId -> {
+            handler.post(() -> {
+                // Update adapter with the current list from SDK
+                // This ensures the adapter's list is in sync with the SDK after a post is deleted
+                adapter.updatePosts(sdk.getFeedPosts());
+                
+                // Log for debugging
+                Log.d("FastCommentsFeedView", "Received post deletion event for post ID: " + postId);
+            });
+        });
     }
     
     /**
@@ -904,8 +916,9 @@ public class FastCommentsFeedView extends FrameLayout {
                             android.widget.Toast.LENGTH_SHORT
                     ).show();
                     
-                    // Update adapter - removal happens in the SDK
-                    adapter.notifyDataSetChanged();
+                    // Update adapter with the current list from SDK
+                    // This ensures the adapter's internal list matches the SDK's list
+                    adapter.updatePosts(sdk.getFeedPosts());
                 });
                 return CONSUME;
             }

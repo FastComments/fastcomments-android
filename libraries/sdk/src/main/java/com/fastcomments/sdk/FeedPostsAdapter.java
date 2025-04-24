@@ -3,6 +3,7 @@ package com.fastcomments.sdk;
 import android.content.Context;
 import android.text.Html;
 import android.text.format.DateUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +32,7 @@ import com.google.android.material.chip.ChipGroup;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -162,11 +164,29 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         return feedPosts.size();
     }
 
+    /**
+     * Updates the adapter with a new list of posts
+     * This is called when posts are added, removed, or changed
+     *
+     * @param newPosts The new list of posts to display
+     */
     public void updatePosts(List<FeedPost> newPosts) {
+        if (newPosts == null) {
+            return;
+        }
+        
+        // Create a new ArrayList to avoid reference issues
+        List<FeedPost> updatedPosts = new ArrayList<>(newPosts);
+        
+        // Clear and update the adapter's internal list
         this.feedPosts.clear();
-        this.feedPosts.addAll(newPosts);
+        this.feedPosts.addAll(updatedPosts);
+        
+        // Notify adapter that all data has changed
         notifyDataSetChanged();
         
+        // Log the update for debugging
+        Log.d("FeedPostsAdapter", "Updated posts list with " + updatedPosts.size() + " posts");
     }
     
 

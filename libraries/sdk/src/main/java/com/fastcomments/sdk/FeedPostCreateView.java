@@ -172,15 +172,6 @@ public class FeedPostCreateView extends FrameLayout {
         linkPreviewContainer.setVisibility(GONE);
         postErrorTextView.setVisibility(GONE);
         postProgressBar.setVisibility(GONE);
-    }
-
-    /**
-     * Set the SDK instance
-     *
-     * @param sdk FastCommentsFeedSDK instance
-     */
-    public void setSDK(FastCommentsFeedSDK sdk) {
-        this.sdk = sdk;
 
         // Set current user info if available
         if (sdk != null && sdk.getCurrentUser() != null) {
@@ -191,6 +182,31 @@ public class FeedPostCreateView extends FrameLayout {
             formUserNameTextView.setText(R.string.anonymous);
             AvatarFetcher.fetchTransformInto(getContext(), R.drawable.default_avatar, formAvatarImageView);
         }
+    }
+
+    public void show() {
+        setVisibility(View.VISIBLE);
+        setClickable(true);
+        setEnabled(true);
+
+        // Set current user info if available
+        if (sdk != null && sdk.getCurrentUser() != null) {
+            UserSessionInfo userInfo = sdk.getCurrentUser();
+            setCurrentUser(userInfo);
+        } else {
+            // Default state for anonymous user
+            formUserNameTextView.setText(R.string.anonymous);
+            AvatarFetcher.fetchTransformInto(getContext(), R.drawable.default_avatar, formAvatarImageView);
+        }
+    }
+
+    /**
+     * Set the SDK instance
+     *
+     * @param sdk FastCommentsFeedSDK instance
+     */
+    public void setSDK(FastCommentsFeedSDK sdk) {
+        this.sdk = sdk;
     }
 
     /**
@@ -212,6 +228,8 @@ public class FeedPostCreateView extends FrameLayout {
             // Set user name
             if (userInfo.getDisplayName() != null && !userInfo.getDisplayName().isEmpty()) {
                 formUserNameTextView.setText(userInfo.getDisplayName());
+            } else if(userInfo.getUsername() != null && !userInfo.getUsername().isEmpty()) {
+                formUserNameTextView.setText(userInfo.getUsername());
             } else {
                 formUserNameTextView.setText(R.string.anonymous);
             }

@@ -288,7 +288,7 @@ public class FastCommentsFeedSDK {
             api.getFeedPostsPublic(config.tenantId)
                     .afterId(lastPostId)
                     .limit(pageSize)
-                    .sso(config.sso)
+                    .sso(config.getSSOToken())
                     .includeUserInfo(lastPostId == null) // only include for initial req
                     .executeAsync(new ApiCallback<GetFeedPostsPublic200Response>() {
                         @Override
@@ -547,7 +547,7 @@ public class FastCommentsFeedSDK {
                     reactParams.reactType("l");
 
                     api.reactFeedPostPublic(config.tenantId, postId, reactParams)
-                            .sso(config.sso)
+                            .sso(config.getSSOToken())
                             .isUndo(isUndo)
                             .executeAsync(new ApiCallback<ReactFeedPostPublic200Response>() {
                                 @Override
@@ -926,7 +926,7 @@ public class FastCommentsFeedSDK {
 
             api.createFeedPostPublic(config.tenantId, params)
                     .broadcastId(broadcastId)
-                    .sso(config.sso)
+                    .sso(config.getSSOToken())
                     .executeAsync(new ApiCallback<CreateFeedPostPublic200Response>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
@@ -1038,9 +1038,13 @@ public class FastCommentsFeedSDK {
             }
 
             mainHandler.post(() -> {
-                // Ignore other event types for now
+                // Handle different types of live events
                 if (eventType == NEW_FEED_POST) {
                     handleNewFeedPost(eventData);
+                } else if (eventType == LiveEventType.DELETED_FEED_POST) {
+                    handleDeletedFeedPost(eventData);
+                } else if (eventType == LiveEventType.UPDATED_FEED_POST) {
+                    handleUpdatedFeedPost(eventData);
                 }
             });
         } catch (Exception e) {
@@ -1099,7 +1103,7 @@ public class FastCommentsFeedSDK {
 
         try {
             api.getFeedPostsStats(config.tenantId, postIds)
-                    .sso(config.sso)
+                    .sso(config.getSSOToken())
                     .executeAsync(new ApiCallback<GetFeedPostsStats200Response>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
@@ -1167,15 +1171,50 @@ public class FastCommentsFeedSDK {
 
         // Get the feed post ID from the event
         String postId = eventData.getFeedPost().getId();
+        boolean wasRemoved = false;
 
         // Remove the post from our list if it exists
         for (int i = 0; i < feedPosts.size(); i++) {
             FeedPost post = feedPosts.get(i);
-            if (post.getId() != null && post.getId().equals(postId)) {
+            if (post != null && post.getId() != null && post.getId().equals(postId)) {
                 feedPosts.remove(i);
+                // Also remove from our lookup maps
+                postsById.remove(postId);
+                likeCounts.remove(postId);
+                wasRemoved = true;
+                // Break after removing to avoid index issues
                 break;
             }
         }
+        
+        if (wasRemoved) {
+            // Log deletion for debugging
+            Log.d("FastCommentsFeedSDK", "Post with ID " + postId + " was deleted via live event");
+            
+            // Notify any callback listeners about the post deletion
+            // This allows the UI to update when a post is deleted by someone else
+            if (onPostDeletedListener != null) {
+                onPostDeletedListener.onPostDeleted(postId);
+            }
+        }
+    }
+    
+    /**
+     * Interface for notifying when a post is deleted via live event
+     */
+    public interface OnPostDeletedListener {
+        void onPostDeleted(String postId);
+    }
+    
+    private OnPostDeletedListener onPostDeletedListener;
+    
+    /**
+     * Set a listener to be notified when posts are deleted via live events
+     * 
+     * @param listener The listener to notify
+     */
+    public void setOnPostDeletedListener(OnPostDeletedListener listener) {
+        this.onPostDeletedListener = listener;
     }
 
     /**
@@ -1231,7 +1270,7 @@ public class FastCommentsFeedSDK {
 
         try {
             api.deleteFeedPostPublic(config.tenantId, postId)
-                    .sso(config.sso)
+                    .sso(config.getSSOToken())
                     .executeAsync(new ApiCallback<DeleteFeedPostPublic200Response>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
