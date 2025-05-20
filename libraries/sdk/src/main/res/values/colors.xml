@@ -20,4 +20,8 @@
     <color name="fastcomments_action_button_color">@color/primary</color>
     <color name="fastcomments_load_more_button_text_color">@color/primary</color>
     <color name="fastcomments_online_indicator_color">#4CAF50</color>
+    
+    <!-- Dialog header colors -->
+    <color name="fastcomments_dialog_header_background">#333333</color>
+    <color name="fastcomments_dialog_header_text_color">@color/white</color>
 </resources>

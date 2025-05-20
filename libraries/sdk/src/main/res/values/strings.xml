@@ -101,6 +101,7 @@
     <string name="delete_post_confirm">Are you sure you want to delete this post?</string>
     <string name="error_deleting_post">Error deleting post. Please try again.</string>
     <string name="post_deleted_successfully">Post deleted successfully</string>
+    <string name="comments">Comments</string>
     
     <!-- Feed view strings -->
     <string name="no_posts_yet">No posts to display.</string>

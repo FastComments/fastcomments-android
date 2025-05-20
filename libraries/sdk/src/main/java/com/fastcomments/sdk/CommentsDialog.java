@@ -1,4 +1,4 @@
-package com.fastcomments;
+package com.fastcomments.sdk;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -19,10 +19,7 @@ import java.util.List;
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.GetFeedPostsStats200Response;
-import com.fastcomments.sdk.FCCallback;
-import com.fastcomments.sdk.FastCommentsFeedSDK;
-import com.fastcomments.sdk.FastCommentsSDK;
-import com.fastcomments.sdk.FastCommentsView;
+import com.fastcomments.model.PublicComment;
 
 /**
  * Dialog for displaying comments for a post

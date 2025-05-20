@@ -5,36 +5,35 @@
     android:layout_height="match_parent"
     android:background="@android:color/white">
 
-    <LinearLayout
+    <FrameLayout
         android:id="@+id/headerContainer"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp"
-        android:background="@android:color/holo_blue_light"
+        android:layout_height="56dp"
+        android:background="@color/fastcomments_dialog_header_background"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/titleTextView"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_gravity="center"
             android:text="@string/comments"
-            android:textColor="@android:color/white"
+            android:textColor="@color/fastcomments_dialog_header_text_color"
             android:textSize="18sp"
             android:textStyle="bold" />
 
         <ImageButton
             android:id="@+id/closeButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="end|center_vertical"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/close"
-            android:padding="8dp"
+            android:padding="12dp"
             android:src="@android:drawable/ic_menu_close_clear_cancel" />
-    </LinearLayout>
+    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/commentsContainer"
