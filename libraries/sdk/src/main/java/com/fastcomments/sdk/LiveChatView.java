@@ -163,11 +163,36 @@ public class LiveChatView extends FrameLayout {
         // Set up back button handling if in an AppCompatActivity
         if (context instanceof AppCompatActivity) {
             AppCompatActivity activity = (AppCompatActivity) context;
-            backPressedCallback = new OnBackPressedCallback(false) {
+            backPressedCallback = new OnBackPressedCallback(true) {
                 @Override
                 public void handleOnBackPressed() {
-                    // Reset the form
-                    commentForm.resetReplyState();
+                    // Check if we have text in the form
+                    if (!commentForm.isTextEmpty()) {
+                        // Show confirmation dialog - different message for reply vs new comment
+                        String title, message;
+                        RenderableComment parentComment = commentForm.getParentComment();
+                        
+                        if (parentComment != null) {
+                            title = getContext().getString(R.string.cancel_reply_title);
+                            message = getContext().getString(R.string.cancel_reply_confirm);
+                        } else {
+                            title = getContext().getString(R.string.cancel_comment_title);
+                            message = getContext().getString(R.string.cancel_comment_confirm);
+                        }
+                        
+                        new android.app.AlertDialog.Builder(getContext())
+                            .setTitle(title)
+                            .setMessage(message)
+                            .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                                // Proceed with cancellation
+                                commentForm.resetReplyState();
+                            })
+                            .setNegativeButton(android.R.string.no, null)
+                            .show();
+                    } else {
+                        // Text is empty, no need for confirmation
+                        commentForm.resetReplyState();
+                    }
                 }
             };
             activity.getOnBackPressedDispatcher().addCallback(backPressedCallback);
@@ -264,8 +289,23 @@ public class LiveChatView extends FrameLayout {
         });
 
         commentForm.setOnCancelReplyListener(() -> {
-            // Just reset the form instead of hiding it
-            commentForm.resetReplyState();
+            // Get the parent comment
+            RenderableComment parentComment = commentForm.getParentComment();
+            if (parentComment != null && !commentForm.isTextEmpty()) {
+                // Show confirmation dialog
+                new android.app.AlertDialog.Builder(getContext())
+                    .setTitle(R.string.cancel_reply_title)
+                    .setMessage(R.string.cancel_reply_confirm)
+                    .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                        // Proceed with cancellation
+                        commentForm.resetReplyState();
+                    })
+                    .setNegativeButton(android.R.string.no, null)
+                    .show();
+            } else {
+                // Just reset the form if there's no text
+                commentForm.resetReplyState();
+            }
         });
 
         // For chat view, we primarily use infinite scrolling, but keep pagination

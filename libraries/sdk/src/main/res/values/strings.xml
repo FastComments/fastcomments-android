@@ -11,6 +11,9 @@
     <string name="reply_hint">Write a reply…</string>
     <string name="submit_comment">Submit</string>
     <string name="reply">Reply</string>
+    <string name="cancel_replying">Cancel Replying</string>
+    <string name="cancel_reply_title">Cancel Reply?</string>
+    <string name="cancel_reply_confirm">Are you sure you want to cancel this reply? Your text will be lost.</string>
     <string name="show_replies">Show Replies (%1$d)</string>
     <string name="loading_replies">Loading...</string>
     <string name="error_loading_replies">Failed to load replies</string>
@@ -147,4 +150,8 @@
     <string name="content_required">Post content is required</string>
     <string name="media_upload_failure">Failed to upload media</string>
     <string name="create_new_post">Create New Post</string>
+    
+    <!-- Comment cancellation dialog -->
+    <string name="cancel_comment_title">Cancel Comment?</string>
+    <string name="cancel_comment_confirm">Are you sure you want to cancel this comment? Your text will be lost.</string>
 </resources>

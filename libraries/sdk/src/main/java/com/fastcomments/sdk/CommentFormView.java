@@ -30,6 +30,7 @@ public class CommentFormView extends LinearLayout {
     private OnCommentSubmitListener submitListener;
     private OnCancelReplyListener cancelListener;
     private String parentId;
+    private RenderableComment parentComment;
 
     public interface OnCommentSubmitListener {
         void onCommentSubmit(String commentText, String parentId);
@@ -88,10 +89,14 @@ public class CommentFormView extends LinearLayout {
 
         // Set up cancel button
         cancelButton.setOnClickListener(v -> {
+            // The cancel listener might want to show a confirmation dialog,
+            // so we let it handle the cancellation first
             if (cancelListener != null) {
                 cancelListener.onCancelReply();
+            } else {
+                // If no listener or the listener doesn't handle it, just reset
+                resetReplyState();
             }
-            resetReplyState();
         });
 
         // Initially hide cancel button until replying
@@ -157,6 +162,15 @@ public class CommentFormView extends LinearLayout {
     public void clearText() {
         commentEditText.setText("");
     }
+    
+    /**
+     * Check if the comment text input is empty
+     * 
+     * @return true if the comment text is empty, false otherwise
+     */
+    public boolean isTextEmpty() {
+        return commentEditText.getText().toString().trim().isEmpty();
+    }
 
     /**
      * Show an error message
@@ -175,6 +189,7 @@ public class CommentFormView extends LinearLayout {
         if (renderableComment != null) {
             final PublicComment comment = renderableComment.getComment();
             this.parentId = comment.getId();
+            this.parentComment = renderableComment; // Store reference to parent comment
             String commenterName = comment.getCommenterName() != null
                     ? comment.getCommenterName()
                     : getContext().getString(R.string.anonymous);
@@ -196,9 +211,19 @@ public class CommentFormView extends LinearLayout {
      */
     public void resetReplyState() {
         this.parentId = null;
+        this.parentComment = null;
         replyingToTextView.setVisibility(View.GONE);
         cancelButton.setVisibility(View.GONE);
         commentEditText.setHint(R.string.comment_hint);
         clearText();
+    }
+    
+    /**
+     * Get the parent comment that's being replied to
+     * 
+     * @return The parent RenderableComment or null if not replying
+     */
+    public RenderableComment getParentComment() {
+        return parentComment;
     }
 }
