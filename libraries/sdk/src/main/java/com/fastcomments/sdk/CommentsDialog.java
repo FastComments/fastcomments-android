@@ -84,7 +84,10 @@ public class CommentsDialog extends Dialog {
         
         // Set up close button
         ImageButton closeButton = findViewById(R.id.closeButton);
-        closeButton.setOnClickListener(v -> dismiss());
+        closeButton.setOnClickListener(v -> {
+            // Use the same logic as onBackPressed
+            onBackPressed();
+        });
         
         // Set title if available
         TextView titleTextView = findViewById(R.id.titleTextView);
@@ -135,6 +138,65 @@ public class CommentsDialog extends Dialog {
         
         // Load comments
         commentsView.load();
+    }
+    
+    /**
+     * Check if the back press should be intercepted to handle comment form state
+     * 
+     * @return true if the back press should be intercepted, false otherwise
+     */
+    private boolean shouldInterceptBackPress() {
+        // If commentsView is null, no need to intercept
+        if (commentsView == null) {
+            return false;
+        }
+        
+        // Get the comment form from CommentsView
+        CommentFormView commentForm = commentsView.getCommentForm();
+        if (commentForm == null) {
+            return false;
+        }
+        
+        // Check if the form is visible and has text
+        boolean formVisible = commentsView.isCommentFormVisible();
+        boolean hasText = !commentForm.isTextEmpty();
+        
+        return formVisible && hasText;
+    }
+    
+    @Override
+    public void onBackPressed() {
+        if (shouldInterceptBackPress()) {
+            // Get the comment form and check if it has a parent comment (reply) or text
+            CommentFormView commentForm = commentsView.getCommentForm();
+            RenderableComment parentComment = commentForm.getParentComment();
+            
+            // Show confirmation dialog
+            String title, message;
+            if (parentComment != null) {
+                title = getContext().getString(R.string.cancel_reply_title);
+                message = getContext().getString(R.string.cancel_reply_confirm);
+            } else {
+                title = getContext().getString(R.string.cancel_comment_title);
+                message = getContext().getString(R.string.cancel_comment_confirm);
+            }
+            
+            new android.app.AlertDialog.Builder(getContext())
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                    // Proceed with cancellation
+                    commentsView.hideCommentForm();
+                    commentForm.resetReplyState();
+                    
+                    // Don't dismiss the dialog yet - let the user continue with comments
+                })
+                .setNegativeButton(android.R.string.no, null)
+                .show();
+        } else {
+            // No need to intercept, just dismiss the dialog
+            super.onBackPressed();
+        }
     }
     
     @Override
