@@ -209,7 +209,7 @@ Check out these demo implementations:
 - [Secure SSO Implementation](app/src/main/java/com/fastcomments/SecureSSOExampleActivity.kt)
 - [Feed Integration Example](app/src/main/java/com/fastcomments/FeedExampleActivity.java)
 - [Live Chat Example](app/src/main/java/com/fastcomments/LiveChatExampleActivity.kt)
-- [Comments Dialog Implementation](app/src/main/java/com/fastcomments/CommentsDialog.java)
+- [Comments Dialog Example](app/src/main/java/com/fastcomments/FeedExampleActivity.java)
 
 ## Configuration Options
 
@@ -229,6 +229,29 @@ The SDK provides many configuration options through the `CommentWidgetConfig` cl
 | `readonly` | Disable commenting but show comments |
 | `disableVoting` | Disable voting functionality |
 | `disableLiveCommenting` | Disable real-time updates |
+
+## Customizing Colors
+
+You can customize the appearance of the FastComments components by overriding the color resources in your app's `colors.xml` file:
+
+```xml
+<!-- Custom FastComments colors -->
+<color name="fastcomments_dialog_header_background">#FF4CAF50</color>
+<color name="fastcomments_dialog_header_text_color">#FFFFFFFF</color>
+```
+
+Available color customization options:
+
+| Color Resource | Default | Description |
+|----------------|---------|-------------|
+| `fastcomments_dialog_header_background` | Blue | Background color of the comments dialog header |
+| `fastcomments_dialog_header_text_color` | White | Text color of the comments dialog title |
+| `fastcomments_reply_button_color` | Primary | Color of the reply button |
+| `fastcomments_toggle_replies_button_color` | Primary | Color of the toggle replies button |
+| `fastcomments_link_color` | #0099FF | Color of links in comments |
+| `fastcomments_link_color_pressed` | #0077CC | Color of links when pressed |
+| `fastcomments_action_button_color` | Primary | Color of action buttons |
+| `fastcomments_load_more_button_text_color` | Primary | Color of load more button text |
 
 ## License
 

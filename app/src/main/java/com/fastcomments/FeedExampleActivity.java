@@ -14,7 +14,7 @@ import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.core.sso.FastCommentsSSO;
 import com.fastcomments.core.sso.SimpleSSOUserData;
 import com.fastcomments.model.FeedPost;
-import com.fastcomments.model.UserSessionInfo;
+import com.fastcomments.sdk.CommentsDialog;
 import com.fastcomments.sdk.FastCommentsFeedSDK;
 import com.fastcomments.sdk.FastCommentsFeedView;
 import com.fastcomments.sdk.FeedPostCreateView;
@@ -100,7 +100,7 @@ public class FeedExampleActivity extends AppCompatActivity {
 
             @Override
             public void onCommentsRequested(FeedPost post) {
-                // Show comments dialog for the post
+                // Show comments dialog for the post from the SDK
                 CommentsDialog dialog = new CommentsDialog(FeedExampleActivity.this, post, feedSDK);
                 
                 // Set comment added listener to update the post in the feed
