@@ -951,4 +951,23 @@ public class FastCommentsFeedView extends FrameLayout {
             sdk.cleanup();
         }
     }
+    
+    /**
+     * Returns the RecyclerView adapter used by this view.
+     *
+     * @return The FeedPostsAdapter instance
+     */
+    public FeedPostsAdapter getAdapter() {
+        return adapter;
+    }
+    
+    /**
+     * Clears the feed posts from the adapter.
+     * Use this method when switching fragments to avoid memory leaks.
+     */
+    public void clearAdapter() {
+        if (adapter != null) {
+            adapter.updatePosts(new ArrayList<>());
+        }
+    }
 }
