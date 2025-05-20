@@ -1000,6 +1000,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 if (hasTitleOrDescription) {
                     // layout with title/description + button on right
                     linkPreviewContainer.setVisibility(View.VISIBLE);
+                    taskButtonsContainer.setVisibility(View.GONE); // Hide regular buttons container
 
                     // Display link title if available
                     if (primaryLink.getTitle() != null && !primaryLink.getTitle().isEmpty()) {
@@ -1073,6 +1074,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 } else {
                     // No title/description - use traditional horizontal button layout
                     linkPreviewContainer.setVisibility(View.GONE);
+                    taskButtonsContainer.setVisibility(View.VISIBLE); // Show the regular buttons container
 
                     // For multiple buttons, we need to handle them differently depending on count
                     int buttonCount = post.getLinks().size();
@@ -1197,8 +1199,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     }
                 }
             } else {
-                // No links, hide the link preview container
+                // No links, hide both link containers
                 linkPreviewContainer.setVisibility(View.GONE);
+                taskButtonsContainer.setVisibility(View.GONE);
             }
         }
 

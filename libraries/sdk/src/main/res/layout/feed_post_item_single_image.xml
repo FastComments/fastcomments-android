@@ -139,6 +139,14 @@
                 tools:text="42 likes"
                 tools:visibility="visible" />
                 
+            <!-- Horizontal Line -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?android:attr/listDivider"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp" />
+                
             <!-- Action Buttons -->
             <LinearLayout
                 android:layout_width="match_parent"
