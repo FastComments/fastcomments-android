@@ -1533,4 +1533,24 @@ public class FastCommentsView extends FrameLayout {
             sdk.cleanup();
         }
     }
+    
+    /**
+     * Returns the RecyclerView adapter used by this view.
+     *
+     * @return The CommentsAdapter instance
+     */
+    public CommentsAdapter getAdapter() {
+        return adapter;
+    }
+    
+    /**
+     * Clears all comments from the adapter.
+     * Use this method when switching fragments to avoid memory leaks.
+     */
+    public void clearAdapter() {
+        if (adapter != null && sdk != null && sdk.commentsTree != null) {
+            sdk.commentsTree.clear();
+            adapter.notifyDataSetChanged();
+        }
+    }
 }

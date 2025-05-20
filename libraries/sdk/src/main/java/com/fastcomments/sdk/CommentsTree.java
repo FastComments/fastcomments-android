@@ -977,4 +977,19 @@ public class CommentsTree {
 
         return true;
     }
+    
+    /**
+     * Clears all data from the comments tree.
+     * Use this when switching fragments to avoid memory leaks.
+     */
+    public void clear() {
+        commentsById.clear();
+        commentsByUserId.clear();
+        allComments.clear();
+        visibleNodes.clear();
+        newChildCommentsButtons.clear();
+        newRootComments.clear();
+        newRootCommentsButton = null;
+        userPresenceCache.clear();
+    }
 }
