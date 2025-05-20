@@ -591,7 +591,22 @@ public class FastCommentsFeedView extends FrameLayout {
         sdk.likePost(post.getId(), new FCCallback<FeedPost>() {
             @Override
             public boolean onFailure(APIError error) {
-                // Handle failure - could show error toast here
+                handler.post(() -> {
+                    String errorMessage;
+                    if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                        errorMessage = error.getTranslatedError();
+                    } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                        errorMessage = error.getReason();
+                    } else {
+                        errorMessage = getContext().getString(R.string.error_liking_post);
+                    }
+
+                    android.widget.Toast.makeText(
+                            getContext(),
+                            errorMessage,
+                            android.widget.Toast.LENGTH_SHORT
+                    ).show();
+                });
                 return CONSUME;
             }
 
