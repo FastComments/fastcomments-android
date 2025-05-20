@@ -142,6 +142,9 @@ public class FastCommentsFeedView extends FrameLayout {
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         recyclerView.setLayoutManager(layoutManager);
         
+        // Disable item animations to prevent flicker when clicking items
+        recyclerView.setItemAnimator(null);
+        
         // Skip initializing the adapter if SDK is not provided yet
         // It will be initialized when setSDK is called
         if (sdk != null) {
