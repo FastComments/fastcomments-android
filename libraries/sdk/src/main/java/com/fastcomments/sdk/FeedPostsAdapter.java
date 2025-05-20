@@ -392,7 +392,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     break;
             }
 
-            // Set post click listener
+            // Prevent default ripple effect when clicking by making item not clickable
+            itemView.setClickable(false);
+            
+            // Still allow click events without animation by sending them through the listener
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION && listener != null) {
