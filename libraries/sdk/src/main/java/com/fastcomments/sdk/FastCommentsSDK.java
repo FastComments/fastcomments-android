@@ -321,6 +321,18 @@ public class FastCommentsSDK {
      * Create comment data object from the provided parameters
      */
     private CommentData createCommentData(String commentText, String parentId) {
+        return createCommentData(commentText, parentId, null);
+    }
+    
+    /**
+     * Create comment data object from the provided parameters, with mentions support
+     *
+     * @param commentText The text content of the comment
+     * @param parentId The ID of the parent comment (for replies)
+     * @param mentions List of user mentions to include
+     * @return CommentData object ready for submission
+     */
+    private CommentData createCommentData(String commentText, String parentId, List<UserMention> mentions) {
         CommentData commentData = new CommentData();
         commentData.setComment(commentText);
         commentData.setDate(Double.valueOf(new Date().getTime()));
@@ -366,6 +378,23 @@ public class FastCommentsSDK {
         if (config.commentMeta != null && !config.commentMeta.isEmpty()) {
             commentData.setMeta(config.commentMeta);
         }
+        
+        // Add mentions if available
+        if (mentions != null && !mentions.isEmpty()) {
+            List<CommentUserMentionInfo> mentionsData = new ArrayList<>();
+            
+            for (UserMention mention : mentions) {
+                CommentUserMentionInfo mentionInfo = new CommentUserMentionInfo();
+                mentionInfo.setId(mention.getId());
+                mentionInfo.setTag("@" + mention.getUsername());
+                mentionInfo.setSent(false);
+                
+                mentionsData.add(mentionInfo);
+            }
+            
+            // Set mentions using the typed method
+            commentData.mentions(mentionsData);
+        }
 
         return commentData;
     }
@@ -378,6 +407,18 @@ public class FastCommentsSDK {
      * @param callback    Callback to receive the response
      */
     public void postComment(String commentText, String parentId, final FCCallback<PublicComment> callback) {
+        postComment(commentText, parentId, null, callback);
+    }
+    
+    /**
+     * Posts a new comment or reply to the FastComments API with mentions
+     *
+     * @param commentText The text of the comment to post
+     * @param parentId    The ID of the parent comment (for replies), or null for top-level comments
+     * @param mentions    List of users mentioned in the comment
+     * @param callback    Callback to receive the response
+     */
+    public void postComment(String commentText, String parentId, List<UserMention> mentions, final FCCallback<PublicComment> callback) {
         if (commentText == null || commentText.trim().isEmpty()) {
             callback.onFailure(new APIError()
                     .status(ImportedAPIStatusFAILED.FAILED)
@@ -392,8 +433,8 @@ public class FastCommentsSDK {
         // Track broadcast ID before sending
         broadcastIdsSent.add(broadcastId);
 
-        // Create comment data
-        CommentData commentData = createCommentData(commentText, parentId);
+        // Create comment data with mentions if available
+        CommentData commentData = createCommentData(commentText, parentId, mentions);
 
         try {
             // Make the API call
@@ -1081,6 +1122,80 @@ public class FastCommentsSDK {
         if (liveEventSubscription != null) {
             liveEventSubscription.close();
             liveEventSubscription = null;
+        }
+    }
+    
+    /**
+     * Search for users to mention in a comment.
+     * 
+     * @param searchTerm The search term (usually the text after the @ symbol)
+     * @param callback Callback to receive search results
+     */
+    public void searchUsers(String searchTerm, final FCCallback<List<UserMention>> callback) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            callback.onSuccess(new ArrayList<>());
+            return;
+        }
+        
+        try {
+            // Create the search users request with the proper parameters
+            api.searchUsers(config.tenantId, config.urlId, searchTerm)
+                .sso(config.getSSOToken())
+                .executeAsync(new ApiCallback<SearchUsers200Response>() {
+                    @Override
+                    public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                        callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                    }
+
+                    @Override
+                    public void onSuccess(SearchUsers200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                        try {
+                            List<UserMention> mentions = new ArrayList<>();
+                            
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                                return;
+                            }
+                            
+                            // Get the search users response from the result
+                            SearchUsersResponse response = result.getSearchUsersResponse();
+                            if (response != null && response.getUsers() != null) {
+                                for (UserSearchResult user : response.getUsers()) {
+                                    final String id = user.getId();
+                                    String displayName = user.getDisplayName();
+                                    
+                                    // Fallback to displayName if username is not available
+                                    if (displayName == null || displayName.isEmpty()) {
+                                        displayName = user.getName();
+                                    }
+                                    
+                                    if (id != null && displayName != null && !displayName.isEmpty()) {
+                                        UserMention mention = new UserMention(id, displayName, user.getAvatarSrc());
+                                        mentions.add(mention);
+                                    }
+                                }
+                            }
+                            
+                            callback.onSuccess(mentions);
+                        } catch (Exception e) {
+                            callback.onFailure(new APIError()
+                                    .status(ImportedAPIStatusFAILED.FAILED)
+                                    .reason("Error parsing search results: " + e.getMessage()));
+                        }
+                    }
+
+                    @Override
+                    public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
+                        // Not used
+                    }
+
+                    @Override
+                    public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+                        // Not used
+                    }
+                });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
         }
     }
 

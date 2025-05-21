@@ -42,17 +42,35 @@
 
     </LinearLayout>
 
-    <EditText
-        android:id="@+id/formEditText"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:gravity="top|start"
-        android:hint="@string/comment_hint"
-        android:inputType="textMultiLine"
-        android:minLines="2"
-        android:padding="8dp"
-        android:importantForAutofill="no" />
+        android:layout_marginTop="8dp">
+            
+        <ListView
+            android:id="@+id/mentionSuggestionsList"
+            android:layout_width="match_parent" 
+            android:layout_height="wrap_content"
+            android:maxHeight="150dp"
+            android:background="@android:color/white"
+            android:divider="@android:color/darker_gray"
+            android:dividerHeight="0.5dp"
+            android:padding="8dp"
+            android:elevation="4dp"
+            android:visibility="gone" />
+            
+        <EditText
+            android:id="@+id/formEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/mentionSuggestionsList"
+            android:gravity="top|start"
+            android:hint="@string/comment_hint"
+            android:inputType="textMultiLine"
+            android:minLines="2"
+            android:padding="8dp"
+            android:importantForAutofill="no" />
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/formErrorText"
