@@ -282,10 +282,13 @@ public class FastCommentsView extends FrameLayout {
                 }
             });
         }
+        
+        // Set the SDK on the comment form for API access
+        commentForm.setSDK(sdk);
 
         // Setup form listeners
         commentForm.setOnCommentSubmitListener((commentText, parentId) -> {
-            postComment(commentText, parentId);
+            postCommentWithMentions(commentText, parentId);
         });
 
         commentForm.setOnCancelReplyListener(() -> {
@@ -1026,18 +1029,21 @@ public class FastCommentsView extends FrameLayout {
     }
 
     /**
-     * Post a new comment
+     * Post a new comment with mentions support
      *
      * @param commentText Text of the comment
      * @param parentId    Parent comment ID for replies (null for top-level comments)
      */
-    public void postComment(String commentText, String parentId) {
+    public void postCommentWithMentions(String commentText, String parentId) {
         commentForm.setSubmitting(true);
 
         // Store reference to the parent comment for resetting UI later
         RenderableComment parentComment = commentForm.getParentComment();
+        
+        // Get any selected mentions from the comment form
+        java.util.List<UserMention> mentions = commentForm.getSelectedMentions();
 
-        sdk.postComment(commentText, parentId, new FCCallback<PublicComment>() {
+        sdk.postComment(commentText, parentId, mentions, new FCCallback<PublicComment>() {
             @Override
             public boolean onFailure(APIError error) {
                 getHandler().post(() -> {
@@ -1110,6 +1116,18 @@ public class FastCommentsView extends FrameLayout {
                 return CONSUME;
             }
         });
+    }
+    
+    /**
+     * Post a new comment (legacy method without mentions support)
+     *
+     * @param commentText Text of the comment
+     * @param parentId    Parent comment ID for replies (null for top-level comments)
+     * @deprecated Use postCommentWithMentions instead
+     */
+    @Deprecated
+    public void postComment(String commentText, String parentId) {
+        postCommentWithMentions(commentText, parentId);
     }
 
     private void showLoading(boolean isLoading) {
