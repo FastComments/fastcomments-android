@@ -119,6 +119,13 @@ public class CommentFormView extends LinearLayout {
                     currentMentionText = "";
                     showMentionSuggestions();
                 } else if (mentionStartPosition >= 0) {
+                    // Check if the @ symbol was deleted
+                    if (mentionStartPosition >= s.length() || s.charAt(mentionStartPosition) != '@') {
+                        // The @ symbol was deleted, cancel mention
+                        cancelMention();
+                        return;
+                    }
+                    
                     // We're in the middle of typing a mention
                     if (start < mentionStartPosition) {
                         // Cursor moved before the @ symbol, cancel mention
