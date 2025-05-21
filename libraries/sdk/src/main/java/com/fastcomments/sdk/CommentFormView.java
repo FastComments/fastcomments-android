@@ -324,8 +324,10 @@ public class CommentFormView extends LinearLayout {
      * Show the mention suggestions list
      */
     private void showMentionSuggestions() {
-        if (mentionSuggestionsList != null) {
+        if (mentionSuggestionsList != null && !mentionSuggestions.isEmpty()) {
             mentionSuggestionsList.setVisibility(View.VISIBLE);
+        } else {
+            hideMentionSuggestions();
         }
     }
     
@@ -378,9 +380,11 @@ public class CommentFormView extends LinearLayout {
                 isSearchingUsers = false;
                 // Use the main thread to update UI
                 post(() -> {
-                    // Clear any previous results and show empty state
+                    // Clear any previous results
                     mentionSuggestions.clear();
                     mentionsAdapter.notifyDataSetChanged();
+                    
+                    // Hide the list on error
                     hideMentionSuggestions();
                 });
                 return FCCallback.CONSUME;
@@ -395,14 +399,15 @@ public class CommentFormView extends LinearLayout {
                     // Update the suggestions list
                     mentionSuggestions.clear();
                     
+                    // Only show the list if we have actual results
                     if (users != null && !users.isEmpty()) {
                         mentionSuggestions.addAll(users);
+                        mentionsAdapter.notifyDataSetChanged();
                         showMentionSuggestions();
                     } else {
+                        // If no results, just hide the list
                         hideMentionSuggestions();
                     }
-                    
-                    mentionsAdapter.notifyDataSetChanged();
                 });
                 return FCCallback.CONSUME;
             }
