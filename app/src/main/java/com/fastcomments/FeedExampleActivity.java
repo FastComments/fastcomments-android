@@ -266,4 +266,13 @@ public class FeedExampleActivity extends AppCompatActivity {
             }
         });
     }
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up the feed view to prevent memory leaks
+        if (feedView != null) {
+            feedView.cleanup();
+        }
+    }
 }

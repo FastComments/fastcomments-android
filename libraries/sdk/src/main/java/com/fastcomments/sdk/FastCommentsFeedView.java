@@ -273,22 +273,33 @@ public class FastCommentsFeedView extends FrameLayout {
      * @param sdk The FastCommentsFeedSDK instance
      */
     public void setSDK(FastCommentsFeedSDK sdk) {
+        // Clean up existing SDK if any
+        if (this.sdk != null) {
+            this.sdk.setOnPostDeletedListener(null);
+        }
+        
         this.sdk = sdk;
         if (adapter == null) {
             initAdapter(getContext());
         }
         
         // Register for post deletion events from live WebSocket
-        sdk.setOnPostDeletedListener(postId -> {
-            handler.post(() -> {
-                // Update adapter with the current list from SDK
-                // This ensures the adapter's list is in sync with the SDK after a post is deleted
-                adapter.updatePosts(sdk.getFeedPosts());
-                
-                // Log for debugging
-                Log.d("FastCommentsFeedView", "Received post deletion event for post ID: " + postId);
+        if (sdk != null) {
+            sdk.setOnPostDeletedListener(postId -> {
+                if (handler != null && adapter != null) {
+                    handler.post(() -> {
+                        // Update adapter with the current list from SDK
+                        // This ensures the adapter's list is in sync with the SDK after a post is deleted
+                        if (sdk != null && adapter != null) {
+                            adapter.updatePosts(sdk.getFeedPosts());
+                        }
+                        
+                        // Log for debugging
+                        Log.d("FastCommentsFeedView", "Received post deletion event for post ID: " + postId);
+                    });
+                }
             });
-        });
+        }
     }
     
     /**
@@ -949,10 +960,43 @@ public class FastCommentsFeedView extends FrameLayout {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        cleanup();
+    }
+    
+    /**
+     * Clean up all resources to prevent memory leaks.
+     * Call this method when the view will no longer be used.
+     */
+    public void cleanup() {
         stopPolling();
-        if (sdk != null) {
-            sdk.cleanup();
+        
+        // Clear adapter data
+        if (adapter != null) {
+            adapter.updatePosts(new ArrayList<>());
         }
+        
+        // Clear SDK listener reference
+        if (sdk != null) {
+            sdk.setOnPostDeletedListener(null);
+            sdk.cleanup();
+            sdk = null;
+        }
+        
+        // Clear local references
+        listener = null;
+        
+        // Clear collections
+        if (feedPosts != null) {
+            feedPosts.clear();
+        }
+        
+        // Clear handler callbacks
+        if (handler != null && pollStatsRunnable != null) {
+            handler.removeCallbacks(pollStatsRunnable);
+        }
+        
+        // Clear polling runnable
+        pollStatsRunnable = null;
     }
     
     /**
