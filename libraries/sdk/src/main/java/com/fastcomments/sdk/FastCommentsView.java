@@ -1728,12 +1728,50 @@ public class FastCommentsView extends FrameLayout {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        cleanup();
+    }
+    
+    /**
+     * Clean up all resources to prevent memory leaks.
+     * Call this method when the view will no longer be used.
+     */
+    public void cleanup() {
         // Stop the timer when the view is detached to prevent memory leaks
         stopDateUpdateTimer();
-        // Clean up WebSocket connections when the view is detached
+        
+        // Clear SDK and WebSocket connections
         if (sdk != null) {
             sdk.cleanup();
+            sdk = null;
         }
+        
+        // Clear listeners
+        commentPostListener = null;
+        
+        // Clear back pressed callback
+        if (backPressedCallback != null) {
+            backPressedCallback.setEnabled(false);
+            backPressedCallback = null;
+        }
+        
+        // Clear adapter data through SDK
+        if (sdk != null && sdk.commentsTree != null) {
+            sdk.commentsTree.clear();
+            if (adapter != null) {
+                adapter.notifyDataSetChanged();
+            }
+        }
+        
+        // Clear currently replying state
+        currentlyReplyingToCommentId = null;
+        
+        // Clear handler callbacks
+        if (dateUpdateHandler != null) {
+            dateUpdateHandler.removeCallbacksAndMessages(null);
+        }
+        
+        // Clear runnables
+        dateUpdateRunnable = null;
     }
     
     /**

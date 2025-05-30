@@ -625,6 +625,25 @@ public class FastCommentsFeedSDK {
             liveEventSubscription.close();
             liveEventSubscription = null;
         }
+        // Clear listener references to prevent memory leaks
+        this.onPostDeletedListener = null;
+        
+        // Clear collections to help GC
+        if (feedPosts != null) {
+            feedPosts.clear();
+        }
+        if (postsById != null) {
+            postsById.clear();
+        }
+        if (likeCounts != null) {
+            likeCounts.clear();
+        }
+        if (myReacts != null) {
+            myReacts.clear();
+        }
+        if (broadcastIdsSent != null) {
+            broadcastIdsSent.clear();
+        }
     }
 
     /**
