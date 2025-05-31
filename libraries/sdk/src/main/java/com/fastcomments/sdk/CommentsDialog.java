@@ -151,25 +151,24 @@ public class CommentsDialog extends Dialog {
             return false;
         }
         
-        // Get the comment form from CommentsView
-        CommentFormView commentForm = commentsView.getCommentForm();
-        if (commentForm == null) {
+        // Get the bottom comment input from CommentsView
+        BottomCommentInputView bottomInput = commentsView.getBottomCommentInput();
+        if (bottomInput == null) {
             return false;
         }
         
-        // Check if the form is visible and has text
-        boolean formVisible = commentsView.isCommentFormVisible();
-        boolean hasText = !commentForm.isTextEmpty();
+        // Check if user has typed any text (either in reply or new comment)
+        boolean hasText = !bottomInput.isTextEmpty();
         
-        return formVisible && hasText;
+        return hasText;
     }
     
     @Override
     public void onBackPressed() {
         if (shouldInterceptBackPress()) {
-            // Get the comment form and check if it has a parent comment (reply) or text
-            CommentFormView commentForm = commentsView.getCommentForm();
-            RenderableComment parentComment = commentForm.getParentComment();
+            // Get the bottom input and check if it has a parent comment (reply) or text
+            BottomCommentInputView bottomInput = commentsView.getBottomCommentInput();
+            RenderableComment parentComment = bottomInput.getParentComment();
             
             // Show confirmation dialog
             String title, message;
@@ -186,8 +185,8 @@ public class CommentsDialog extends Dialog {
                 .setMessage(message)
                 .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                     // Proceed with cancellation
-                    commentsView.hideCommentForm();
-                    commentForm.resetReplyState();
+                    bottomInput.clearReplyState();
+                    bottomInput.clearText();
                     
                     // Don't dismiss the dialog yet - let the user continue with comments
                 })

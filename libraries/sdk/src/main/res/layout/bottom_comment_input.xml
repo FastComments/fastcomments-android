@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@android:color/white"
+    android:elevation="8dp">
+
+        <!-- Reply indicator -->
+        <LinearLayout
+            android:id="@+id/replyIndicator"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:background="#F5F5F5"
+            android:gravity="center_vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/replyingToText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="14sp"
+                android:textColor="#757575"
+                android:text="Replying to @username" />
+
+            <ImageButton
+                android:id="@+id/cancelReplyButton"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:contentDescription="@string/cancel"
+                android:tint="#757575" />
+
+        </LinearLayout>
+
+        <!-- Separator line -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:background="#E0E0E0" />
+
+        <!-- Main input area -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:gravity="center_vertical">
+
+            <!-- User avatar -->
+            <ImageView
+                android:id="@+id/userAvatar"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/default_avatar"
+                android:contentDescription="@string/user_avatar"
+                android:scaleType="centerCrop" />
+
+            <!-- Input field -->
+            <EditText
+                android:id="@+id/commentInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/rounded_input_background"
+                android:hint="@string/add_comment_hint"
+                android:inputType="textMultiLine|textCapSentences"
+                android:maxLines="6"
+                android:minLines="1"
+                android:padding="12dp"
+                android:textSize="14sp"
+                android:textColorHint="#999999"
+                android:importantForAutofill="no" />
+
+            <!-- Send button -->
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <ImageButton
+                    android:id="@+id/sendButton"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_send"
+                    android:contentDescription="@string/send_comment"
+                    android:tint="@color/fastcomments_action_button_color"
+                    android:enabled="false"
+                    android:alpha="0.5" />
+
+                <ProgressBar
+                    android:id="@+id/sendProgress"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+
+        </LinearLayout>
+
+        <!-- Error message -->
+        <TextView
+            android:id="@+id/errorMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginBottom="8dp"
+            android:textColor="#F44336"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+    <!-- Hidden ListView for mention suggestions - will be positioned programmatically -->
+    <ListView
+        android:id="@+id/mentionSuggestionsList"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+
+</LinearLayout>

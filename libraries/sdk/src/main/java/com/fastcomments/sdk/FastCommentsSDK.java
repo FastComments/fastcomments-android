@@ -1136,7 +1136,8 @@ public class FastCommentsSDK {
             callback.onSuccess(new ArrayList<>());
             return;
         }
-        
+        Log.i("FastCommentsSDK", "Searching for users: " + searchTerm);
+
         try {
             // Create the search users request with the proper parameters
             api.searchUsers(config.tenantId, config.urlId, searchTerm)

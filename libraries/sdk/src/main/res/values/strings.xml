@@ -23,6 +23,8 @@
     <string name="cancel">Cancel</string>
     <string name="replying_to">Replying to %s</string>
     <string name="new_comment">Add a comment</string>
+    <string name="add_comment_hint">Add a comment...</string>
+    <string name="send_comment">Send comment</string>
     <string name="next_comments">Next (%1$d)</string>
     <string name="load_all">Load All (%1$d)</string>
     <string name="loading_more">Loading...</string>
@@ -153,7 +155,7 @@
     
     <!-- Comment cancellation dialog -->
     <string name="cancel_comment_title">Cancel Comment?</string>
-    <string name="cancel_comment_confirm">Are you sure you want to cancel this comment? Your text will be lost.</string>
+    <string name="cancel_comment_confirm">Are you sure you want to cancel? Your text will be lost.</string>
     
     <!-- Mention strings -->
     <string name="mention_no_results">No users found</string>
