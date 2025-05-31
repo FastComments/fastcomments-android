@@ -155,7 +155,7 @@
     
     <!-- Comment cancellation dialog -->
     <string name="cancel_comment_title">Cancel Comment?</string>
-    <string name="cancel_comment_confirm">Are you sure you want to cancel this comment? Your text will be lost.</string>
+    <string name="cancel_comment_confirm">Are you sure you want to cancel? Your text will be lost.</string>
     
     <!-- Mention strings -->
     <string name="mention_no_results">No users found</string>
