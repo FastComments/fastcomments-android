@@ -153,7 +153,8 @@ public class LiveChatView extends FrameLayout {
         // Find the bottom comment input
         bottomCommentInput = findViewById(R.id.bottomCommentInput);
         if (bottomCommentInput != null) {
-            // Set up for live chat use
+            // Use bottom comment input for live chat
+            commentForm = null; // We'll use bottomCommentInput instead
         } else {
             // Fallback for layouts without bottom input
             commentForm = new CommentFormView(context);
@@ -167,11 +168,21 @@ public class LiveChatView extends FrameLayout {
             backPressedCallback = new OnBackPressedCallback(true) {
                 @Override
                 public void handleOnBackPressed() {
-                    // Check if we have text in the form
-                    if (!commentForm.isTextEmpty()) {
+                    // Check if we have text in either input method
+                    boolean hasText = false;
+                    RenderableComment parentComment = null;
+                    
+                    if (bottomCommentInput != null) {
+                        hasText = !bottomCommentInput.isTextEmpty();
+                        parentComment = bottomCommentInput.getParentComment();
+                    } else if (commentForm != null) {
+                        hasText = !commentForm.isTextEmpty();
+                        parentComment = commentForm.getParentComment();
+                    }
+                    
+                    if (hasText) {
                         // Show confirmation dialog - different message for reply vs new comment
                         String title, message;
-                        RenderableComment parentComment = commentForm.getParentComment();
                         
                         if (parentComment != null) {
                             title = getContext().getString(R.string.cancel_reply_title);
@@ -186,13 +197,22 @@ public class LiveChatView extends FrameLayout {
                             .setMessage(message)
                             .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                                 // Proceed with cancellation
-                                commentForm.resetReplyState();
+                                if (bottomCommentInput != null) {
+                                    bottomCommentInput.clearText();
+                                    bottomCommentInput.clearReplyState();
+                                } else if (commentForm != null) {
+                                    commentForm.resetReplyState();
+                                }
                             })
                             .setNegativeButton(android.R.string.no, null)
                             .show();
                     } else {
                         // Text is empty, no need for confirmation
-                        commentForm.resetReplyState();
+                        if (bottomCommentInput != null) {
+                            bottomCommentInput.clearReplyState();
+                        } else if (commentForm != null) {
+                            commentForm.resetReplyState();
+                        }
                     }
                 }
             };
@@ -284,30 +304,45 @@ public class LiveChatView extends FrameLayout {
             }
         });
 
-        // Setup form listeners
-        commentForm.setOnCommentSubmitListener((commentText, parentId) -> {
-            postComment(commentText, parentId);
-        });
+        // Setup form listeners based on which input method is available
+        if (bottomCommentInput != null) {
+            // Setup bottom comment input for live chat
+            bottomCommentInput.setCurrentUser(sdk.getCurrentUser());
+            bottomCommentInput.setSDK(sdk);
+            
+            bottomCommentInput.setOnCommentSubmitListener((commentText, parentId) -> {
+                postComment(commentText, parentId);
+            });
+            
+            bottomCommentInput.setOnReplyStateChangeListener((isReplying, parentComment) -> {
+                // Handle reply state changes if needed
+            });
+        } else if (commentForm != null) {
+            // Setup traditional comment form as fallback
+            commentForm.setOnCommentSubmitListener((commentText, parentId) -> {
+                postComment(commentText, parentId);
+            });
 
-        commentForm.setOnCancelReplyListener(() -> {
-            // Get the parent comment
-            RenderableComment parentComment = commentForm.getParentComment();
-            if (parentComment != null && !commentForm.isTextEmpty()) {
-                // Show confirmation dialog
-                new android.app.AlertDialog.Builder(getContext())
-                    .setTitle(R.string.cancel_reply_title)
-                    .setMessage(R.string.cancel_reply_confirm)
-                    .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                        // Proceed with cancellation
-                        commentForm.resetReplyState();
-                    })
-                    .setNegativeButton(android.R.string.no, null)
-                    .show();
-            } else {
-                // Just reset the form if there's no text
-                commentForm.resetReplyState();
-            }
-        });
+            commentForm.setOnCancelReplyListener(() -> {
+                // Get the parent comment
+                RenderableComment parentComment = commentForm.getParentComment();
+                if (parentComment != null && !commentForm.isTextEmpty()) {
+                    // Show confirmation dialog
+                    new android.app.AlertDialog.Builder(getContext())
+                        .setTitle(R.string.cancel_reply_title)
+                        .setMessage(R.string.cancel_reply_confirm)
+                        .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                            // Proceed with cancellation
+                            commentForm.resetReplyState();
+                        })
+                        .setNegativeButton(android.R.string.no, null)
+                        .show();
+                } else {
+                    // Just reset the form if there's no text
+                    commentForm.resetReplyState();
+                }
+            });
+        }
 
         // For chat view, we primarily use infinite scrolling, but keep pagination
         // buttons just in case
@@ -321,8 +356,13 @@ public class LiveChatView extends FrameLayout {
 
         // Handle reply requests from comments
         adapter.setRequestingReplyListener((commentToReplyTo) -> {
-            // Show form in reply mode
-            commentForm.setReplyingTo(commentToReplyTo);
+            // Set reply mode on the appropriate input method
+            if (bottomCommentInput != null) {
+                bottomCommentInput.setReplyingTo(commentToReplyTo);
+                bottomCommentInput.requestInputFocus();
+            } else if (commentForm != null) {
+                commentForm.setReplyingTo(commentToReplyTo);
+            }
             
             // Scroll to the comment being replied to
             int pos = adapter.getPositionForComment(commentToReplyTo);
@@ -344,8 +384,11 @@ public class LiveChatView extends FrameLayout {
             sendResults.call(new ArrayList<>());
         });
         
-        // Set SDK on comment form for mentions functionality
-        commentForm.setSDK(sdk);
+        // Set SDK on the appropriate input method for mentions functionality
+        if (commentForm != null) {
+            commentForm.setSDK(sdk);
+        }
+        // Note: bottomCommentInput SDK is already set above
     }
 
     private void setupVoteHandlers() {
@@ -901,8 +944,12 @@ public class LiveChatView extends FrameLayout {
                         }
                     }
                     
-                    // Initialize the form with current user info
-                    commentForm.setCurrentUser(sdk.getCurrentUser());
+                    // Initialize the input with current user info
+                    if (bottomCommentInput != null) {
+                        bottomCommentInput.setCurrentUser(sdk.getCurrentUser());
+                    } else if (commentForm != null) {
+                        commentForm.setCurrentUser(sdk.getCurrentUser());
+                    }
                 });
                 return CONSUME;
             }
@@ -927,13 +974,24 @@ public class LiveChatView extends FrameLayout {
      * @param parentId    Parent comment ID for replies (null for top-level comments)
      */
     public void postComment(String commentText, String parentId) {
-        commentForm.setSubmitting(true);
+        // Set submitting state on the appropriate input method
+        if (bottomCommentInput != null) {
+            bottomCommentInput.setSubmitting(true);
+        } else if (commentForm != null) {
+            commentForm.setSubmitting(true);
+        }
 
         sdk.postComment(commentText, parentId, new FCCallback<PublicComment>() {
             @Override
             public boolean onFailure(APIError error) {
                 getHandler().post(() -> {
-                    commentForm.setSubmitting(false);
+                    // Reset submitting state
+                    if (bottomCommentInput != null) {
+                        bottomCommentInput.setSubmitting(false);
+                    } else if (commentForm != null) {
+                        commentForm.setSubmitting(false);
+                    }
+                    
                     // Check for translated error message
                     String errorMessage;
                     if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
@@ -944,7 +1002,12 @@ public class LiveChatView extends FrameLayout {
                         errorMessage = getContext().getString(R.string.error_posting_comment);
                     }
 
-                    commentForm.showError(errorMessage);
+                    // Show error on the appropriate input method
+                    if (bottomCommentInput != null) {
+                        bottomCommentInput.showError(errorMessage);
+                    } else if (commentForm != null) {
+                        commentForm.showError(errorMessage);
+                    }
                 });
                 return CONSUME;
             }
@@ -952,9 +1015,16 @@ public class LiveChatView extends FrameLayout {
             @Override
             public boolean onSuccess(PublicComment comment) {
                 getHandler().post(() -> {
-                    commentForm.setSubmitting(false);
-                    commentForm.clearText();
-                    commentForm.resetReplyState();
+                    // Reset state on the appropriate input method
+                    if (bottomCommentInput != null) {
+                        bottomCommentInput.setSubmitting(false);
+                        bottomCommentInput.clearText();
+                        bottomCommentInput.clearReplyState();
+                    } else if (commentForm != null) {
+                        commentForm.setSubmitting(false);
+                        commentForm.clearText();
+                        commentForm.resetReplyState();
+                    }
 
                     // Show a toast message to confirm successful posting
                     android.widget.Toast.makeText(
