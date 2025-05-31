@@ -8,7 +8,7 @@
         android:id="@+id/commentsContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/commentFormContainer">
+        android:layout_above="@+id/bottomCommentInput">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -49,27 +49,11 @@
 
     </FrameLayout>
 
-    <!-- New Comment Button -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/newCommentButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_margin="16dp"
-        android:contentDescription="@string/new_comment"
-        android:src="@drawable/add_comment"
-        app:tint="@android:color/white"
-        app:backgroundTint="@color/fastcomments_action_button_color"
-        android:visibility="visible" />
-
-    <!-- Container for the comment form, fixed at bottom -->
-    <FrameLayout
-        android:id="@+id/commentFormContainer"
+    <!-- Bottom comment input -->
+    <com.fastcomments.sdk.BottomCommentInputView
+        android:id="@+id/bottomCommentInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:background="@android:color/white"
-        android:elevation="4dp" />
+        android:layout_alignParentBottom="true" />
 
 </RelativeLayout>

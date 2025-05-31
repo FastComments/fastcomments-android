@@ -41,12 +41,10 @@ public class FastCommentsView extends FrameLayout {
 
     private RecyclerView recyclerView;
     private CommentsAdapter adapter;
-    private CommentFormView commentForm;
+    private BottomCommentInputView bottomCommentInput;
     private ProgressBar progressBar;
     private TextView emptyStateView;
     private FastCommentsSDK sdk;
-    private FrameLayout commentFormContainer;
-    private FloatingActionButton newCommentButton;
     private View paginationControls;
     private Button btnNextComments;
     private Button btnLoadAll;
@@ -56,21 +54,38 @@ public class FastCommentsView extends FrameLayout {
     private Runnable dateUpdateRunnable;
     private static final long DATE_UPDATE_INTERVAL = 60000; // Update every minute
     private CommentPostListener commentPostListener;
-    private String currentlyReplyingToCommentId;
-    
+    private OnReplyClickListener replyClickListener;
+
     /**
      * Interface for comment post callbacks
      */
     public interface CommentPostListener {
         void onCommentPosted(com.fastcomments.model.PublicComment comment);
     }
-    
+
+    /**
+     * Interface for reply button click callbacks
+     */
+    public interface OnReplyClickListener {
+        void onReplyClick(RenderableComment comment);
+    }
+
     /**
      * Set a listener to be notified when a comment is posted
+     *
      * @param listener The listener to set
      */
     public void setCommentPostListener(CommentPostListener listener) {
         this.commentPostListener = listener;
+    }
+
+    /**
+     * Set a listener to be notified when a reply button is clicked
+     *
+     * @param listener The listener to set
+     */
+    public void setOnReplyClickListener(OnReplyClickListener listener) {
+        this.replyClickListener = listener;
     }
 
     // Standard View constructors for inflation from XML
@@ -122,7 +137,7 @@ public class FastCommentsView extends FrameLayout {
         recyclerView = findViewById(R.id.recyclerViewComments);
         progressBar = findViewById(R.id.commentsProgressBar);
         emptyStateView = findViewById(R.id.emptyStateView);
-        this.newCommentButton = findViewById(R.id.newCommentButton);
+        bottomCommentInput = findViewById(R.id.bottomCommentInput);
 
         // Initialize pagination controls
         this.paginationControls = findViewById(R.id.paginationControls);
@@ -130,75 +145,20 @@ public class FastCommentsView extends FrameLayout {
         this.btnLoadAll = paginationControls.findViewById(R.id.btnLoadAll);
         this.paginationProgressBar = paginationControls.findViewById(R.id.paginationProgressBar);
 
-        // Find the comment form container and initialize the form
-        this.commentFormContainer = findViewById(R.id.commentFormContainer);
-        commentForm = new CommentFormView(context);
-        this.commentFormContainer.addView(commentForm);
 
-        // Hide the form initially
-        this.commentFormContainer.setVisibility(View.GONE);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(context);
+        recyclerView.setLayoutManager(layoutManager);
+
+        // Disable item animations to prevent flicker when clicking items
+        recyclerView.setItemAnimator(null);
 
         // Set up back button handling if in an AppCompatActivity
         if (context instanceof AppCompatActivity) {
             AppCompatActivity activity = (AppCompatActivity) context;
-            backPressedCallback = new OnBackPressedCallback(false) {
+            backPressedCallback = new OnBackPressedCallback(true) {
                 @Override
                 public void handleOnBackPressed() {
-                    // Check if the comment form is visible
-                    if (commentFormContainer.getVisibility() == View.VISIBLE) {
-                        // Handle different cases for top-level comment vs reply
-                        RenderableComment parentComment = commentForm.getParentComment();
-                        
-                        // Check if we have text in the form
-                        if (!commentForm.isTextEmpty()) {
-                            // Show confirmation dialog - different message for reply vs new comment
-                            String title, message;
-                            if (parentComment != null) {
-                                title = getContext().getString(R.string.cancel_reply_title);
-                                message = getContext().getString(R.string.cancel_reply_confirm);
-                            } else {
-                                title = getContext().getString(R.string.cancel_comment_title);
-                                message = getContext().getString(R.string.cancel_comment_confirm);
-                            }
-                            
-                            new android.app.AlertDialog.Builder(getContext())
-                                .setTitle(title)
-                                .setMessage(message)
-                                .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                                    // Proceed with cancellation
-                                    if (parentComment != null) {
-                                        // This is a reply - reset the reply button
-                                        String parentId = parentComment.getComment().getId();
-                                        updateReplyButtonText(parentId, false);
-                                        if (parentId.equals(currentlyReplyingToCommentId)) {
-                                            currentlyReplyingToCommentId = null;
-                                        }
-                                    }
-                                    // Hide the form with animation
-                                    hideCommentForm();
-                                    // Reset the form
-                                    commentForm.resetReplyState();
-                                })
-                                .setNegativeButton(android.R.string.no, null)
-                                .show();
-                        } else {
-                            // Text is empty, no need for confirmation
-                            if (parentComment != null) {
-                                // This is a reply - reset the reply button
-                                String parentId = parentComment.getComment().getId();
-                                updateReplyButtonText(parentId, false);
-                                if (parentId.equals(currentlyReplyingToCommentId)) {
-                                    currentlyReplyingToCommentId = null;
-                                }
-                            }
-                            // Hide the form with animation
-                            hideCommentForm();
-                            // Reset the form
-                            commentForm.resetReplyState();
-                        }
-                        // Prevent further handling of the back press
-                        return;
-                    }
+                    handleBackPress();
                 }
             };
             activity.getOnBackPressedDispatcher().addCallback(backPressedCallback);
@@ -207,32 +167,19 @@ public class FastCommentsView extends FrameLayout {
             Log.w("FastCommentsView", "Context is an Activity but not AppCompatActivity. Back button handling not supported.");
         }
 
-        // Setup new comment button
-        newCommentButton.setOnClickListener(v -> {
-            // Show form for a new top-level comment
-            commentForm.resetReplyState();
-            showCommentForm();
-        });
-
-        LinearLayoutManager layoutManager = new LinearLayoutManager(context);
-        recyclerView.setLayoutManager(layoutManager);
-        
-        // Disable item animations to prevent flicker when clicking items
-        recyclerView.setItemAnimator(null);
-        
         // Store the SDK reference
         this.sdk = sdk;
-        
+
         // If SDK is not provided, postpone adapter initialization
         // It will be initialized when setSDK is called
         if (sdk != null) {
             initializeWithSDK();
         }
     }
-    
+
     /**
      * Set the SDK instance to use with this view (for use when inflating from XML)
-     * 
+     *
      * @param sdk The FastCommentsSDK instance
      */
     public void setSDK(FastCommentsSDK sdk) {
@@ -240,13 +187,13 @@ public class FastCommentsView extends FrameLayout {
         if (this.sdk == sdk) {
             return;
         }
-        
+
         this.sdk = sdk;
         if (sdk != null) {
             initializeWithSDK();
         }
     }
-    
+
     /**
      * Initialize the adapter and other SDK-dependent functionality
      */
@@ -254,11 +201,11 @@ public class FastCommentsView extends FrameLayout {
         // Initialize adapter
         adapter = new CommentsAdapter(getContext(), sdk);
         recyclerView.setAdapter(adapter);
-        
+
         // Set up infinite scrolling if enabled in config
         boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null &&
                 sdk.getConfig().enableInfiniteScrolling;
-                
+
         if (isInfiniteScrollingEnabled) {
             recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
@@ -282,49 +229,19 @@ public class FastCommentsView extends FrameLayout {
                 }
             });
         }
-        
-        // Set the SDK on the comment form for API access
-        commentForm.setSDK(sdk);
 
-        // Setup form listeners
-        commentForm.setOnCommentSubmitListener((commentText, parentId) -> {
+        // Set up bottom comment input
+        bottomCommentInput.setCurrentUser(sdk.getCurrentUser());
+        bottomCommentInput.setSDK(sdk);
+
+        // Setup comment submission listener
+        bottomCommentInput.setOnCommentSubmitListener((commentText, parentId) -> {
             postCommentWithMentions(commentText, parentId);
         });
 
-        commentForm.setOnCancelReplyListener(() -> {
-            // Get the parent comment that was being replied to
-            RenderableComment parentComment = commentForm.getParentComment();
-            if (parentComment != null) {
-                final String parentId = parentComment.getComment().getId();
-                
-                // Check if comment field has text before canceling
-                if (!commentForm.isTextEmpty()) {
-                    // Show confirmation dialog
-                    new android.app.AlertDialog.Builder(getContext())
-                        .setTitle(R.string.cancel_reply_title)
-                        .setMessage(R.string.cancel_reply_confirm)
-                        .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                            // Proceed with cancellation
-                            updateReplyButtonText(parentId, false);
-                            if (parentId.equals(currentlyReplyingToCommentId)) {
-                                currentlyReplyingToCommentId = null;
-                            }
-                            hideCommentForm();
-                        })
-                        .setNegativeButton(android.R.string.no, null)
-                        .show();
-                } else {
-                    // Text is empty, no need for confirmation
-                    updateReplyButtonText(parentId, false);
-                    if (parentId.equals(currentlyReplyingToCommentId)) {
-                        currentlyReplyingToCommentId = null;
-                    }
-                    hideCommentForm();
-                }
-            } else {
-                // No parent comment, just hide the form
-                hideCommentForm();
-            }
+        // Handle reply state changes
+        bottomCommentInput.setOnReplyStateChangeListener((isReplying, parentComment) -> {
+            // Update any UI state as needed
         });
 
         // Setup pagination button listeners
@@ -338,43 +255,13 @@ public class FastCommentsView extends FrameLayout {
 
         // Handle reply requests from comments
         adapter.setRequestingReplyListener((commentToReplyTo) -> {
-            String commentId = commentToReplyTo.getComment().getId();
-            
-            // Check if we're already replying to this comment
-            if (commentId.equals(currentlyReplyingToCommentId)) {
-                // Check if comment field has text before canceling
-                if (!commentForm.isTextEmpty()) {
-                    // Show confirmation dialog
-                    new android.app.AlertDialog.Builder(getContext())
-                        .setTitle(R.string.cancel_reply_title)
-                        .setMessage(R.string.cancel_reply_confirm)
-                        .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                            // Cancel the reply
-                            proceedWithCancelReply(commentId);
-                        })
-                        .setNegativeButton(android.R.string.no, null)
-                        .show();
-                } else {
-                    // Text is empty, no need for confirmation
-                    proceedWithCancelReply(commentId);
-                }
-            } else {
-                // Start a new reply
-                // If there was a previous reply in progress, cancel it first
-                if (currentlyReplyingToCommentId != null) {
-                    updateReplyButtonText(currentlyReplyingToCommentId, false);
-                }
-                
-                // Remember which comment we're replying to
-                currentlyReplyingToCommentId = commentId;
-                // Show form in reply mode
-                commentForm.setReplyingTo(commentToReplyTo);
-                // Make form visible with animation
-                showCommentForm();
-                // Update the reply button text on the comment being replied to
-                updateReplyButtonText(commentId, true);
-                // Scroll to show both the comment and the form
-                recyclerView.smoothScrollToPosition(adapter.getPositionForComment(commentToReplyTo));
+            // Set the bottom input to reply mode
+            bottomCommentInput.setReplyingTo(commentToReplyTo);
+            bottomCommentInput.requestInputFocus();
+
+            // Notify the reply click listener if set
+            if (replyClickListener != null) {
+                replyClickListener.onReplyClick(commentToReplyTo);
             }
         });
 
@@ -814,7 +701,7 @@ public class FastCommentsView extends FrameLayout {
                     });
                 }).show(commentText);
             }
-            
+
             @Override
             public void onDelete(String commentId) {
                 // Confirm before deleting
@@ -858,7 +745,7 @@ public class FastCommentsView extends FrameLayout {
 
                                         // UI is updated from the SDK on success
                                         adapter.notifyDataSetChanged();
-                                        
+
                                         // Notify listener that a comment was deleted (to update post stats)
                                         if (commentPostListener != null) {
                                             // We use the same listener as when adding a comment
@@ -980,7 +867,7 @@ public class FastCommentsView extends FrameLayout {
             Log.e("FastCommentsView", "Cannot load comments: SDK not set. Call setSDK() first.");
             return;
         }
-        
+
         showLoading(true);
 
         sdk.load(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
@@ -1009,6 +896,10 @@ public class FastCommentsView extends FrameLayout {
                     // Clear any blocking error
                     setBlockingError(null);
 
+                    if (bottomCommentInput != null) {
+                        bottomCommentInput.setCurrentUser(sdk.getCurrentUser());
+                    }
+
                     if (response.getComments().isEmpty()) {
                         setIsEmpty(true);
                         paginationControls.setVisibility(View.GONE);
@@ -1035,19 +926,19 @@ public class FastCommentsView extends FrameLayout {
      * @param parentId    Parent comment ID for replies (null for top-level comments)
      */
     public void postCommentWithMentions(String commentText, String parentId) {
-        commentForm.setSubmitting(true);
+        bottomCommentInput.setSubmitting(true);
 
         // Store reference to the parent comment for resetting UI later
-        RenderableComment parentComment = commentForm.getParentComment();
-        
-        // Get any selected mentions from the comment form
-        java.util.List<UserMention> mentions = commentForm.getSelectedMentions();
+        RenderableComment parentComment = bottomCommentInput.getParentComment();
+
+        // Get any selected mentions from the bottom comment input
+        java.util.List<UserMention> mentions = bottomCommentInput.getSelectedMentions();
 
         sdk.postComment(commentText, parentId, mentions, new FCCallback<PublicComment>() {
             @Override
             public boolean onFailure(APIError error) {
                 getHandler().post(() -> {
-                    commentForm.setSubmitting(false);
+                    bottomCommentInput.setSubmitting(false);
                     // Check for translated error message
                     String errorMessage;
                     if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
@@ -1058,7 +949,7 @@ public class FastCommentsView extends FrameLayout {
                         errorMessage = getContext().getString(R.string.error_posting_comment);
                     }
 
-                    commentForm.showError(errorMessage);
+                    bottomCommentInput.showError(errorMessage);
                 });
                 return CONSUME;
             }
@@ -1066,21 +957,9 @@ public class FastCommentsView extends FrameLayout {
             @Override
             public boolean onSuccess(PublicComment comment) {
                 getHandler().post(() -> {
-                    commentForm.setSubmitting(false);
-                    commentForm.clearText();
-
-                    // Reset the "Reply" button text on the parent comment if we were replying
-                    if (parentComment != null) {
-                        String parentId = parentComment.getComment().getId();
-                        updateReplyButtonText(parentId, false);
-                        
-                        // Clear tracking
-                        if (parentId.equals(currentlyReplyingToCommentId)) {
-                            currentlyReplyingToCommentId = null;
-                        }
-                    }
-                    
-                    commentForm.resetReplyState();
+                    bottomCommentInput.setSubmitting(false);
+                    bottomCommentInput.clearText();
+                    bottomCommentInput.clearReplyState();
 
                     // Show a toast message to confirm successful posting
                     android.widget.Toast.makeText(
@@ -1088,22 +967,20 @@ public class FastCommentsView extends FrameLayout {
                             R.string.comment_posted_successfully,
                             android.widget.Toast.LENGTH_SHORT
                     ).show();
-                    // Hide form after submitting with animation
-                    hideCommentForm();
 
                     // Add the comment to the tree, display immediately
                     sdk.addComment(comment, true);
-                    
+
                     // If this was the first comment, update empty state to show the comments
                     if (sdk.commentsTree.visibleSize() == 1) {
                         setIsEmpty(false);
                     }
-                    
+
                     // Notify listener that a comment has been posted
                     if (commentPostListener != null) {
                         commentPostListener.onCommentPosted(comment);
                     }
-                    
+
                     // Get the position of the newly added comment and scroll to it
                     final RenderableComment renderableComment = sdk.commentsTree.commentsById.get(comment.getId());
                     if (renderableComment != null) {
@@ -1117,7 +994,7 @@ public class FastCommentsView extends FrameLayout {
             }
         });
     }
-    
+
     /**
      * Post a new comment (legacy method without mentions support)
      *
@@ -1154,7 +1031,6 @@ public class FastCommentsView extends FrameLayout {
             emptyStateView.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
             paginationControls.setVisibility(View.GONE);
-            newCommentButton.setVisibility(View.GONE);
         } else {
             // No error, restore normal visibility based on comments count
             boolean isEmpty = adapter.getItemCount() == 0;
@@ -1166,79 +1042,6 @@ public class FastCommentsView extends FrameLayout {
             } else {
                 paginationControls.setVisibility(View.GONE);
             }
-
-            // Show the new comment button
-            newCommentButton.setVisibility(View.VISIBLE);
-        }
-    }
-
-    /**
-     * Shows the comment form with animation
-     */
-    private void showCommentForm() {
-        commentForm.setCurrentUser(sdk.getCurrentUser());
-        // Load and start the animation
-        Animation slideUpAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.slide_up);
-        commentFormContainer.startAnimation(slideUpAnimation);
-        commentFormContainer.setVisibility(View.VISIBLE);
-
-        // Hide the new comment button
-        Animation fadeOutAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.fade_out);
-        newCommentButton.startAnimation(fadeOutAnimation);
-        newCommentButton.setVisibility(View.GONE);
-
-        // Hide pagination controls while commenting
-        if (paginationControls.getVisibility() == View.VISIBLE) {
-            paginationControls.startAnimation(fadeOutAnimation);
-            paginationControls.setVisibility(View.GONE);
-        }
-
-        // Enable back button handling
-        if (backPressedCallback != null) {
-            backPressedCallback.setEnabled(true);
-        }
-    }
-
-    /**
-     * Hides the comment form with animation
-     */
-    public void hideCommentForm() {
-        // Load and start the animation
-        Animation slideDownAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.slide_down);
-        slideDownAnimation.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                commentFormContainer.setVisibility(View.GONE);
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-            }
-        });
-        commentFormContainer.startAnimation(slideDownAnimation);
-
-        // Show the new comment button
-        Animation fadeInAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.fade_in);
-        newCommentButton.startAnimation(fadeInAnimation);
-        newCommentButton.setVisibility(View.VISIBLE);
-
-        // Restore pagination controls if needed
-        if (sdk.hasMore && adapter.getItemCount() > 0) {
-            updatePaginationControls();
-            if (paginationControls.getVisibility() == View.GONE &&
-                    (sdk.getCountRemainingToShow() > 0 || sdk.shouldShowLoadAll())) {
-                paginationControls.startAnimation(fadeInAnimation);
-                paginationControls.setVisibility(View.VISIBLE);
-            }
-        }
-
-        // Disable back button handling
-        if (backPressedCallback != null) {
-            backPressedCallback.setEnabled(false);
         }
     }
 
@@ -1639,7 +1442,7 @@ public class FastCommentsView extends FrameLayout {
 
     /**
      * Get the UI handler for posting to the main thread
-     * 
+     *
      * @return Handler for UI updates
      */
     public Handler getHandler() {
@@ -1657,7 +1460,7 @@ public class FastCommentsView extends FrameLayout {
         if (sdk == null || (sdk.getConfig().absoluteDates != null && sdk.getConfig().absoluteDates)) {
             return;
         }
-        
+
         // Get visible position range
         LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
         if (layoutManager != null) {
@@ -1673,45 +1476,40 @@ public class FastCommentsView extends FrameLayout {
             }
         }
     }
-    
+
     /**
      * Proceed with canceling reply after confirmation or if no confirmation needed
-     * 
+     *
      * @param commentId The ID of the comment being replied to
      */
     private void proceedWithCancelReply(String commentId) {
         // Cancel the reply
-        commentForm.resetReplyState();
-        hideCommentForm();
-        // Reset the button text
-        updateReplyButtonText(commentId, false);
-        // Clear tracking
-        currentlyReplyingToCommentId = null;
+        bottomCommentInput.clearReplyState();
     }
-    
+
     /**
      * Updates the reply button text for a specific comment
-     * 
-     * @param commentId The ID of the comment to update
+     *
+     * @param commentId  The ID of the comment to update
      * @param isReplying True if the user is replying to this comment, false otherwise
      */
     private void updateReplyButtonText(String commentId, boolean isReplying) {
         if (commentId == null || adapter == null) {
             return;
         }
-        
+
         // Get the RenderableComment from the comments tree
         RenderableComment comment = sdk.commentsTree.commentsById.get(commentId);
         if (comment == null) {
             return;
         }
-        
+
         // Get the position of the comment in the adapter
         int position = adapter.getPositionForComment(comment);
         if (position < 0) {
             return;
         }
-        
+
         // Find the ViewHolder for this position
         RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(position);
         if (holder instanceof CommentViewHolder) {
@@ -1724,13 +1522,61 @@ public class FastCommentsView extends FrameLayout {
             }
         }
     }
+    
+    /**
+     * Handle back button press to warn user before losing comment text
+     */
+    private void handleBackPress() {
+        // Check if we have text in the bottom comment input
+        if (bottomCommentInput != null && !bottomCommentInput.isTextEmpty()) {
+            // Show confirmation dialog - different message for reply vs new comment
+            String title, message;
+            RenderableComment parentComment = bottomCommentInput.getParentComment();
+            
+            if (parentComment != null) {
+                title = getContext().getString(R.string.cancel_reply_title);
+                message = getContext().getString(R.string.cancel_reply_confirm);
+            } else {
+                title = getContext().getString(R.string.cancel_comment_title);
+                message = getContext().getString(R.string.cancel_comment_confirm);
+            }
+            
+            new android.app.AlertDialog.Builder(getContext())
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                    // Proceed with back navigation
+                    bottomCommentInput.clearText();
+                    bottomCommentInput.clearReplyState();
+                    // Allow the back press to proceed
+                    if (backPressedCallback != null) {
+                        backPressedCallback.setEnabled(false);
+                        if (getContext() instanceof Activity) {
+                            ((Activity) getContext()).onBackPressed();
+                        }
+                        backPressedCallback.setEnabled(true);
+                    }
+                })
+                .setNegativeButton(android.R.string.no, null)
+                .show();
+        } else {
+            // No text, allow normal back navigation
+            if (backPressedCallback != null) {
+                backPressedCallback.setEnabled(false);
+                if (getContext() instanceof Activity) {
+                    ((Activity) getContext()).onBackPressed();
+                }
+                backPressedCallback.setEnabled(true);
+            }
+        }
+    }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         cleanup();
     }
-    
+
     /**
      * Clean up all resources to prevent memory leaks.
      * Call this method when the view will no longer be used.
@@ -1738,22 +1584,22 @@ public class FastCommentsView extends FrameLayout {
     public void cleanup() {
         // Stop the timer when the view is detached to prevent memory leaks
         stopDateUpdateTimer();
-        
+
         // Clear SDK and WebSocket connections
         if (sdk != null) {
             sdk.cleanup();
             sdk = null;
         }
-        
+
         // Clear listeners
         commentPostListener = null;
-        
+
         // Clear back pressed callback
         if (backPressedCallback != null) {
             backPressedCallback.setEnabled(false);
             backPressedCallback = null;
         }
-        
+
         // Clear adapter data through SDK
         if (sdk != null && sdk.commentsTree != null) {
             sdk.commentsTree.clear();
@@ -1761,19 +1607,17 @@ public class FastCommentsView extends FrameLayout {
                 adapter.notifyDataSetChanged();
             }
         }
-        
-        // Clear currently replying state
-        currentlyReplyingToCommentId = null;
-        
+
+
         // Clear handler callbacks
         if (dateUpdateHandler != null) {
             dateUpdateHandler.removeCallbacksAndMessages(null);
         }
-        
+
         // Clear runnables
         dateUpdateRunnable = null;
     }
-    
+
     /**
      * Returns the RecyclerView adapter used by this view.
      *
@@ -1782,7 +1626,7 @@ public class FastCommentsView extends FrameLayout {
     public CommentsAdapter getAdapter() {
         return adapter;
     }
-    
+
     /**
      * Clears all comments from the adapter.
      * Use this method when switching fragments to avoid memory leaks.
@@ -1793,23 +1637,23 @@ public class FastCommentsView extends FrameLayout {
             adapter.notifyDataSetChanged();
         }
     }
-    
+
     /**
-     * Gets the comment form view
-     * 
-     * @return The comment form view
+     * Gets the bottom comment input view
+     *
+     * @return The bottom comment input view
      */
-    public CommentFormView getCommentForm() {
-        return commentForm;
+    public BottomCommentInputView getBottomCommentInput() {
+        return bottomCommentInput;
     }
-    
+
     /**
-     * Checks if the comment form is currently visible
-     * 
-     * @return true if the comment form is visible, false otherwise
+     * Checks if the bottom comment input is currently in reply mode
+     *
+     * @return true if replying to a comment, false otherwise
      */
-    public boolean isCommentFormVisible() {
-        return commentFormContainer != null && 
-               commentFormContainer.getVisibility() == View.VISIBLE;
+    public boolean isReplyingToComment() {
+        return bottomCommentInput != null &&
+                bottomCommentInput.getParentComment() != null;
     }
 }

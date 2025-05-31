@@ -50,6 +50,7 @@ public class LiveChatView extends FrameLayout {
     private RecyclerView recyclerView;
     private CommentsAdapter adapter;
     private CommentFormView commentForm;
+    private BottomCommentInputView bottomCommentInput;
     private ProgressBar progressBar;
     private TextView emptyStateView;
     private FastCommentsSDK sdk;
@@ -141,10 +142,7 @@ public class LiveChatView extends FrameLayout {
         recyclerView = findViewById(R.id.recyclerViewComments);
         progressBar = findViewById(R.id.commentsProgressBar);
         emptyStateView = findViewById(R.id.emptyStateView);
-        FloatingActionButton newCommentButton = findViewById(R.id.newCommentButton);
-        
-        // Hide the new comment button - chat has a persistent input field
-        newCommentButton.setVisibility(View.GONE);
+        // Note: LiveChatView should be updated to use BottomCommentInputView in a future update
 
         // Initialize pagination controls
         this.paginationControls = findViewById(R.id.paginationControls);
@@ -152,13 +150,16 @@ public class LiveChatView extends FrameLayout {
         this.btnLoadAll = paginationControls.findViewById(R.id.btnLoadAll);
         this.paginationProgressBar = paginationControls.findViewById(R.id.paginationProgressBar);
 
-        // Find the comment form container and initialize the form
-        this.commentFormContainer = findViewById(R.id.commentFormContainer);
-        commentForm = new CommentFormView(context);
-        this.commentFormContainer.addView(commentForm);
+        // Find the bottom comment input
+        bottomCommentInput = findViewById(R.id.bottomCommentInput);
+        if (bottomCommentInput != null) {
+            // Set up for live chat use
+        } else {
+            // Fallback for layouts without bottom input
+            commentForm = new CommentFormView(context);
+        }
 
-        // In chat mode, always show the form at the bottom
-        this.commentFormContainer.setVisibility(View.VISIBLE);
+        // Bottom input is always visible for live chat
 
         // Set up back button handling if in an AppCompatActivity
         if (context instanceof AppCompatActivity) {
@@ -342,6 +343,9 @@ public class LiveChatView extends FrameLayout {
             // Simply return an empty list since we don't show threaded replies
             sendResults.call(new ArrayList<>());
         });
+        
+        // Set SDK on comment form for mentions functionality
+        commentForm.setSDK(sdk);
     }
 
     private void setupVoteHandlers() {
