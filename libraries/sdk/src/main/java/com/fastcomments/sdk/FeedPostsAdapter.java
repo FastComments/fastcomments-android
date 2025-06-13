@@ -1527,7 +1527,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 likeButton.setText(R.string.liked);
             } else {
                 likeButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.like_icon, 0, 0, 0);
-                likeButton.setTextColor(likeButton.getContext().getResources().getColor(android.R.color.darker_gray, null));
                 likeButton.setText(R.string.like);
             }
         }
