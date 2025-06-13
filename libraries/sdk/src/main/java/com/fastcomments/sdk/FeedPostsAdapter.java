@@ -612,36 +612,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         mediaImageView.setFocusable(true);
 
                         // Set click listener for the image
-                        mediaImageView.setOnClickListener(v -> {
-                            // Get best quality image URL
-                            String fullImageUrl = getBestQualityImageUrl(mediaItem);
-
-                            if (fullImageUrl != null) {
-                                // Show the full image dialog
-                                new FullImageDialog(context, fullImageUrl).show();
-                            }
-
-                            // Also notify the listener if set
-                            if (listener != null) {
-                                listener.onMediaClick(mediaItem);
-                            }
-                        });
+                        mediaImageView.setOnClickListener(v -> handleImageClick(post, mediaItem, 0));
 
                         // Set click listener for media container as a backup
-                        mediaContainer.setOnClickListener(v -> {
-                            // Get best quality image URL
-                            String fullImageUrl = getBestQualityImageUrl(mediaItem);
-
-                            if (fullImageUrl != null) {
-                                // Show the full image dialog
-                                new FullImageDialog(context, fullImageUrl).show();
-                            }
-
-                            // Also notify the listener if set
-                            if (listener != null) {
-                                listener.onMediaClick(mediaItem);
-                            }
-                        });
+                        mediaContainer.setOnClickListener(v -> handleImageClick(post, mediaItem, 0));
                     } else {
                         mediaContainer.setVisibility(View.GONE);
                     }
@@ -678,7 +652,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     imageCounterTextView.setVisibility(View.GONE);
 
                     // Set up the 3 images
-                    setupThreeImagesLayout(mediaItems);
+                    setupThreeImagesLayout(post, mediaItems);
 
                     // Make sure container is visible
                     mediaGalleryContainer.setVisibility(View.VISIBLE);
@@ -694,7 +668,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     imageGridLayout.removeAllViews();
 
                     // Set up grid layout based on number of images
-                    setupImageGrid(mediaItems);
+                    setupImageGrid(post, mediaItems);
 
                     // Make sure GridLayout is actually visible
                     imageGridLayout.invalidate();
@@ -758,9 +732,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         /**
          * Set up the grid layout for 1-3 images
          *
+         * @param post The post containing the media items
          * @param mediaItems The list of media items
          */
-        private void setupImageGrid(List<FeedPostMediaItem> mediaItems) {
+        private void setupImageGrid(FeedPost post, List<FeedPostMediaItem> mediaItems) {
             int count = mediaItems.size();
             int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
 
@@ -778,7 +753,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     }
                 }
                 
-                ImageView imageView = createImageView(mediaItem);
+                ImageView imageView = createImageView(post, mediaItem, 0);
                 GridLayout.LayoutParams params = new GridLayout.LayoutParams(
                         GridLayout.spec(0, 2, 1f),
                         GridLayout.spec(0, 2, 1f));
@@ -813,7 +788,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 // Two images stacked vertically
                 for (int i = 0; i < count; i++) {
                     FeedPostMediaItem mediaItem = mediaItems.get(i);
-                    ImageView imageView = createImageView(mediaItem);
+                    ImageView imageView = createImageView(post, mediaItem, i);
                     
                     // Calculate individual image height for proper layout
                     int individualHeight = getHalfImageHeight(); // Default fallback
@@ -839,7 +814,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
          * Set up the three images layout with the given media items
          * This is a dedicated method for handling exactly 3 images
          */
-        private void setupThreeImagesLayout(List<FeedPostMediaItem> mediaItems) {
+        private void setupThreeImagesLayout(FeedPost post, List<FeedPostMediaItem> mediaItems) {
             int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
             int halfWidth = screenWidth / 2;
             
@@ -897,44 +872,20 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             // Load top image (first image)
             loadImageIntoView(firstItem, topImageView);
 
-            // Set click listener for full screen viewing
-            topImageView.setOnClickListener(v -> {
-                String fullImageUrl = getBestQualityImageUrl(firstItem);
-                if (fullImageUrl != null) {
-                    new FullImageDialog(context, fullImageUrl).show();
-                }
-                if (listener != null) {
-                    listener.onMediaClick(firstItem);
-                }
-            });
+            // Set click listener for full screen viewing - start at image 0 (first image)
+            topImageView.setOnClickListener(v -> handleImageClick(post, firstItem, 0));
 
             // Load bottom left image (second image)
             loadImageIntoView(secondItem, bottomLeftImageView);
 
-            // Set click listener for full screen viewing
-            bottomLeftImageView.setOnClickListener(v -> {
-                String fullImageUrl = getBestQualityImageUrl(secondItem);
-                if (fullImageUrl != null) {
-                    new FullImageDialog(context, fullImageUrl).show();
-                }
-                if (listener != null) {
-                    listener.onMediaClick(secondItem);
-                }
-            });
+            // Set click listener for full screen viewing - start at image 1 (second image)
+            bottomLeftImageView.setOnClickListener(v -> handleImageClick(post, secondItem, 1));
 
             // Load bottom right image (third image)
             loadImageIntoView(thirdItem, bottomRightImageView);
 
-            // Set click listener for full screen viewing
-            bottomRightImageView.setOnClickListener(v -> {
-                String fullImageUrl = getBestQualityImageUrl(thirdItem);
-                if (fullImageUrl != null) {
-                    new FullImageDialog(context, fullImageUrl).show();
-                }
-                if (listener != null) {
-                    listener.onMediaClick(thirdItem);
-                }
-            });
+            // Set click listener for full screen viewing - start at image 2 (third image)
+            bottomRightImageView.setOnClickListener(v -> handleImageClick(post, thirdItem, 2));
         }
 
         /**
@@ -990,10 +941,12 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         /**
          * Create an ImageView for a media item
          *
+         * @param post The post containing the media
          * @param mediaItem The media item to display
+         * @param position The position of this media item in the post's media list
          * @return A configured ImageView
          */
-        private ImageView createImageView(FeedPostMediaItem mediaItem) {
+        private ImageView createImageView(FeedPost post, FeedPostMediaItem mediaItem, int position) {
             ImageView imageView = new ImageView(context);
 
             // Set up ImageView properties similar to single image view
@@ -1063,20 +1016,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             }
 
             // Set click listener
-            imageView.setOnClickListener(v -> {
-                // Get best quality image URL
-                String fullImageUrl = getBestQualityImageUrl(mediaItem);
-
-                if (fullImageUrl != null) {
-                    // Show the full image dialog
-                    new FullImageDialog(context, fullImageUrl).show();
-                }
-
-                // Also notify the listener if set
-                if (listener != null) {
-                    listener.onMediaClick(mediaItem);
-                }
-            });
+            imageView.setOnClickListener(v -> handleImageClick(post, mediaItem, position));
 
             return imageView;
         }
@@ -1137,20 +1077,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         mediaImageView.setFocusable(true);
 
                         // Set click listeners for both container and image
-                        View.OnClickListener imageClickListener = v -> {
-                            // Get best quality image URL
-                            String fullImageUrl = getBestQualityImageUrl(mediaItem);
-
-                            if (fullImageUrl != null) {
-                                // Show the full image dialog
-                                new FullImageDialog(context, fullImageUrl).show();
-                            }
-
-                            // Also notify the listener
-                            if (listener != null) {
-                                listener.onMediaClick(mediaItem);
-                            }
-                        };
+                        View.OnClickListener imageClickListener = v -> handleImageClick(post, mediaItem, 0);
 
                         mediaContainer.setOnClickListener(imageClickListener);
                         mediaImageView.setOnClickListener(imageClickListener);
@@ -1533,6 +1460,30 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         void updateStatsAndLikes(FeedPost post) {
             updateLikeAndCommentCounts(post);
             updateLikeButtonState(post);
+        }
+
+        /**
+         * Helper method to handle image click and show appropriate dialog
+         * @param post The post containing the image
+         * @param mediaItem The specific media item clicked
+         * @param imagePosition The position of the clicked image in the post's media list
+         */
+        private void handleImageClick(FeedPost post, FeedPostMediaItem mediaItem, int imagePosition) {
+            // If this post has multiple images, show gallery mode
+            if (post.getMedia() != null && post.getMedia().size() > 1) {
+                new FullImageDialog(context, post.getMedia(), imagePosition).show();
+            } else {
+                // Single image mode - get best quality image URL
+                String fullImageUrl = getBestQualityImageUrl(mediaItem);
+                if (fullImageUrl != null) {
+                    new FullImageDialog(context, fullImageUrl).show();
+                }
+            }
+
+            // Also notify the listener if set
+            if (listener != null) {
+                listener.onMediaClick(mediaItem);
+            }
         }
 
         /**
