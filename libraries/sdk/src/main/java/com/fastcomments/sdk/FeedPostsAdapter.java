@@ -503,6 +503,13 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 }
             });
 
+            // Make comment count clickable - when user taps on comment count, open comments
+            likeCountTextView.setOnClickListener(v -> {
+                if (listener != null && post.getCommentCount() != null && post.getCommentCount() > 0) {
+                    listener.onCommentClick(post);
+                }
+            });
+
             // Post menu button setup
             if (postMenuButton != null) {
                 // Determine if this is the current user's post
