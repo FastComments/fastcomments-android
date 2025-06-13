@@ -43,6 +43,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
     private final OnFeedPostInteractionListener listener;
     private final FastCommentsFeedSDK sdk;
     private final boolean useAbsoluteDates;
+    private OnScrollToTopRequestedListener onScrollToTopRequestedListener;
 
     public interface OnFeedPostInteractionListener {
         void onCommentClick(FeedPost post);
@@ -60,6 +61,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         void onDeletePost(FeedPost post);
     }
 
+    public interface OnScrollToTopRequestedListener {
+        void onScrollToTopRequested();
+    }
+
     public FeedPostsAdapter(Context context, List<FeedPost> feedPosts, FastCommentsFeedSDK sdk, OnFeedPostInteractionListener listener) {
         this.context = context;
         this.feedPosts = feedPosts;
@@ -67,6 +72,15 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         this.sdk = sdk;
         // Set date format based on SDK configuration
         this.useAbsoluteDates = Boolean.TRUE.equals(sdk.getConfig().absoluteDates);
+    }
+
+    /**
+     * Set the listener for scroll to top requests
+     *
+     * @param listener The listener to be notified when scroll to top is requested
+     */
+    public void setOnScrollToTopRequestedListener(OnScrollToTopRequestedListener listener) {
+        this.onScrollToTopRequestedListener = listener;
     }
 
     /**
@@ -192,6 +206,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
      * @param newPosts The new list of posts to display
      */
     public void updatePosts(List<FeedPost> newPosts) {
+        updatePosts(newPosts, false);
+    }
+
+    public void updatePosts(List<FeedPost> newPosts, boolean scrollToTop) {
         if (newPosts == null) {
             return;
         }
@@ -205,6 +223,15 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
         // Notify adapter that all data has changed
         notifyDataSetChanged();
+
+        // Scroll to top if requested (e.g., after adding a new post)
+        // Use post() to ensure this happens after the RecyclerView has updated
+        if (scrollToTop && onScrollToTopRequestedListener != null) {
+            // Post the scroll action to happen after the adapter update is complete
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                onScrollToTopRequestedListener.onScrollToTopRequested();
+            });
+        }
 
         // Log the update for debugging
         Log.d("FeedPostsAdapter", "Updated posts list with " + updatedPosts.size() + " posts");
