@@ -65,18 +65,14 @@ public class PostImagesAdapter extends RecyclerView.Adapter<PostImagesAdapter.Im
             imageView = itemView.findViewById(R.id.postImageView);
             playButton = itemView.findViewById(R.id.playButton);
 
-            // Set click listener to show full image
+            // Set click listener to show full image gallery
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
                     FeedPostMediaItem mediaItem = mediaItems.get(position);
-                    // Get the best quality image URL for full view
-                    String fullImageUrl = getBestQualityImageUrl(mediaItem);
                     
-                    if (fullImageUrl != null) {
-                        // Show the full image dialog
-                        new FullImageDialog(context, fullImageUrl).show();
-                    }
+                    // Show gallery mode starting at the clicked image position
+                    new FullImageDialog(context, mediaItems, position).show();
                     
                     // Also notify the listener if set
                     if (listener != null) {

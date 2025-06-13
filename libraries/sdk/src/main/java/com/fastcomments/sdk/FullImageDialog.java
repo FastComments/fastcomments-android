@@ -8,22 +8,47 @@ import android.os.Bundle;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
+import com.fastcomments.model.FeedPostMediaItem;
 import com.github.chrisbanes.photoview.PhotoView;
 
+import java.util.List;
+
 /**
- * Dialog for displaying a full-screen, zoomable image
+ * Dialog for displaying a full-screen, zoomable image or gallery of images
  */
 public class FullImageDialog extends Dialog {
 
     private final String imageUrl;
+    private final List<FeedPostMediaItem> mediaItems;
+    private final int startPosition;
+    private final boolean isGalleryMode;
 
+    /**
+     * Constructor for single image mode
+     */
     public FullImageDialog(@NonNull Context context, String imageUrl) {
         super(context);
         this.imageUrl = imageUrl;
+        this.mediaItems = null;
+        this.startPosition = 0;
+        this.isGalleryMode = false;
+    }
+
+    /**
+     * Constructor for gallery mode with multiple images
+     */
+    public FullImageDialog(@NonNull Context context, List<FeedPostMediaItem> mediaItems, int startPosition) {
+        super(context);
+        this.imageUrl = null;
+        this.mediaItems = mediaItems;
+        this.startPosition = startPosition;
+        this.isGalleryMode = true;
     }
 
     @Override
@@ -31,7 +56,14 @@ public class FullImageDialog extends Dialog {
         super.onCreate(savedInstanceState);
         
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.dialog_full_image);
+        
+        if (isGalleryMode) {
+            setContentView(R.layout.dialog_full_image_gallery);
+            setupGalleryMode();
+        } else {
+            setContentView(R.layout.dialog_full_image);
+            setupSingleImageMode();
+        }
         
         // Make dialog fill the screen
         Window window = getWindow();
@@ -54,7 +86,9 @@ public class FullImageDialog extends Dialog {
         // Set up close button
         ImageButton closeButton = findViewById(R.id.closeButton);
         closeButton.setOnClickListener(v -> dismiss());
-        
+    }
+
+    private void setupSingleImageMode() {
         // Set up photo view with the image
         PhotoView photoView = findViewById(R.id.photoView);
         
@@ -66,6 +100,46 @@ public class FullImageDialog extends Dialog {
                     .into(photoView);
             // Note: we intentionally don't use centerCrop() here as this is a full-screen
             // image view with zoom capabilities via PhotoView
+        }
+    }
+
+    private void setupGalleryMode() {
+        if (mediaItems == null || mediaItems.isEmpty()) {
+            return;
+        }
+
+        ViewPager2 imageViewPager = findViewById(R.id.imageViewPager);
+        TextView imageCounter = findViewById(R.id.imageCounter);
+
+        // Set up the adapter
+        GalleryImageAdapter adapter = new GalleryImageAdapter(getContext(), mediaItems);
+        imageViewPager.setAdapter(adapter);
+
+        // Set the starting position
+        imageViewPager.setCurrentItem(startPosition, false);
+
+        // Show image counter if there are multiple images
+        if (mediaItems.size() > 1) {
+            imageCounter.setVisibility(android.view.View.VISIBLE);
+            updateImageCounter(startPosition, imageCounter);
+
+            // Set up page change callback to update counter
+            imageViewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                @Override
+                public void onPageSelected(int position) {
+                    super.onPageSelected(position);
+                    updateImageCounter(position, imageCounter);
+                }
+            });
+        } else {
+            imageCounter.setVisibility(android.view.View.GONE);
+        }
+    }
+
+    private void updateImageCounter(int position, TextView imageCounter) {
+        if (mediaItems != null && !mediaItems.isEmpty()) {
+            String counterText = String.format("%d of %d", position + 1, mediaItems.size());
+            imageCounter.setText(counterText);
         }
     }
 }
