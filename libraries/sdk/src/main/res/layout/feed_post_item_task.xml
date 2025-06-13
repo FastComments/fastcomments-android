@@ -211,8 +211,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="?android:attr/listDivider"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginTop="8dp" />
                 
             <!-- Standard Action Buttons -->
             <LinearLayout
@@ -223,48 +222,21 @@
 
                 <Button
                     android:id="@+id/likeButton"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_weight="1"
+                    style="@style/FeedActionButton"
                     android:drawableStart="@drawable/like_icon"
-                    android:drawablePadding="4dp"
-                    android:text="@string/like"
-                    android:textAllCaps="false"
-                    android:textSize="12sp"
-                    android:minHeight="0dp"
-                    android:paddingTop="0dp"
-                    android:paddingBottom="0dp" />
+                    android:text="@string/like" />
 
                 <Button
                     android:id="@+id/commentButton"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_weight="1"
+                    style="@style/FeedActionButton"
                     android:drawableStart="@drawable/comment_icon"
-                    android:drawablePadding="4dp"
-                    android:text="@string/comment"
-                    android:textAllCaps="false"
-                    android:textSize="12sp"
-                    android:minHeight="0dp"
-                    android:paddingTop="0dp"
-                    android:paddingBottom="0dp" />
+                    android:text="@string/comment" />
 
                 <Button
                     android:id="@+id/shareButton"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_weight="1"
+                    style="@style/FeedActionButton"
                     android:drawableStart="@drawable/share_icon"
-                    android:drawablePadding="4dp"
-                    android:text="@string/share"
-                    android:textAllCaps="false"
-                    android:textSize="12sp"
-                    android:minHeight="0dp"
-                    android:paddingTop="0dp"
-                    android:paddingBottom="0dp" />
+                    android:text="@string/share" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
