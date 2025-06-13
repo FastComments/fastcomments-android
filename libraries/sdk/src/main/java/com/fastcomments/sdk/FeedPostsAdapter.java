@@ -56,7 +56,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         void onLinkClick(String url);
 
         void onMediaClick(FeedPostMediaItem mediaItem);
-        
+
         void onDeletePost(FeedPost post);
     }
 
@@ -68,17 +68,19 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         // Set date format based on SDK configuration
         this.useAbsoluteDates = Boolean.TRUE.equals(sdk.getConfig().absoluteDates);
     }
-    
+
     /**
      * Get the standard image height from resources
+     *
      * @return Standard image height in pixels
      */
     private int getDefaultImageHeight() {
         return context.getResources().getDimensionPixelSize(R.dimen.feed_image_height);
     }
-    
+
     /**
      * Get the half-size image height from resources
+     *
      * @return Half image height in pixels
      */
     private int getHalfImageHeight() {
@@ -151,6 +153,25 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
     }
 
     @Override
+    public void onBindViewHolder(@NonNull FeedPostViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (payloads.isEmpty()) {
+            // No payloads, do full bind
+            onBindViewHolder(holder, position);
+        } else {
+            // Handle partial updates based on payloads
+            FeedPost post = feedPosts.get(position);
+            for (Object payload : payloads) {
+                if (payload instanceof UpdateType) {
+                    UpdateType updateType = (UpdateType) payload;
+                    if (updateType == UpdateType.STATS_UPDATE) {
+                        holder.updateStatsAndLikes(post);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public void onViewRecycled(@NonNull FeedPostViewHolder holder) {
         super.onViewRecycled(holder);
         // Clean up ViewPager callbacks when view is recycled
@@ -174,27 +195,26 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         if (newPosts == null) {
             return;
         }
-        
+
         // Create a new ArrayList to avoid reference issues
         List<FeedPost> updatedPosts = new ArrayList<>(newPosts);
-        
+
         // Clear and update the adapter's internal list
         this.feedPosts.clear();
         this.feedPosts.addAll(updatedPosts);
-        
+
         // Notify adapter that all data has changed
         notifyDataSetChanged();
-        
+
         // Log the update for debugging
         Log.d("FeedPostsAdapter", "Updated posts list with " + updatedPosts.size() + " posts");
     }
-    
+
 
     public void addPosts(List<FeedPost> morePosts) {
         int startPosition = this.feedPosts.size();
         this.feedPosts.addAll(morePosts);
         notifyItemRangeInserted(startPosition, morePosts.size());
-        
     }
 
     public void updatePost(int position, FeedPost updatedPost) {
@@ -203,7 +223,17 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             notifyItemChanged(position);
         }
     }
-    
+
+    /**
+     * Update a post with specific payload to trigger partial updates
+     */
+    public void updatePost(int position, FeedPost updatedPost, UpdateType updateType) {
+        if (position >= 0 && position < feedPosts.size()) {
+            feedPosts.set(position, updatedPost);
+            notifyItemChanged(position, updateType);
+        }
+    }
+
     /**
      * Select the best image size based on device display metrics
      * Prioritizes images that fit well on the screen while maintaining quality
@@ -279,34 +309,34 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         // Return best match or first asset if no match found
         return bestMatch != null ? bestMatch : sizes.get(0);
     }
-    
+
     /**
      * Calculate the aspect ratio-based height for an image that will be displayed at the given width
-     * 
-     * @param asset The media asset containing width and height information
+     *
+     * @param asset        The media asset containing width and height information
      * @param displayWidth The width at which the image will be displayed
      * @return The calculated height based on aspect ratio, or default height if dimensions are missing
      */
     private int calculateImageHeight(FeedPostMediaItemAsset asset, int displayWidth) {
-        if (asset == null || asset.getW() == null || asset.getH() == null || 
-            asset.getW() <= 0 || asset.getH() <= 0) {
+        if (asset == null || asset.getW() == null || asset.getH() == null ||
+                asset.getW() <= 0 || asset.getH() <= 0) {
             return getDefaultImageHeight(); // Fall back to default height
         }
-        
+
         // Calculate aspect ratio (width / height)
         double aspectRatio = (double) asset.getW() / (double) asset.getH();
-        
+
         // If aspect ratio is invalid, use default height
         if (aspectRatio <= 0) {
             return getDefaultImageHeight();
         }
-        
+
         // Calculate height based on aspect ratio and display width
         int calculatedHeight = (int) (displayWidth / aspectRatio);
-        
+
         // Set minimum bound to prevent extremely small images
         int minHeight = context.getResources().getDimensionPixelSize(R.dimen.feed_image_half_height);
-        
+
         // Ensure the height is at least the minimum height 
         // but allow it to be as tall as needed by the aspect ratio
         return Math.max(minHeight, calculatedHeight);
@@ -318,6 +348,11 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         MULTI_IMAGE,
         TASK
     }
+
+    enum UpdateType {
+        STATS_UPDATE
+    }
+
 
     class FeedPostViewHolder extends RecyclerView.ViewHolder {
         private final FeedPostType postType;
@@ -394,7 +429,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
             // Prevent default ripple effect when clicking by making item not clickable
             itemView.setClickable(false);
-            
+
             // Still allow click events without animation by sending them through the listener
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();
@@ -444,60 +479,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             setupTags(post);
 
             // Handle like count and comment count display
-            final int likeCount = sdk.getPostLikeCount(post.getId());
-            final Integer commentCount = post.getCommentCount();
-            
-            if (likeCount > 0 || (commentCount != null && commentCount > 0)) {
-                likeCountTextView.setVisibility(View.VISIBLE);
-                
-                StringBuilder displayText = new StringBuilder();
-                
-                // Add likes text if there are likes
-                if (likeCount > 0) {
-                    // Show heart icon only when there are likes
-                    likeCountTextView.setCompoundDrawablesWithIntrinsicBounds(
-                            context.getResources().getDrawable(R.drawable.heart_filled_small, null), 
-                            null, null, null);
-                            
-                    String likesText = likeCount == 1 ?
-                            context.getString(R.string.like_count_singular, likeCount) :
-                            context.getString(R.string.like_count_plural, likeCount);
-                    displayText.append(likesText);
-                } else {
-                    // No likes, so don't show heart icon
-                    likeCountTextView.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
-                }
-                
-                // Add comment count if there are comments
-                if (commentCount != null && commentCount > 0) {
-                    // Add separator if needed
-                    if (likeCount > 0) {
-                        displayText.append(" · ");
-                    }
-                    
-                    String commentsText = commentCount == 1 ?
-                            context.getString(R.string.comment_count_singular, commentCount) :
-                            context.getString(R.string.comment_count_plural, commentCount);
-                    displayText.append(commentsText);
-                }
-                
-                // Set the text
-                likeCountTextView.setText(displayText.toString());
-            } else {
-                likeCountTextView.setVisibility(View.GONE);
-            }
+            updateLikeAndCommentCounts(post);
 
             // Handle like button state based on user's reactions from SDK
-            final boolean userHasLiked = sdk.hasUserReactedToPost(post.getId(), "l");
-            if (userHasLiked) {
-                likeButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.like_filled_icon, 0, 0, 0);
-                likeButton.setTextColor(context.getResources().getColor(android.R.color.holo_red_light, null));
-                likeButton.setText(R.string.liked);
-            } else {
-                likeButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.like_icon, 0, 0, 0);
-                likeButton.setTextColor(likeButton.getContext().getResources().getColor(android.R.color.darker_gray, null));
-                likeButton.setText(R.string.like);
-            }
+            updateLikeButtonState(post);
 
             // Set common button actions
             commentButton.setOnClickListener(v -> {
@@ -517,18 +502,18 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     listener.onShareClick(post);
                 }
             });
-            
+
             // Post menu button setup
             if (postMenuButton != null) {
                 // Determine if this is the current user's post
                 boolean isCurrentUserPost = false;
                 String currentUserId = sdk.getCurrentUser() != null ? sdk.getCurrentUser().getId() : null;
                 String postUserId = post.getFromUserId();
-                
+
                 if (currentUserId != null && postUserId != null && currentUserId.equals(postUserId)) {
                     isCurrentUserPost = true;
                     postMenuButton.setVisibility(View.VISIBLE);
-                    
+
                     postMenuButton.setOnClickListener(v -> showPostMenu(post));
                 } else {
                     postMenuButton.setVisibility(View.GONE);
@@ -563,12 +548,21 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
                         mediaContainer.setVisibility(View.VISIBLE);
 
-                        // Don't set fixed height - let the image determine its own size
-                        // with adjustViewBounds
+                        // Calculate and set height upfront to prevent layout shifts
+                        int containerWidth = mediaContainer.getWidth();
+                        if (containerWidth == 0) {
+                            // Container not yet measured, use screen width as estimate
+                            containerWidth = context.getResources().getDisplayMetrics().widthPixels;
+                        }
 
-                        // Load image without overriding dimensions
+                        int calculatedHeight = calculateImageHeight(bestSizeAsset, containerWidth);
+                        mediaImageView.getLayoutParams().height = calculatedHeight;
+                        mediaImageView.requestLayout();
+
+                        // Load image with calculated dimensions
                         Glide.with(context)
                                 .load(bestSizeAsset.getSrc())
+                                .override(containerWidth, calculatedHeight)
                                 .transition(DrawableTransitionOptions.withCrossFade(300))
                                 .error(R.drawable.image_placeholder)
                                 .into(mediaImageView);
@@ -682,6 +676,25 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     imageViewPager.setVisibility(View.VISIBLE);
                     imageCounterTextView.setVisibility(View.VISIBLE);
 
+                    // Pre-size the ViewPager to prevent layout shifts
+                    int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+                    int viewPagerHeight = getDefaultImageHeight(); // Use default height for consistency
+                    
+                    // Try to calculate a better height from the first image
+                    if (!mediaItems.isEmpty()) {
+                        FeedPostMediaItem firstItem = mediaItems.get(0);
+                        if (firstItem.getSizes() != null && !firstItem.getSizes().isEmpty()) {
+                            FeedPostMediaItemAsset bestAsset = selectBestImageSize(firstItem.getSizes());
+                            if (bestAsset != null) {
+                                viewPagerHeight = calculateImageHeight(bestAsset, screenWidth);
+                            }
+                        }
+                    }
+                    
+                    // Set the ViewPager height
+                    imageViewPager.getLayoutParams().height = viewPagerHeight;
+                    imageViewPager.requestLayout();
+
                     // Create and set up the images adapter
                     imagesAdapter = new PostImagesAdapter(context, mediaItems, mediaItem -> {
                         if (listener != null) {
@@ -719,10 +732,23 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
          */
         private void setupImageGrid(List<FeedPostMediaItem> mediaItems) {
             int count = mediaItems.size();
+            int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
 
             if (count == 1) {
                 // Single image takes full size
-                ImageView imageView = createImageView(mediaItems.get(0));
+                FeedPostMediaItem mediaItem = mediaItems.get(0);
+                
+                // Pre-calculate and set grid height to prevent layout shifts
+                if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
+                    FeedPostMediaItemAsset bestAsset = selectBestImageSize(mediaItem.getSizes());
+                    if (bestAsset != null) {
+                        int calculatedHeight = calculateImageHeight(bestAsset, screenWidth);
+                        imageGridLayout.getLayoutParams().height = calculatedHeight;
+                        imageGridLayout.requestLayout();
+                    }
+                }
+                
+                ImageView imageView = createImageView(mediaItem);
                 GridLayout.LayoutParams params = new GridLayout.LayoutParams(
                         GridLayout.spec(0, 2, 1f),
                         GridLayout.spec(0, 2, 1f));
@@ -730,12 +756,47 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 params.height = GridLayout.LayoutParams.MATCH_PARENT;
                 imageGridLayout.addView(imageView, params);
             } else if (count == 2) {
+                // Pre-calculate total height for two stacked images
+                int totalHeight = 0;
+                for (int i = 0; i < count; i++) {
+                    FeedPostMediaItem mediaItem = mediaItems.get(i);
+                    if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
+                        FeedPostMediaItemAsset bestAsset = selectBestImageSize(mediaItem.getSizes());
+                        if (bestAsset != null) {
+                            int imageHeight = calculateImageHeight(bestAsset, screenWidth);
+                            totalHeight += imageHeight;
+                            if (i > 0) totalHeight += 4; // Add margin between images
+                        }
+                    }
+                }
+                
+                // Set grid height to prevent layout shifts
+                if (totalHeight > 0) {
+                    imageGridLayout.getLayoutParams().height = totalHeight;
+                    imageGridLayout.requestLayout();
+                }
+                
+                // Set up GridLayout configuration for 2 rows, 1 column
+                imageGridLayout.setRowCount(2);
+                imageGridLayout.setColumnCount(1);
+                
                 // Two images stacked vertically
                 for (int i = 0; i < count; i++) {
-                    ImageView imageView = createImageView(mediaItems.get(i));
+                    FeedPostMediaItem mediaItem = mediaItems.get(i);
+                    ImageView imageView = createImageView(mediaItem);
+                    
+                    // Calculate individual image height for proper layout
+                    int individualHeight = getHalfImageHeight(); // Default fallback
+                    if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
+                        FeedPostMediaItemAsset bestAsset = selectBestImageSize(mediaItem.getSizes());
+                        if (bestAsset != null) {
+                            individualHeight = calculateImageHeight(bestAsset, screenWidth);
+                        }
+                    }
+                    
                     GridLayout.LayoutParams params = new GridLayout.LayoutParams(
-                            GridLayout.spec(i, 1, 1f),  // i'th row, 1 row, 1f weight
-                            GridLayout.spec(0, 1, 1f));  // 0th column, 1 column, 1f weight
+                            GridLayout.spec(i, 1),  // i'th row, span 1 row
+                            GridLayout.spec(0, 1));  // column 0, span 1 column
                     params.width = GridLayout.LayoutParams.MATCH_PARENT;
                     params.height = GridLayout.LayoutParams.WRAP_CONTENT;
                     params.setMargins(0, i > 0 ? 4 : 0, 0, i < count - 1 ? 4 : 0); // Vertical margins between images
@@ -749,8 +810,61 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
          * This is a dedicated method for handling exactly 3 images
          */
         private void setupThreeImagesLayout(List<FeedPostMediaItem> mediaItems) {
-            // Load top image (first image)
+            int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+            int halfWidth = screenWidth / 2;
+            
+            // Pre-calculate layout height to prevent shifting
             FeedPostMediaItem firstItem = mediaItems.get(0);
+            FeedPostMediaItem secondItem = mediaItems.get(1);
+            FeedPostMediaItem thirdItem = mediaItems.get(2);
+            
+            int topImageHeight = 0;
+            int bottomImageHeight = 0;
+            
+            // Calculate top image height (full width)
+            if (firstItem.getSizes() != null && !firstItem.getSizes().isEmpty()) {
+                FeedPostMediaItemAsset bestAsset = selectBestImageSize(firstItem.getSizes());
+                if (bestAsset != null) {
+                    topImageHeight = calculateImageHeight(bestAsset, screenWidth);
+                }
+            }
+            
+            // Calculate bottom images height (half width each, use the taller one)
+            if (secondItem.getSizes() != null && !secondItem.getSizes().isEmpty()) {
+                FeedPostMediaItemAsset bestAsset = selectBestImageSize(secondItem.getSizes());
+                if (bestAsset != null) {
+                    bottomImageHeight = Math.max(bottomImageHeight, calculateImageHeight(bestAsset, halfWidth));
+                }
+            }
+            
+            if (thirdItem.getSizes() != null && !thirdItem.getSizes().isEmpty()) {
+                FeedPostMediaItemAsset bestAsset = selectBestImageSize(thirdItem.getSizes());
+                if (bestAsset != null) {
+                    bottomImageHeight = Math.max(bottomImageHeight, calculateImageHeight(bestAsset, halfWidth));
+                }
+            }
+            
+            // Set the three images layout height
+            int totalHeight = topImageHeight + bottomImageHeight + 4; // 4dp margin between rows
+            if (totalHeight > 0) {
+                threeImagesLayout.getLayoutParams().height = totalHeight;
+                threeImagesLayout.requestLayout();
+                
+                // Pre-size individual image views
+                if (topImageHeight > 0) {
+                    topImageView.getLayoutParams().height = topImageHeight;
+                    topImageView.requestLayout();
+                }
+                
+                if (bottomImageHeight > 0) {
+                    bottomLeftImageView.getLayoutParams().height = bottomImageHeight;
+                    bottomLeftImageView.requestLayout();
+                    bottomRightImageView.getLayoutParams().height = bottomImageHeight;
+                    bottomRightImageView.requestLayout();
+                }
+            }
+            
+            // Load top image (first image)
             loadImageIntoView(firstItem, topImageView);
 
             // Set click listener for full screen viewing
@@ -765,7 +879,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             });
 
             // Load bottom left image (second image)
-            FeedPostMediaItem secondItem = mediaItems.get(1);
             loadImageIntoView(secondItem, bottomLeftImageView);
 
             // Set click listener for full screen viewing
@@ -780,7 +893,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             });
 
             // Load bottom right image (third image)
-            FeedPostMediaItem thirdItem = mediaItems.get(2);
             loadImageIntoView(thirdItem, bottomRightImageView);
 
             // Set click listener for full screen viewing
@@ -819,14 +931,14 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         // Fallback to screen width if no parent
                         parentWidth = context.getResources().getDisplayMetrics().widthPixels;
                     }
-                    
+
                     // Calculate height based on aspect ratio
                     int calculatedHeight = calculateImageHeight(bestAsset, parentWidth);
-                    
+
                     // Set the calculated height
                     imageView.getLayoutParams().height = calculatedHeight;
                     imageView.requestLayout();
-                    
+
                     Glide.with(context)
                             .load(bestAsset.getSrc())
                             .override(parentWidth, calculatedHeight)
@@ -853,35 +965,60 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
          */
         private ImageView createImageView(FeedPostMediaItem mediaItem) {
             ImageView imageView = new ImageView(context);
-            
+
             // Set up ImageView properties similar to single image view
             imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             imageView.setAdjustViewBounds(true);
-            
+
             // Use full screen width for stacked images
             int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
-            
+
             // Load image using Glide if media item has sizes
             if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
                 FeedPostMediaItemAsset bestSizeAsset = selectBestImageSize(mediaItem.getSizes());
 
                 if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
+                    // Get parent width for calculating the appropriate height
+                    int parentWidth;
+                    if (imageView.getParent() instanceof View) {
+                        View parent = (View) imageView.getParent();
+                        parentWidth = parent.getWidth();
+                        // If parent width is zero (not yet measured), use screen width
+                        if (parentWidth == 0) {
+                            parentWidth = context.getResources().getDisplayMetrics().widthPixels;
+                            // Adjust for multi-image layouts where images may not take full width
+                            if (imageView != topImageView) {
+                                parentWidth = parentWidth / 2; // Rough estimate for side-by-side images
+                            }
+                        }
+                    } else {
+                        // Fallback to screen width if no parent
+                        parentWidth = context.getResources().getDisplayMetrics().widthPixels;
+                    }
+
                     // Set up layout parameters for wrap_content height
                     ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT, 
+                            ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.WRAP_CONTENT);
                     imageView.setLayoutParams(layoutParams);
-                    
+
+                    int calculatedHeight = calculateImageHeight(bestSizeAsset, parentWidth);
+
+                    // Set the calculated height
+                    imageView.getLayoutParams().height = calculatedHeight;
+                    imageView.requestLayout();
+
                     // Let Glide load the image with natural aspect ratio
                     Glide.with(context)
                             .load(bestSizeAsset.getSrc())
                             .transition(DrawableTransitionOptions.withCrossFade())
+                            .override(parentWidth, calculatedHeight)
                             .error(R.drawable.image_placeholder)
                             .into(imageView);
                 } else {
                     // Set fallback if no valid asset
                     ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT, 
+                            ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.WRAP_CONTENT);
                     imageView.setLayoutParams(layoutParams);
                     imageView.setImageResource(R.drawable.image_placeholder);
@@ -889,7 +1026,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             } else {
                 // Set fallback if no sizes
                 ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, 
+                        ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.WRAP_CONTENT);
                 imageView.setLayoutParams(layoutParams);
                 imageView.setImageResource(R.drawable.image_placeholder);
@@ -943,10 +1080,22 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
                     if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
                         mediaContainer.setVisibility(View.VISIBLE);
-                        
-                        // Load image without overriding dimensions
+
+                        // Calculate and set height upfront to prevent layout shifts
+                        int containerWidth = mediaContainer.getWidth();
+                        if (containerWidth == 0) {
+                            // Container not yet measured, use screen width as estimate
+                            containerWidth = context.getResources().getDisplayMetrics().widthPixels;
+                        }
+
+                        int calculatedHeight = calculateImageHeight(bestSizeAsset, containerWidth);
+                        mediaImageView.getLayoutParams().height = calculatedHeight;
+                        mediaImageView.requestLayout();
+
+                        // Load image with calculated dimensions
                         Glide.with(context)
                                 .load(bestSizeAsset.getSrc())
+                                .override(containerWidth, calculatedHeight)
                                 .transition(DrawableTransitionOptions.withCrossFade(300))
                                 .error(R.drawable.image_placeholder)
                                 .into(mediaImageView);
@@ -1258,18 +1407,18 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
         /**
          * Shows the post menu with options
-         * 
+         *
          * @param post The post to show menu for
          */
         private void showPostMenu(FeedPost post) {
             // Create popup menu
             PopupMenu popupMenu = new PopupMenu(context, postMenuButton);
             popupMenu.inflate(R.menu.feed_post_menu);
-            
+
             // Set item click listener
             popupMenu.setOnMenuItemClickListener(item -> {
                 int itemId = item.getItemId();
-                
+
                 if (itemId == R.id.menu_delete_post) {
                     // Handle delete post
                     if (listener != null) {
@@ -1277,14 +1426,86 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         return true;
                     }
                 }
-                
+
                 return false;
             });
-            
+
             // Show the popup menu
             popupMenu.show();
         }
-        
+
+        /**
+         * Update the like count and comment count display
+         */
+        private void updateLikeAndCommentCounts(FeedPost post) {
+            final int likeCount = sdk.getPostLikeCount(post.getId());
+            final Integer commentCount = post.getCommentCount();
+            
+            if (likeCount > 0 || (commentCount != null && commentCount > 0)) {
+                likeCountTextView.setVisibility(View.VISIBLE);
+                
+                StringBuilder displayText = new StringBuilder();
+                
+                // Add likes text if there are likes
+                if (likeCount > 0) {
+                    // Show heart icon only when there are likes
+                    likeCountTextView.setCompoundDrawablesWithIntrinsicBounds(
+                            context.getResources().getDrawable(R.drawable.heart_filled_small, null), 
+                            null, null, null);
+                            
+                    String likesText = likeCount == 1 ?
+                            context.getString(R.string.like_count_singular, likeCount) :
+                            context.getString(R.string.like_count_plural, likeCount);
+                    displayText.append(likesText);
+                } else {
+                    // No likes, so don't show heart icon
+                    likeCountTextView.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
+                }
+                
+                // Add comment count if there are comments
+                if (commentCount != null && commentCount > 0) {
+                    // Add separator if needed
+                    if (likeCount > 0) {
+                        displayText.append(" · ");
+                    }
+                    
+                    String commentsText = commentCount == 1 ?
+                            context.getString(R.string.comment_count_singular, commentCount) :
+                            context.getString(R.string.comment_count_plural, commentCount);
+                    displayText.append(commentsText);
+                }
+                
+                // Set the text
+                likeCountTextView.setText(displayText.toString());
+            } else {
+                likeCountTextView.setVisibility(View.GONE);
+            }
+        }
+
+        /**
+         * Update the like button state
+         */
+        private void updateLikeButtonState(FeedPost post) {
+            final boolean userHasLiked = sdk.hasUserReactedToPost(post.getId(), "l");
+            if (userHasLiked) {
+                likeButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.like_filled_icon, 0, 0, 0);
+                likeButton.setTextColor(context.getResources().getColor(android.R.color.holo_red_light, null));
+                likeButton.setText(R.string.liked);
+            } else {
+                likeButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.like_icon, 0, 0, 0);
+                likeButton.setTextColor(likeButton.getContext().getResources().getColor(android.R.color.darker_gray, null));
+                likeButton.setText(R.string.like);
+            }
+        }
+
+        /**
+         * Update only stats and likes without re-binding the entire view
+         */
+        void updateStatsAndLikes(FeedPost post) {
+            updateLikeAndCommentCounts(post);
+            updateLikeButtonState(post);
+        }
+
         /**
          * Format timestamp based on SDK configuration
          * Uses the same logic as CommentViewHolder.updateDateDisplay()

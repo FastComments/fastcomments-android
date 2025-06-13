@@ -891,8 +891,8 @@ public class FastCommentsFeedView extends FrameLayout {
                         for (int i = 0; i < feedPosts.size(); i++) {
                             FeedPost post = feedPosts.get(i);
                             if (post != null && postId.equals(post.getId())) {
-                                // Update this item in the adapter
-                                adapter.notifyItemChanged(i);
+                                // Update only stats and likes using payload-based partial update
+                                adapter.updatePost(i, post, FeedPostsAdapter.UpdateType.STATS_UPDATE);
                                 break;
                             }
                         }
