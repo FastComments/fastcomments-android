@@ -10,6 +10,7 @@
     <color name="white">#FFFFFFFF</color>
     
     <!-- Application specific colors with semantic naming -->
+    <!-- Default color values that can be overridden by consumers -->
     <color name="fastcomments_reply_button_color">@color/primary</color>
     <color name="fastcomments_toggle_replies_button_color">@color/primary</color>
     <color name="fastcomments_link_color">#0099FF</color>

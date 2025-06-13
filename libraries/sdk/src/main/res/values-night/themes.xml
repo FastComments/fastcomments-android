@@ -13,4 +13,19 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <!-- FastComments default dark theme with customizable colors -->
+    <style name="Theme.FastComments" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Dark mode specific FastComments color attributes -->
+        <item name="fastcomments_primary_color">@color/primary_light</item>
+        <item name="fastcomments_primary_light_color">@color/primary_light</item>
+        <item name="fastcomments_primary_dark_color">@color/primary_dark</item>
+        <item name="fastcomments_secondary_color">@color/secondary_light</item>
+        <item name="fastcomments_link_color">#FF42A5F5</item>  <!-- Lighter blue for dark mode -->
+        <item name="fastcomments_link_color_pressed">#FF1E88E5</item>
+        <item name="fastcomments_action_button_color">@color/primary_light</item>
+        <item name="fastcomments_dialog_header_background">#FF1E1E1E</item>  <!-- Darker header for dark mode -->
+        <item name="fastcomments_dialog_header_text_color">@color/white</item>
+        <item name="fastcomments_online_indicator_color">#FF66BB6A</item>  <!-- Lighter green for dark mode -->
+    </style>
 </resources>
