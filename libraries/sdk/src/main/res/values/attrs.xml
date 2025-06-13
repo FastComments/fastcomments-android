@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- FastComments theme attributes for color customization -->
+    <declare-styleable name="FastCommentsTheme">
+        <!-- Primary color used for buttons, reply actions, and other interactive elements -->
+        <attr name="fastcomments_primary_color" format="color|reference" />
+        
+        <!-- Light variant of primary color -->
+        <attr name="fastcomments_primary_light_color" format="color|reference" />
+        
+        <!-- Dark variant of primary color -->
+        <attr name="fastcomments_primary_dark_color" format="color|reference" />
+        
+        <!-- Secondary color for accents and highlights -->
+        <attr name="fastcomments_secondary_color" format="color|reference" />
+        
+        <!-- Link color for clickable text -->
+        <attr name="fastcomments_link_color" format="color|reference" />
+        
+        <!-- Link color when pressed/focused -->
+        <attr name="fastcomments_link_color_pressed" format="color|reference" />
+        
+        <!-- Color for action buttons (reply, vote, etc.) -->
+        <attr name="fastcomments_action_button_color" format="color|reference" />
+        
+        <!-- Background color for dialog headers -->
+        <attr name="fastcomments_dialog_header_background" format="color|reference" />
+        
+        <!-- Text color for dialog headers -->
+        <attr name="fastcomments_dialog_header_text_color" format="color|reference" />
+        
+        <!-- Online indicator color for live chat -->
+        <attr name="fastcomments_online_indicator_color" format="color|reference" />
+    </declare-styleable>
+</resources>
