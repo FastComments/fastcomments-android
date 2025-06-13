@@ -230,6 +230,16 @@ public class FastCommentsFeedView extends FrameLayout {
         
         recyclerView.setAdapter(adapter);
 
+        // Set up scroll-to-top listener for when new posts are added
+        adapter.setOnScrollToTopRequestedListener(() -> {
+            if (recyclerView != null) {
+                // Use post() to ensure RecyclerView layout is complete before scrolling
+                recyclerView.post(() -> {
+                    recyclerView.smoothScrollToPosition(0);
+                });
+            }
+        });
+
         // Set up pull-to-refresh
         swipeRefreshLayout.setOnRefreshListener(this::refresh);
         
@@ -517,12 +527,7 @@ public class FastCommentsFeedView extends FrameLayout {
                             firstVisiblePosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
                         }
                         
-                        adapter.updatePosts(posts);
-                        
-                        // Restore position if we had one
-                        if (firstVisiblePosition >= 0 && firstVisiblePosition < posts.size()) {
-                            recyclerView.scrollToPosition(firstVisiblePosition);
-                        }
+                        adapter.updatePosts(posts, true);
                     }
 
                     if (listener != null) {
