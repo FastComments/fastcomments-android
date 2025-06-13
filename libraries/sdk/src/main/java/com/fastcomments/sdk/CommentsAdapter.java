@@ -235,11 +235,11 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
      * Get the position for a specific comment in the adapter
      *
      * @param comment The comment to find
-     * @return The position or 0 if not found
+     * @return The position or -1 if not found
      */
     public int getPositionForComment(RenderableComment comment) {
         if (comment == null || commentsTree.visibleNodes.isEmpty()) {
-            return 0;
+            return -1;
         }
 
         return commentsTree.visibleNodes.indexOf(comment);

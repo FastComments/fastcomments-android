@@ -329,8 +329,13 @@ public class FastCommentsView extends FrameLayout {
                 }
             }
 
-            // Notify adapter to update UI immediately for better UX
-            adapter.notifyDataSetChanged();
+            // Notify adapter to update UI immediately for better UX - use targeted update for performance
+            int position = adapter.getPositionForComment(commentToVote);
+            if (position != -1) {
+                adapter.notifyItemChanged(position);
+            } else {
+                Log.w("FastCommentsView", "Could not find comment position for vote update, UI may not refresh");
+            }
 
             // Store toast message for display after successful API call
             final String finalToastMessage = toastMessage;
@@ -360,8 +365,13 @@ public class FastCommentsView extends FrameLayout {
                                 android.widget.Toast.LENGTH_SHORT
                         ).show();
 
-                        // Update the UI
-                        adapter.notifyDataSetChanged();
+                        // Update the UI - use targeted update for performance
+                        int position = adapter.getPositionForComment(commentToVote);
+                        if (position != -1) {
+                            adapter.notifyItemChanged(position);
+                        } else {
+                            Log.w("FastCommentsView", "Could not find comment position for vote rollback, UI may not refresh");
+                        }
                     });
 
                     return CONSUME;
@@ -468,8 +478,13 @@ public class FastCommentsView extends FrameLayout {
                 toastMessage = getContext().getString(R.string.you_downvoted, commenterName);
             }
 
-            // Notify adapter to update UI immediately for better UX
-            adapter.notifyDataSetChanged();
+            // Notify adapter to update UI immediately for better UX - use targeted update for performance
+            int position = adapter.getPositionForComment(commentToVote);
+            if (position != -1) {
+                adapter.notifyItemChanged(position);
+            } else {
+                Log.w("FastCommentsView", "Could not find comment position for vote update, UI may not refresh");
+            }
 
             // Store toast message for display after successful API call
             final String finalToastMessage = toastMessage;
