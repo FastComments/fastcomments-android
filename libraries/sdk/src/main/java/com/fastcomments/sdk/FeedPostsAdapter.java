@@ -361,12 +361,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         // Calculate height based on aspect ratio and display width
         int calculatedHeight = (int) (displayWidth / aspectRatio);
 
-        // Set minimum bound to prevent extremely small images
-        int minHeight = context.getResources().getDimensionPixelSize(R.dimen.feed_image_half_height);
-
-        // Ensure the height is at least the minimum height 
-        // but allow it to be as tall as needed by the aspect ratio
-        return Math.max(minHeight, calculatedHeight);
+        // setting a minimum height makes short images appear weird
+        return calculatedHeight;
     }
 
     enum FeedPostType {
