@@ -18,6 +18,10 @@ import com.fastcomments.sdk.CommentsDialog;
 import com.fastcomments.sdk.FastCommentsFeedSDK;
 import com.fastcomments.sdk.FastCommentsFeedView;
 import com.fastcomments.sdk.FeedPostCreateView;
+import com.fastcomments.sdk.OnUserClickListener;
+import com.fastcomments.sdk.UserClickContext;
+import com.fastcomments.sdk.UserClickSource;
+import com.fastcomments.sdk.UserInfo;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.List;
@@ -31,6 +35,7 @@ public class FeedExampleActivity extends AppCompatActivity {
     private FastCommentsFeedSDK feedSDK;
     private FeedPostCreateView postCreateView;
     private FloatingActionButton createPostFab;
+    private OnUserClickListener userClickListener;
 
     // Image picker launcher
     private final ActivityResultLauncher<String> pickImageLauncher = 
@@ -72,6 +77,8 @@ public class FeedExampleActivity extends AppCompatActivity {
         // Create and add the FeedPostCreateView
         setupPostCreationView();
 
+        setupUserClickListener();
+
         // Set interaction listener
         feedView.setFeedViewInteractionListener(new FastCommentsFeedView.OnFeedViewInteractionListener() {
             @Override
@@ -112,12 +119,26 @@ public class FeedExampleActivity extends AppCompatActivity {
                     });
                 });
                 
+                dialog.setOnUserClickListener(userClickListener);
+                
                 dialog.show();
             }
         });
+        
+        feedView.setOnUserClickListener(userClickListener);
 
         // Load the feed
         feedView.load();
+    }
+
+    private void setupUserClickListener() {
+        userClickListener = (context, userInfo, source) -> {
+            String sourceText = source == UserClickSource.NAME ? "name" : "avatar";
+            String contextText = context.isComment() ? "comment" : "feed post";
+            Toast.makeText(FeedExampleActivity.this, 
+                "Clicked " + userInfo.getDisplayName() + "'s " + sourceText + " in " + contextText, 
+                Toast.LENGTH_SHORT).show();
+        };
     }
 
     /**

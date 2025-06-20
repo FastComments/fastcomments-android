@@ -71,6 +71,7 @@ public class FastCommentsFeedView extends FrameLayout {
     private Handler handler;
     private List<FeedPost> feedPosts = new ArrayList<>();
     private OnFeedViewInteractionListener listener;
+    private OnUserClickListener userClickListener;
     
     // Polling for post stats
     private static final long POLLING_INTERVAL_MS = 30 * 1000; // 30 seconds
@@ -228,6 +229,15 @@ public class FastCommentsFeedView extends FrameLayout {
                             dialog.dismiss();
                         })
                         .show();
+            }
+            
+            @Override
+            public void onUserClick(FeedPost post, UserInfo userInfo, UserClickSource source) {
+                // Notify the user click listener if set
+                if (userClickListener != null) {
+                    UserClickContext context = UserClickContext.fromFeedPost(post);
+                    userClickListener.onUserClicked(context, userInfo, source);
+                }
             }
         });
         
@@ -395,6 +405,15 @@ public class FastCommentsFeedView extends FrameLayout {
      */
     public void setFeedViewInteractionListener(OnFeedViewInteractionListener listener) {
         this.listener = listener;
+    }
+    
+    /**
+     * Set a listener to be notified when a user (name or avatar) is clicked
+     * 
+     * @param listener The listener to set
+     */
+    public void setOnUserClickListener(OnUserClickListener listener) {
+        this.userClickListener = listener;
     }
 
     /**

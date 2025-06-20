@@ -57,6 +57,7 @@ public class FastCommentsView extends FrameLayout {
     private static final long DATE_UPDATE_INTERVAL = 60000; // Update every minute
     private CommentPostListener commentPostListener;
     private OnReplyClickListener replyClickListener;
+    private OnUserClickListener userClickListener;
 
     /**
      * Interface for comment post callbacks
@@ -88,6 +89,19 @@ public class FastCommentsView extends FrameLayout {
      */
     public void setOnReplyClickListener(OnReplyClickListener listener) {
         this.replyClickListener = listener;
+    }
+    
+    /**
+     * Set a listener to be notified when a user (name or avatar) is clicked
+     *
+     * @param listener The listener to set
+     */
+    public void setOnUserClickListener(OnUserClickListener listener) {
+        this.userClickListener = listener;
+        // Update existing adapter if it's already created
+        if (adapter != null) {
+            adapter.setUserClickListener(listener);
+        }
     }
 
     // Standard View constructors for inflation from XML
@@ -270,6 +284,9 @@ public class FastCommentsView extends FrameLayout {
                 replyClickListener.onReplyClick(commentToReplyTo);
             }
         });
+        
+        // Handle user click events
+        adapter.setUserClickListener(userClickListener);
 
         // Handle upvote requests
         adapter.setUpVoteListener((commentToVote) -> {
