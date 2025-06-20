@@ -1,6 +1,7 @@
 package com.fastcomments.sdk;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -259,6 +260,7 @@ public class BottomCommentInputView extends FrameLayout {
      */
     public void setSDK(FastCommentsSDK sdk) {
         this.sdk = sdk;
+        applyTheme();
     }
 
     /**
@@ -489,6 +491,22 @@ public class BottomCommentInputView extends FrameLayout {
         
         // Reset the mention state
         cancelMention();
+    }
+    
+    /**
+     * Apply theme colors to the UI elements
+     */
+    private void applyTheme() {
+        FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
+        
+        // Apply action button color to the send button
+        int actionButtonColor = ThemeColorResolver.getActionButtonColor(getContext(), theme);
+        sendButton.setImageTintList(ColorStateList.valueOf(actionButtonColor));
+        
+        // Also apply to cancel reply button
+        if (cancelReplyButton != null) {
+            cancelReplyButton.setImageTintList(ColorStateList.valueOf(actionButtonColor));
+        }
     }
     
     /**

@@ -2,6 +2,7 @@ package com.fastcomments.sdk;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
@@ -17,10 +18,12 @@ public class CommentEditDialog {
 
     private Dialog dialog;
     private final Context context;
+    private final FastCommentsSDK sdk;
     private Callback<String> onSaveCallback;
 
-    public CommentEditDialog(Context context) {
+    public CommentEditDialog(Context context, FastCommentsSDK sdk) {
         this.context = context;
+        this.sdk = sdk;
     }
 
     /**
@@ -72,7 +75,26 @@ public class CommentEditDialog {
             }
         });
         
+        // Apply theme colors
+        applyTheme(cancelButton, saveButton);
+        
         dialog.show();
+    }
+    
+    /**
+     * Apply theme colors to dialog buttons
+     */
+    private void applyTheme(Button cancelButton, Button saveButton) {
+        FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
+        
+        // Apply action button color to both buttons
+        int actionButtonColor = ThemeColorResolver.getActionButtonColor(context, theme);
+        if (cancelButton != null) {
+            cancelButton.setTextColor(actionButtonColor);
+        }
+        if (saveButton != null) {
+            saveButton.setTextColor(actionButtonColor);
+        }
     }
     
     /**

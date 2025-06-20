@@ -1,6 +1,7 @@
 package com.fastcomments.sdk;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -103,7 +104,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             return new DateSeparatorViewHolder(view);
         } else {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_button, parent, false);
-            return new ButtonViewHolder(view);
+            return new ButtonViewHolder(view, sdk, context);
         }
     }
 
@@ -264,10 +265,28 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
      */
     static class ButtonViewHolder extends RecyclerView.ViewHolder {
         private final Button button;
+        private final FastCommentsSDK sdk;
+        private final Context context;
         
-        public ButtonViewHolder(@NonNull View itemView) {
+        public ButtonViewHolder(@NonNull View itemView, FastCommentsSDK sdk, Context context) {
             super(itemView);
+            this.sdk = sdk;
+            this.context = context;
             button = itemView.findViewById(R.id.btnNewComments);
+            applyTheme();
+        }
+        
+        /**
+         * Apply theme colors to the button
+         */
+        private void applyTheme() {
+            FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
+            
+            // Apply load more button text color
+            int loadMoreButtonTextColor = ThemeColorResolver.getLoadMoreButtonTextColor(context, theme);
+            if (button != null) {
+                button.setTextColor(loadMoreButtonTextColor);
+            }
         }
         
         public void setButtonText(String text) {

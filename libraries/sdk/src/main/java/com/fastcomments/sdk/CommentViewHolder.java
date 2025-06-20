@@ -1,6 +1,7 @@
 package com.fastcomments.sdk;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -99,6 +100,49 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         childPaginationControls = itemView.findViewById(R.id.childPaginationControls);
         btnLoadMoreReplies = itemView.findViewById(R.id.btnLoadMoreReplies);
         childPaginationProgressBar = itemView.findViewById(R.id.childPaginationProgressBar);
+        
+        // Apply theme colors
+        applyTheme();
+    }
+
+    /**
+     * Apply theme colors to buttons and UI elements
+     */
+    private void applyTheme() {
+        FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
+        
+        // Apply action button colors to ImageButtons
+        int actionButtonColor = ThemeColorResolver.getActionButtonColor(context, theme);
+        if (upVoteButton != null) {
+            upVoteButton.setImageTintList(ColorStateList.valueOf(actionButtonColor));
+        }
+        if (downVoteButton != null) {
+            downVoteButton.setImageTintList(ColorStateList.valueOf(actionButtonColor));
+        }
+        if (heartButton != null) {
+            heartButton.setImageTintList(ColorStateList.valueOf(actionButtonColor));
+        }
+        if (commentMenuButton != null) {
+            commentMenuButton.setImageTintList(ColorStateList.valueOf(actionButtonColor));
+        }
+        
+        // Apply reply button color
+        int replyButtonColor = ThemeColorResolver.getReplyButtonColor(context, theme);
+        if (replyButton != null) {
+            replyButton.setTextColor(replyButtonColor);
+        }
+        
+        // Apply toggle replies button color
+        int toggleRepliesButtonColor = ThemeColorResolver.getToggleRepliesButtonColor(context, theme);
+        if (toggleRepliesButton != null) {
+            toggleRepliesButton.setTextColor(toggleRepliesButtonColor);
+        }
+        
+        // Apply load more button text color
+        int loadMoreButtonTextColor = ThemeColorResolver.getLoadMoreButtonTextColor(context, theme);
+        if (btnLoadMoreReplies != null) {
+            btnLoadMoreReplies.setTextColor(loadMoreButtonTextColor);
+        }
     }
 
     private boolean liveChatStyle = false;
@@ -196,22 +240,22 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         if (upVotes != null && upVotes > 0) {
             upVoteCountTextView.setText(String.valueOf(upVotes));
             upVoteCountTextView.setTypeface(null, android.graphics.Typeface.BOLD);
-            upVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_color));
+            upVoteCountTextView.setTextColor(ThemeColorResolver.getVoteCountColor(context, sdk.getTheme()));
         } else {
             upVoteCountTextView.setText(R.string.vote_count_zero);
             upVoteCountTextView.setTypeface(null, android.graphics.Typeface.NORMAL);
-            upVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_zero_color));
+            upVoteCountTextView.setTextColor(ThemeColorResolver.getVoteCountZeroColor(context, sdk.getTheme()));
         }
 
         Integer downVotes = comment.getComment().getVotesDown();
         if (downVotes != null && downVotes > 0) {
             downVoteCountTextView.setText(String.valueOf(downVotes));
             downVoteCountTextView.setTypeface(null, android.graphics.Typeface.BOLD);
-            downVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_color));
+            downVoteCountTextView.setTextColor(ThemeColorResolver.getVoteCountColor(context, sdk.getTheme()));
         } else {
             downVoteCountTextView.setText(R.string.vote_count_zero);
             downVoteCountTextView.setTypeface(null, android.graphics.Typeface.NORMAL);
-            downVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_zero_color));
+            downVoteCountTextView.setTextColor(ThemeColorResolver.getVoteCountZeroColor(context, sdk.getTheme()));
         }
 
         // Set button selected states based on user's votes
@@ -228,11 +272,11 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         if (upVotes != null && upVotes > 0) {
             heartVoteCountTextView.setText(formatAbbreviatedCount(upVotes));
             heartVoteCountTextView.setTypeface(null, android.graphics.Typeface.BOLD);
-            heartVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_color));
+            heartVoteCountTextView.setTextColor(ThemeColorResolver.getVoteCountColor(context, sdk.getTheme()));
         } else {
             heartVoteCountTextView.setText(R.string.vote_count_zero);
             heartVoteCountTextView.setTypeface(null, android.graphics.Typeface.NORMAL);
-            heartVoteCountTextView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.fastcomments_vote_count_zero_color));
+            heartVoteCountTextView.setTextColor(ThemeColorResolver.getVoteCountZeroColor(context, sdk.getTheme()));
         }
 
         // Check if voting is disabled first
