@@ -684,40 +684,15 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             }
         }
 
-        // Reference to the new 3-images layout
-        private LinearLayout threeImagesLayout;
-        private ImageView topImageView, bottomLeftImageView, bottomRightImageView;
 
         private void bindMultiImagePost(FeedPost post) {
             if (post.getMedia() != null && !post.getMedia().isEmpty()) {
                 mediaItems = post.getMedia();
 
-                // Make sure we have references to the new layout
-                if (threeImagesLayout == null) {
-                    threeImagesLayout = itemView.findViewById(R.id.threeImagesLayout);
-                    topImageView = itemView.findViewById(R.id.topImageView);
-                    bottomLeftImageView = itemView.findViewById(R.id.bottomLeftImageView);
-                    bottomRightImageView = itemView.findViewById(R.id.bottomRightImageView);
-                }
 
-                // Special case for exactly 3 images - use the dedicated layout
-                if (mediaItems.size() == 3) {
-                    // Show 3-image layout, hide others
-                    threeImagesLayout.setVisibility(View.VISIBLE);
-                    imageGridLayout.setVisibility(View.GONE);
-                    imageViewPager.setVisibility(View.GONE);
-                    imageCounterTextView.setVisibility(View.GONE);
-
-                    // Set up the 3 images
-                    setupThreeImagesLayout(post, mediaItems);
-
-                    // Make sure container is visible
-                    mediaGalleryContainer.setVisibility(View.VISIBLE);
-                }
                 // For posts with 1-2 images, use grid layout
-                else if (mediaItems.size() <= 2) {
+                if (mediaItems.size() <= 2) {
                     imageGridLayout.setVisibility(View.VISIBLE);
-                    threeImagesLayout.setVisibility(View.GONE);
                     imageViewPager.setVisibility(View.GONE);
                     imageCounterTextView.setVisibility(View.GONE);
 
@@ -731,9 +706,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     imageGridLayout.invalidate();
                     mediaGalleryContainer.setVisibility(View.VISIBLE);
                 } else {
-                    // For 4+ images, use the ViewPager
+                    // For 3+ images, use the ViewPager
                     imageGridLayout.setVisibility(View.GONE);
-                    threeImagesLayout.setVisibility(View.GONE);
                     imageViewPager.setVisibility(View.VISIBLE);
                     imageCounterTextView.setVisibility(View.VISIBLE);
 
@@ -868,134 +842,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         }
 
         /**
-         * Set up the three images layout with the given media items
-         * This is a dedicated method for handling exactly 3 images
-         */
-        private void setupThreeImagesLayout(FeedPost post, List<FeedPostMediaItem> mediaItems) {
-            int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
-            int halfWidth = screenWidth / 2;
-            
-            // Pre-calculate layout height to prevent shifting
-            FeedPostMediaItem firstItem = mediaItems.get(0);
-            FeedPostMediaItem secondItem = mediaItems.get(1);
-            FeedPostMediaItem thirdItem = mediaItems.get(2);
-            
-            int topImageHeight = 0;
-            int bottomImageHeight = 0;
-            
-            // Calculate top image height (full width)
-            if (firstItem.getSizes() != null && !firstItem.getSizes().isEmpty()) {
-                FeedPostMediaItemAsset bestAsset = selectBestImageSize(firstItem.getSizes());
-                if (bestAsset != null) {
-                    topImageHeight = calculateImageHeight(bestAsset, screenWidth);
-                }
-            }
-            
-            // Calculate bottom images height (half width each, use the taller one)
-            if (secondItem.getSizes() != null && !secondItem.getSizes().isEmpty()) {
-                FeedPostMediaItemAsset bestAsset = selectBestImageSize(secondItem.getSizes());
-                if (bestAsset != null) {
-                    bottomImageHeight = Math.max(bottomImageHeight, calculateImageHeight(bestAsset, halfWidth));
-                }
-            }
-            
-            if (thirdItem.getSizes() != null && !thirdItem.getSizes().isEmpty()) {
-                FeedPostMediaItemAsset bestAsset = selectBestImageSize(thirdItem.getSizes());
-                if (bestAsset != null) {
-                    bottomImageHeight = Math.max(bottomImageHeight, calculateImageHeight(bestAsset, halfWidth));
-                }
-            }
-            
-            // Set the three images layout height
-            int totalHeight = topImageHeight + bottomImageHeight + 4; // 4dp margin between rows
-            if (totalHeight > 0) {
-                threeImagesLayout.getLayoutParams().height = totalHeight;
-                threeImagesLayout.requestLayout();
-                
-                // Pre-size individual image views
-                if (topImageHeight > 0) {
-                    topImageView.getLayoutParams().height = topImageHeight;
-                    topImageView.requestLayout();
-                }
-                
-                if (bottomImageHeight > 0) {
-                    bottomLeftImageView.getLayoutParams().height = bottomImageHeight;
-                    bottomLeftImageView.requestLayout();
-                    bottomRightImageView.getLayoutParams().height = bottomImageHeight;
-                    bottomRightImageView.requestLayout();
-                }
-            }
-            
-            // Load top image (first image)
-            loadImageIntoView(firstItem, topImageView);
-
-            // Set click listener for full screen viewing - start at image 0 (first image)
-            topImageView.setOnClickListener(v -> handleImageClick(post, firstItem, 0));
-
-            // Load bottom left image (second image)
-            loadImageIntoView(secondItem, bottomLeftImageView);
-
-            // Set click listener for full screen viewing - start at image 1 (second image)
-            bottomLeftImageView.setOnClickListener(v -> handleImageClick(post, secondItem, 1));
-
-            // Load bottom right image (third image)
-            loadImageIntoView(thirdItem, bottomRightImageView);
-
-            // Set click listener for full screen viewing - start at image 2 (third image)
-            bottomRightImageView.setOnClickListener(v -> handleImageClick(post, thirdItem, 2));
-        }
-
-        /**
-         * Helper method to load an image into an ImageView
-         */
-        private void loadImageIntoView(FeedPostMediaItem mediaItem, ImageView imageView) {
-            if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
-                FeedPostMediaItemAsset bestAsset = selectBestImageSize(mediaItem.getSizes());
-                if (bestAsset != null && bestAsset.getSrc() != null) {
-                    // Get parent width for calculating the appropriate height
-                    int parentWidth;
-                    if (imageView.getParent() instanceof View) {
-                        View parent = (View) imageView.getParent();
-                        parentWidth = parent.getWidth();
-                        // If parent width is zero (not yet measured), use screen width
-                        if (parentWidth == 0) {
-                            parentWidth = context.getResources().getDisplayMetrics().widthPixels;
-                            // Adjust for multi-image layouts where images may not take full width
-                            if (imageView != topImageView) {
-                                parentWidth = parentWidth / 2; // Rough estimate for side-by-side images
-                            }
-                        }
-                    } else {
-                        // Fallback to screen width if no parent
-                        parentWidth = context.getResources().getDisplayMetrics().widthPixels;
-                    }
-
-                    // Calculate height based on aspect ratio
-                    int calculatedHeight = calculateImageHeight(bestAsset, parentWidth);
-
-                    // Set the calculated height
-                    imageView.getLayoutParams().height = calculatedHeight;
-                    imageView.requestLayout();
-
-                    Glide.with(context)
-                            .load(bestAsset.getSrc())
-                            .override(parentWidth, calculatedHeight)
-                            .transition(DrawableTransitionOptions.withCrossFade(300))
-                            .error(R.drawable.image_placeholder)
-                            .into(imageView);
-                } else {
-                    imageView.setImageResource(R.drawable.image_placeholder);
-                    imageView.getLayoutParams().height = getHalfImageHeight();
-                    imageView.requestLayout();
-                }
-            } else {
-                imageView.setImageResource(R.drawable.image_placeholder);
-                imageView.getLayoutParams().height = getHalfImageHeight();
-                imageView.requestLayout();
-            }
-        }
-
-        /**
          * Create an ImageView for a media item
          *
          * @param post The post containing the media
@@ -1026,10 +872,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         // If parent width is zero (not yet measured), use screen width
                         if (parentWidth == 0) {
                             parentWidth = context.getResources().getDisplayMetrics().widthPixels;
-                            // Adjust for multi-image layouts where images may not take full width
-                            if (imageView != topImageView) {
-                                parentWidth = parentWidth / 2; // Rough estimate for side-by-side images
-                            }
                         }
                     } else {
                         // Fallback to screen width if no parent
