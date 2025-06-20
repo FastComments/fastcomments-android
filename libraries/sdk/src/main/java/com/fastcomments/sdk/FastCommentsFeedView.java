@@ -137,6 +137,9 @@ public class FastCommentsFeedView extends FrameLayout {
         loadMoreProgressBar = findViewById(R.id.loadMoreProgressBar);
         emptyStateView = findViewById(R.id.emptyStateView);
         errorStateView = findViewById(R.id.errorStateView);
+        
+        // Initialize demo banner
+        setupDemoBanner();
 
         // Set up RecyclerView
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
@@ -310,6 +313,9 @@ public class FastCommentsFeedView extends FrameLayout {
                 }
             });
         }
+        
+        // Setup demo banner
+        setupDemoBanner();
     }
     
     /**
@@ -1021,5 +1027,12 @@ public class FastCommentsFeedView extends FrameLayout {
         if (adapter != null) {
             adapter.updatePosts(new ArrayList<>());
         }
+    }
+    
+    /**
+     * Sets up the demo banner if tenant ID is "demo"
+     */
+    private void setupDemoBanner() {
+        DemoBannerHelper.setupDemoBanner(this, sdk);
     }
 }

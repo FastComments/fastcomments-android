@@ -2,6 +2,8 @@ package com.fastcomments.sdk;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
@@ -138,6 +140,9 @@ public class FastCommentsView extends FrameLayout {
         progressBar = findViewById(R.id.commentsProgressBar);
         emptyStateView = findViewById(R.id.emptyStateView);
         bottomCommentInput = findViewById(R.id.bottomCommentInput);
+        
+        // Initialize demo banner
+        setupDemoBanner();
 
         // Initialize pagination controls
         this.paginationControls = findViewById(R.id.paginationControls);
@@ -191,6 +196,7 @@ public class FastCommentsView extends FrameLayout {
         this.sdk = sdk;
         if (sdk != null) {
             initializeWithSDK();
+            setupDemoBanner();
         }
     }
 
@@ -1670,5 +1676,12 @@ public class FastCommentsView extends FrameLayout {
     public boolean isReplyingToComment() {
         return bottomCommentInput != null &&
                 bottomCommentInput.getParentComment() != null;
+    }
+    
+    /**
+     * Sets up the demo banner if tenant ID is "demo"
+     */
+    private void setupDemoBanner() {
+        DemoBannerHelper.setupDemoBanner(this, sdk);
     }
 }
