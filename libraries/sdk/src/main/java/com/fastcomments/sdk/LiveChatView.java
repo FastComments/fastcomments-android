@@ -275,6 +275,7 @@ public class LiveChatView extends FrameLayout {
         this.sdk = sdk;
         if (sdk != null) {
             initializeWithSDK();
+            setupDemoBanner();
         }
     }
     
@@ -1492,5 +1493,12 @@ public class LiveChatView extends FrameLayout {
      */
     public boolean isAutoScrollToBottom() {
         return autoScrollToBottom;
+    }
+    
+    /**
+     * Sets up the demo banner if tenant ID is "demo"
+     */
+    private void setupDemoBanner() {
+        DemoBannerHelper.setupDemoBanner(this, sdk);
     }
 }
