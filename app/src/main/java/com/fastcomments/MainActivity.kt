@@ -1,12 +1,17 @@
 package com.fastcomments
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.fastcomments.core.CommentWidgetConfig
 import com.fastcomments.core.VoteStyle
 import com.fastcomments.sdk.FastCommentsSDK
 import com.fastcomments.sdk.FastCommentsTheme
 import com.fastcomments.sdk.FastCommentsView
+import com.fastcomments.sdk.OnUserClickListener
+import com.fastcomments.sdk.UserClickSource
+import com.fastcomments.sdk.UserInfo
+import com.fastcomments.sdk.UserClickContext
 
 class MainActivity : AppCompatActivity() {
     
@@ -64,6 +69,11 @@ class MainActivity : AppCompatActivity() {
         
         // Set the SDK instance for the view
         commentsView.setSDK(sdk)
+        
+        commentsView.setOnUserClickListener { context, userInfo, source ->
+            val sourceText = if (source == UserClickSource.NAME) "name" else "avatar"
+            Toast.makeText(this@MainActivity, "Clicked ${userInfo.displayName}'s $sourceText", Toast.LENGTH_SHORT).show()
+        }
         
         // Load comments
         commentsView.load()

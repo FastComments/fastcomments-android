@@ -493,6 +493,24 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     }
     
     /**
+     * Set the click listener for the user avatar
+     * 
+     * @param clickListener The click listener to set
+     */
+    public void setAvatarClickListener(View.OnClickListener clickListener) {
+        avatarImageView.setOnClickListener(clickListener);
+    }
+    
+    /**
+     * Set the click listener for the user name
+     * 
+     * @param clickListener The click listener to set
+     */
+    public void setUserNameClickListener(View.OnClickListener clickListener) {
+        nameTextView.setOnClickListener(clickListener);
+    }
+    
+    /**
      * Show the comment menu
      * 
      * @param commentMenuListener The listener to handle menu items

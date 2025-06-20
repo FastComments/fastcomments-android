@@ -30,6 +30,7 @@ public class CommentsDialog extends Dialog {
     private final FastCommentsFeedSDK feedSDK;
     private FastCommentsView commentsView;
     private OnCommentAddedListener commentAddedListener;
+    private OnUserClickListener userClickListener;
     
     /**
      * Interface for notifying when a comment is added
@@ -57,6 +58,26 @@ public class CommentsDialog extends Dialog {
      */
     public OnCommentAddedListener getOnCommentAddedListener() {
         return commentAddedListener;
+    }
+    
+    /**
+     * Set a listener to be notified when a user (name or avatar) is clicked
+     * @param listener The listener to set
+     */
+    public void setOnUserClickListener(OnUserClickListener listener) {
+        this.userClickListener = listener;
+        // If commentsView is already created, pass the listener to it
+        if (commentsView != null) {
+            commentsView.setOnUserClickListener(listener);
+        }
+    }
+    
+    /**
+     * Get the current user click listener
+     * @return The current listener
+     */
+    public OnUserClickListener getOnUserClickListener() {
+        return userClickListener;
     }
     
     /**
@@ -98,6 +119,11 @@ public class CommentsDialog extends Dialog {
         // Create the comments SDK and view
         FastCommentsSDK commentsSDK = feedSDK.createCommentsSDKForPost(post);
         commentsView = new FastCommentsView(getContext(), commentsSDK);
+        
+        // Set user click listener if one was provided
+        if (userClickListener != null) {
+            commentsView.setOnUserClickListener(userClickListener);
+        }
         
         // Set up comment form listener to know when a comment is posted
         commentsView.setCommentPostListener((comment) -> {

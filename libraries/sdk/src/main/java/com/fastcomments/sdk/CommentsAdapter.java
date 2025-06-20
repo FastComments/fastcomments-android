@@ -36,6 +36,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private Producer<GetChildrenRequest, List<PublicComment>> getChildren;
     private Callback<String> newChildCommentsListener; // Triggered when clicking "Show new replies" button
     private OnCommentMenuItemListener commentMenuListener; // Listener for comment menu actions
+    private OnUserClickListener userClickListener; // Listener for user name/avatar clicks
 
     public CommentsAdapter(Context context, FastCommentsSDK sdk) {
         this.context = context;
@@ -66,6 +67,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     
     public void setCommentMenuListener(OnCommentMenuItemListener listener) {
         this.commentMenuListener = listener;
+    }
+    
+    public void setUserClickListener(OnUserClickListener listener) {
+        this.userClickListener = listener;
     }
 
     public void setGetChildrenProducer(Producer<GetChildrenRequest, List<PublicComment>> getChildren) {
@@ -176,6 +181,21 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         
         // Set up comment menu click listener
         holder.setCommentMenuClickListener(commentMenuListener);
+        
+        // Set up user click listeners
+        if (userClickListener != null) {
+            holder.setUserNameClickListener(v -> {
+                UserInfo userInfo = UserInfo.fromComment(comment.getComment());
+                UserClickContext context = UserClickContext.fromComment(comment.getComment());
+                userClickListener.onUserClicked(context, userInfo, UserClickSource.NAME);
+            });
+            
+            holder.setAvatarClickListener(v -> {
+                UserInfo userInfo = UserInfo.fromComment(comment.getComment());
+                UserClickContext context = UserClickContext.fromComment(comment.getComment());
+                userClickListener.onUserClicked(context, userInfo, UserClickSource.AVATAR);
+            });
+        }
         
         // Set up load more children click listener
         holder.setLoadMoreChildrenClickListener(v -> {

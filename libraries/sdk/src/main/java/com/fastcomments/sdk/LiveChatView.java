@@ -84,6 +84,7 @@ public class LiveChatView extends FrameLayout {
     }
     
     private CommentActionListener commentActionListener;
+    private OnUserClickListener userClickListener;
     
     /**
      * Set a listener to be notified of comment actions
@@ -91,6 +92,18 @@ public class LiveChatView extends FrameLayout {
      */
     public void setCommentActionListener(CommentActionListener listener) {
         this.commentActionListener = listener;
+    }
+    
+    /**
+     * Set a listener to be notified when a user (name or avatar) is clicked
+     * @param listener The listener to set
+     */
+    public void setOnUserClickListener(OnUserClickListener listener) {
+        this.userClickListener = listener;
+        // Update existing adapter if it's already created
+        if (adapter != null) {
+            adapter.setUserClickListener(listener);
+        }
     }
 
     // Standard View constructors for inflation from XML
@@ -377,6 +390,9 @@ public class LiveChatView extends FrameLayout {
         
         // Set up comment menu listener
         setupCommentMenuListener();
+        
+        // Handle user click events
+        adapter.setUserClickListener(userClickListener);
         
         // The SDK supports loading child comments, but we don't need to show
         // them in the chat view as they appear as top-level messages

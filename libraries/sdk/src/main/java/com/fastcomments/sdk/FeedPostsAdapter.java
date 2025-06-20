@@ -60,6 +60,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         void onMediaClick(FeedPostMediaItem mediaItem);
 
         void onDeletePost(FeedPost post);
+        
+        void onUserClick(FeedPost post, UserInfo userInfo, UserClickSource source);
     }
 
     public interface OnScrollToTopRequestedListener {
@@ -517,6 +519,23 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         avatarImageView.setVisibility(View.VISIBLE);
                         AvatarFetcher.fetchTransformInto(context, R.drawable.default_avatar, avatarImageView);
                     }
+                }
+                
+                // Set up user click listeners
+                userNameTextView.setOnClickListener(v -> {
+                    if (listener != null) {
+                        UserInfo userInfo = UserInfo.fromFeedPost(post);
+                        listener.onUserClick(post, userInfo, UserClickSource.NAME);
+                    }
+                });
+                
+                if (avatarImageView != null) {
+                    avatarImageView.setOnClickListener(v -> {
+                        if (listener != null) {
+                            UserInfo userInfo = UserInfo.fromFeedPost(post);
+                            listener.onUserClick(post, userInfo, UserClickSource.AVATAR);
+                        }
+                    });
                 }
             } else {
                 // Hide user information for anonymous posts

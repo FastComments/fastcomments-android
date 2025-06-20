@@ -1,12 +1,17 @@
 package com.fastcomments
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.fastcomments.core.CommentWidgetConfig
 import com.fastcomments.core.sso.FastCommentsSSO
 import com.fastcomments.core.sso.SimpleSSOUserData
 import com.fastcomments.sdk.LiveChatView
 import com.fastcomments.sdk.FastCommentsSDK
+import com.fastcomments.sdk.OnUserClickListener
+import com.fastcomments.sdk.UserClickSource
+import com.fastcomments.sdk.UserInfo
+import com.fastcomments.sdk.UserClickContext
 
 /**
  * Example activity showing how to use the LiveChatView
@@ -44,6 +49,13 @@ class LiveChatExampleActivity : AppCompatActivity() {
 
         // Set the SDK instance for the view
         liveChatView.setSDK(sdk)
+        
+        liveChatView.setOnUserClickListener { context, userInfo, source ->
+            val sourceText = if (source == UserClickSource.NAME) "name" else "avatar"
+            Toast.makeText(this@LiveChatExampleActivity, 
+                "Clicked ${userInfo.displayName}'s $sourceText in live chat", 
+                Toast.LENGTH_SHORT).show()
+        }
 
         // Load the chat
         liveChatView.load()
