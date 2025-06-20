@@ -220,11 +220,23 @@ public class LiveChatView extends FrameLayout {
                             .setNegativeButton(android.R.string.no, null)
                             .show();
                     } else {
-                        // Text is empty, no need for confirmation
+                        // Text is empty, check if we're in a reply state
+                        boolean wasInReplyState = false;
                         if (bottomCommentInput != null) {
+                            wasInReplyState = bottomCommentInput.getParentComment() != null;
                             bottomCommentInput.clearReplyState();
                         } else if (commentForm != null) {
+                            wasInReplyState = commentForm.getParentComment() != null;
                             commentForm.resetReplyState();
+                        }
+                        
+                        // If we weren't in a reply state, allow normal back navigation
+                        if (!wasInReplyState) {
+                            backPressedCallback.setEnabled(false);
+                            if (getContext() instanceof Activity) {
+                                ((Activity) getContext()).onBackPressed();
+                            }
+                            backPressedCallback.setEnabled(true);
                         }
                     }
                 }
@@ -1485,12 +1497,8 @@ public class LiveChatView extends FrameLayout {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        // Stop the timer when the view is detached to prevent memory leaks
-        stopDateUpdateTimer();
-        // Clean up WebSocket connections when the view is detached
-        if (sdk != null) {
-            sdk.cleanup();
-        }
+        // Clean up all resources including backpress callback
+        cleanup();
     }
     
     /**
@@ -1509,6 +1517,38 @@ public class LiveChatView extends FrameLayout {
      */
     public boolean isAutoScrollToBottom() {
         return autoScrollToBottom;
+    }
+    
+    /**
+     * Cleanup method to properly release resources and callbacks.
+     * Should be called when the view is no longer needed, especially when used in fragments.
+     */
+    public void cleanup() {
+        // Clear back pressed callback
+        if (backPressedCallback != null) {
+            backPressedCallback.setEnabled(false);
+            backPressedCallback = null;
+        }
+        
+        // Stop any timers
+        stopDateUpdateTimer();
+        
+        // Clean up SDK
+        if (sdk != null) {
+            sdk.cleanup();
+        }
+    }
+    
+    /**
+     * Enable or disable back press handling.
+     * Useful for fragment lifecycle management.
+     * 
+     * @param enabled Whether back press handling should be active
+     */
+    public void setBackPressHandlingEnabled(boolean enabled) {
+        if (backPressedCallback != null) {
+            backPressedCallback.setEnabled(enabled);
+        }
     }
     
     /**
