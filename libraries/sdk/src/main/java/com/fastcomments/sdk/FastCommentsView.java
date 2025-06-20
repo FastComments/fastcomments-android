@@ -668,7 +668,7 @@ public class FastCommentsView extends FrameLayout {
             @Override
             public void onEdit(String commentId, String commentText) {
                 // Show edit dialog
-                CommentEditDialog dialog = new CommentEditDialog(getContext());
+                CommentEditDialog dialog = new CommentEditDialog(getContext(), sdk);
                 dialog.setOnSaveCallback(newText -> {
                     // Call API to edit the comment
                     sdk.editComment(commentId, newText, new FCCallback<PickFCommentApprovedOrCommentHTML>() {

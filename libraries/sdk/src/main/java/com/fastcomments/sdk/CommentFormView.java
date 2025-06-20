@@ -325,6 +325,25 @@ public class CommentFormView extends LinearLayout {
      */
     public void setSDK(FastCommentsSDK sdk) {
         this.sdk = sdk;
+        applyTheme();
+    }
+    
+    /**
+     * Apply theme colors to buttons and UI elements
+     */
+    private void applyTheme() {
+        FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
+        
+        // Apply action button color to submit button
+        int actionButtonColor = ThemeColorResolver.getActionButtonColor(getContext(), theme);
+        if (submitButton != null) {
+            submitButton.setTextColor(actionButtonColor);
+        }
+        
+        // Apply action button color to cancel button as well
+        if (cancelButton != null) {
+            cancelButton.setTextColor(actionButtonColor);
+        }
     }
     
     /**

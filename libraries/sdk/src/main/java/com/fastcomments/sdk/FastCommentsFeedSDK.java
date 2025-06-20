@@ -65,6 +65,7 @@ public class FastCommentsFeedSDK {
     private final CommentWidgetConfig config;
     private final PublicApi api;
     private final Handler mainHandler;
+    private FastCommentsTheme theme;
 
     private List<FeedPost> feedPosts = new ArrayList<>();
     private Map<String, FeedPost> postsById = new HashMap<>(); // Map for quick lookup by ID
@@ -105,6 +106,24 @@ public class FastCommentsFeedSDK {
      */
     public CommentWidgetConfig getConfig() {
         return config;
+    }
+    
+    /**
+     * Get the current theme
+     *
+     * @return FastCommentsTheme object or null if no theme is set
+     */
+    public FastCommentsTheme getTheme() {
+        return theme;
+    }
+    
+    /**
+     * Set a custom theme for the SDK
+     *
+     * @param theme FastCommentsTheme object
+     */
+    public void setTheme(FastCommentsTheme theme) {
+        this.theme = theme;
     }
 
     /**

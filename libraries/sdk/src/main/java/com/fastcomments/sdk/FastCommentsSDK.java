@@ -33,6 +33,7 @@ public class FastCommentsSDK {
 
     private UserSessionInfo currentUser;
     private CommentWidgetConfig config;
+    private FastCommentsTheme theme;
     private final PublicApi api;
     private final Handler mainHandler;
     public final CommentsTree commentsTree;
@@ -98,6 +99,24 @@ public class FastCommentsSDK {
      */
     public UserSessionInfo getCurrentUser() {
         return currentUser;
+    }
+
+    /**
+     * Get the current theme configuration
+     *
+     * @return FastCommentsTheme object or null if no theme is set
+     */
+    public FastCommentsTheme getTheme() {
+        return theme;
+    }
+
+    /**
+     * Set a custom theme for the SDK
+     *
+     * @param theme The theme configuration to use
+     */
+    public void setTheme(FastCommentsTheme theme) {
+        this.theme = theme;
     }
 
     /**

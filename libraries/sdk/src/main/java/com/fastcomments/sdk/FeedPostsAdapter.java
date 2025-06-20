@@ -1,6 +1,7 @@
 package com.fastcomments.sdk;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.text.Html;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -460,6 +461,43 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     listener.onPostClick(feedPosts.get(position));
                 }
             });
+            
+            // Apply theme colors
+            applyTheme();
+        }
+        
+        /**
+         * Apply theme colors to buttons and UI elements
+         */
+        private void applyTheme() {
+            FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
+            
+            // Apply action button colors to buttons
+            int actionButtonColor = ThemeColorResolver.getActionButtonColor(context, theme);
+            
+            if (commentButton != null) {
+                commentButton.setTextColor(actionButtonColor);
+            }
+            if (likeButton != null) {
+                likeButton.setTextColor(actionButtonColor);
+            }
+            if (shareButton != null) {
+                shareButton.setTextColor(actionButtonColor);
+            }
+            if (postMenuButton != null) {
+                postMenuButton.setImageTintList(ColorStateList.valueOf(actionButtonColor));
+            }
+        }
+        
+        /**
+         * Apply theme colors to a dynamically created button
+         */
+        private void applyThemeToButton(Button button) {
+            FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
+            
+            // Apply action button color to the button text
+            int actionButtonColor = ThemeColorResolver.getActionButtonColor(context, theme);
+            button.setTextColor(actionButtonColor);
         }
 
         void bind(FeedPost post, int position) {
@@ -1140,8 +1178,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
                         // Apply modern styling with our custom background
                         actionButton.setBackgroundResource(R.drawable.task_button_background);
-                        actionButton.setTextColor(context.getResources().getColor(android.R.color.black, null));
                         actionButton.setPadding(16, 12, 16, 12); // Increased vertical padding for taller buttons
+                        
+                        // Apply theme colors
+                        applyThemeToButton(actionButton);
 
                         // Set button text
                         String buttonText = link.getText(); // Prefer the display text if available
@@ -1220,7 +1260,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
                             // Apply modern styling with our custom background
                             actionButton.setBackgroundResource(R.drawable.task_button_background);
-                            actionButton.setTextColor(context.getResources().getColor(android.R.color.black, null));
+                            // Apply theme colors
+                            applyThemeToButton(actionButton);
                             actionButton.setPadding(16, 12, 16, 12); // Increased vertical padding for taller buttons
                             actionButton.setMinHeight(48); // Set minimum height to 48dp (standard button height)
 
@@ -1273,7 +1314,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
                             // Apply modern styling with our custom background
                             actionButton.setBackgroundResource(R.drawable.task_button_background);
-                            actionButton.setTextColor(context.getResources().getColor(android.R.color.black, null));
+                            // Apply theme colors
+                            applyThemeToButton(actionButton);
                             actionButton.setPadding(16, 12, 16, 12); // Increased vertical padding for taller buttons
                             actionButton.setMinHeight(48); // Set minimum height to 48dp (standard button height)
 

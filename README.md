@@ -16,6 +16,7 @@ The FastComments Android SDK provides a simple way to add real-time commenting f
 - 🔍 Comment moderation capabilities
 - 📱 Social feed integration
 - ♾️ Infinite scroll pagination
+- 🎨 Comprehensive theming
 
 ## Requirements
 
@@ -230,28 +231,63 @@ The SDK provides many configuration options through the `CommentWidgetConfig` cl
 | `disableVoting` | Disable voting functionality |
 | `disableLiveCommenting` | Disable real-time updates |
 
-## Customizing Colors
+## Comprehensive Theme Customization
 
-You can customize the appearance of the FastComments components by overriding the color resources in your app's `colors.xml` file:
+All buttons and UI elements in the FastComments SDK are themeable. Use the `FastCommentsTheme.Builder` for complete control over your app's branding.
 
-```xml
-<!-- Custom FastComments colors -->
-<color name="fastcomments_dialog_header_background">#FF4CAF50</color>
-<color name="fastcomments_dialog_header_text_color">#FFFFFFFF</color>
+### Programmatic Theming (Recommended)
+
+```kotlin
+val theme = FastCommentsTheme.Builder()
+    // Action buttons: Send, vote, menu, like/share buttons
+    .setActionButtonColor(Color.parseColor("#FF1976D2"))
+    
+    // Reply buttons: Comment reply buttons  
+    .setReplyButtonColor(Color.parseColor("#FF4CAF50"))
+    
+    // Toggle buttons: Show/hide replies buttons
+    .setToggleRepliesButtonColor(Color.parseColor("#FFFF5722"))
+    
+    // Load more buttons: Pagination buttons
+    .setLoadMoreButtonTextColor(Color.parseColor("#FF9C27B0"))
+    
+    .setPrimaryColor(Color.parseColor("#FF6200EE"))
+    .setLinkColor(Color.parseColor("#FF1976D2"))
+    .setDialogHeaderBackgroundColor(Color.parseColor("#FF333333"))
+    .build()
+
+// Apply the theme
+sdk.setTheme(theme)
 ```
 
-Available color customization options:
+### Quick Color Override
 
-| Color Resource | Default | Description |
-|----------------|---------|-------------|
-| `fastcomments_dialog_header_background` | Blue | Background color of the comments dialog header |
-| `fastcomments_dialog_header_text_color` | White | Text color of the comments dialog title |
-| `fastcomments_reply_button_color` | Primary | Color of the reply button |
-| `fastcomments_toggle_replies_button_color` | Primary | Color of the toggle replies button |
-| `fastcomments_link_color` | #0099FF | Color of links in comments |
-| `fastcomments_link_color_pressed` | #0077CC | Color of links when pressed |
-| `fastcomments_action_button_color` | Primary | Color of action buttons |
-| `fastcomments_load_more_button_text_color` | Primary | Color of load more button text |
+Override color resources in your `colors.xml` for simple branding:
+
+```xml
+<!-- In your app's res/values/colors.xml -->
+<resources>
+    <!-- Change all primary UI elements -->
+    <color name="primary">#FF1976D2</color>
+    
+    <!-- Or customize specific button types -->
+    <color name="fastcomments_action_button_color">#FF1976D2</color>
+    <color name="fastcomments_reply_button_color">#FF4CAF50</color>
+    <color name="fastcomments_toggle_replies_button_color">#FFFF5722</color>
+    <color name="fastcomments_load_more_button_text_color">#FF9C27B0</color>
+</resources>
+```
+
+### Themed Button Coverage
+
+**Every button in the SDK supports theming:**
+- Send buttons, vote buttons, menu buttons, reply buttons
+- Show/hide replies buttons, load more buttons  
+- Feed action buttons (like, comment, share)
+- Dialog buttons (submit, cancel, save)
+- Dynamic task buttons in feed posts
+
+For detailed theming documentation, see [THEMING.md](THEMING.md).
 
 ## Memory Management
 
