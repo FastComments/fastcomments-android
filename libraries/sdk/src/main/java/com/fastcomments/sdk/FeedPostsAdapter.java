@@ -690,8 +690,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 mediaItems = post.getMedia();
 
 
-                // For posts with 1-2 images, use grid layout
-                if (mediaItems.size() <= 2) {
+                // For posts with 1 image, use grid layout
+                if (mediaItems.size() <= 1) {
                     imageGridLayout.setVisibility(View.VISIBLE);
                     imageViewPager.setVisibility(View.GONE);
                     imageCounterTextView.setVisibility(View.GONE);
@@ -706,7 +706,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     imageGridLayout.invalidate();
                     mediaGalleryContainer.setVisibility(View.VISIBLE);
                 } else {
-                    // For 3+ images, use the ViewPager
+                    // For 2+ images, use the ViewPager
                     imageGridLayout.setVisibility(View.GONE);
                     imageViewPager.setVisibility(View.VISIBLE);
                     imageCounterTextView.setVisibility(View.VISIBLE);
@@ -761,7 +761,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         }
 
         /**
-         * Set up the grid layout for 1-3 images
+         * Set up the grid layout for single image
          *
          * @param post The post containing the media items
          * @param mediaItems The list of media items
@@ -791,53 +791,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 params.width = GridLayout.LayoutParams.MATCH_PARENT;
                 params.height = GridLayout.LayoutParams.MATCH_PARENT;
                 imageGridLayout.addView(imageView, params);
-            } else if (count == 2) {
-                // Pre-calculate total height for two stacked images
-                int totalHeight = 0;
-                for (int i = 0; i < count; i++) {
-                    FeedPostMediaItem mediaItem = mediaItems.get(i);
-                    if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
-                        FeedPostMediaItemAsset bestAsset = selectBestImageSize(mediaItem.getSizes());
-                        if (bestAsset != null) {
-                            int imageHeight = calculateImageHeight(bestAsset, screenWidth);
-                            totalHeight += imageHeight;
-                            if (i > 0) totalHeight += 4; // Add margin between images
-                        }
-                    }
-                }
-                
-                // Set grid height to prevent layout shifts
-                if (totalHeight > 0) {
-                    imageGridLayout.getLayoutParams().height = totalHeight;
-                    imageGridLayout.requestLayout();
-                }
-                
-                // Set up GridLayout configuration for 2 rows, 1 column
-                imageGridLayout.setRowCount(2);
-                imageGridLayout.setColumnCount(1);
-                
-                // Two images stacked vertically
-                for (int i = 0; i < count; i++) {
-                    FeedPostMediaItem mediaItem = mediaItems.get(i);
-                    ImageView imageView = createImageView(post, mediaItem, i);
-                    
-                    // Calculate individual image height for proper layout
-                    int individualHeight = getHalfImageHeight(); // Default fallback
-                    if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
-                        FeedPostMediaItemAsset bestAsset = selectBestImageSize(mediaItem.getSizes());
-                        if (bestAsset != null) {
-                            individualHeight = calculateImageHeight(bestAsset, screenWidth);
-                        }
-                    }
-                    
-                    GridLayout.LayoutParams params = new GridLayout.LayoutParams(
-                            GridLayout.spec(i, 1),  // i'th row, span 1 row
-                            GridLayout.spec(0, 1));  // column 0, span 1 column
-                    params.width = GridLayout.LayoutParams.MATCH_PARENT;
-                    params.height = GridLayout.LayoutParams.WRAP_CONTENT;
-                    params.setMargins(0, i > 0 ? 4 : 0, 0, i < count - 1 ? 4 : 0); // Vertical margins between images
-                    imageGridLayout.addView(imageView, params);
-                }
             }
         }
 
