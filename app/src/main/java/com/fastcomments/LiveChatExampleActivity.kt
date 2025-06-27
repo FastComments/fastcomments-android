@@ -63,13 +63,18 @@ class LiveChatExampleActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Refresh live events connection when returning to the app
         sdk.refreshLiveEvents()
+        liveChatView.onResume()
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        liveChatView.onPause()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Clean up resources
+        liveChatView.cleanup()
         sdk.cleanup()
     }
 }

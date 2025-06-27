@@ -1524,18 +1524,55 @@ public class LiveChatView extends FrameLayout {
      * Should be called when the view is no longer needed, especially when used in fragments.
      */
     public void cleanup() {
-        // Clear back pressed callback
+        stopDateUpdateTimer();
+        
+        if (dateUpdateHandler != null) {
+            dateUpdateHandler.removeCallbacksAndMessages(null);
+            dateUpdateHandler = null;
+        }
+        dateUpdateRunnable = null;
+        
         if (backPressedCallback != null) {
             backPressedCallback.setEnabled(false);
             backPressedCallback = null;
         }
         
-        // Stop any timers
-        stopDateUpdateTimer();
+        if (recyclerView != null) {
+            recyclerView.clearOnScrollListeners();
+        }
         
-        // Clean up SDK
+        if (adapter != null) {
+            adapter.setRequestingReplyListener(null);
+            adapter.setUpVoteListener(null);
+            adapter.setDownVoteListener(null);
+            adapter.setCommentMenuListener(null);
+            adapter.setUserClickListener(null);
+            adapter.setGetChildrenProducer(null);
+            adapter = null;
+        }
+        
+        if (bottomCommentInput != null) {
+            bottomCommentInput.setOnCommentSubmitListener(null);
+            bottomCommentInput.setOnReplyStateChangeListener(null);
+        }
+        if (commentForm != null) {
+            commentForm.setOnCommentSubmitListener(null);
+            commentForm.setOnCancelReplyListener(null);
+        }
+        
+        if (btnNextComments != null) {
+            btnNextComments.setOnClickListener(null);
+        }
+        if (btnLoadAll != null) {
+            btnLoadAll.setOnClickListener(null);
+        }
+        
+        commentActionListener = null;
+        userClickListener = null;
+        
         if (sdk != null) {
             sdk.cleanup();
+            sdk = null;
         }
     }
     
@@ -1549,6 +1586,24 @@ public class LiveChatView extends FrameLayout {
         if (backPressedCallback != null) {
             backPressedCallback.setEnabled(enabled);
         }
+    }
+    
+    /**
+     * Lifecycle method to call when the view/fragment is paused.
+     * Stops timers and disables back press handling to prevent memory leaks.
+     */
+    public void onPause() {
+        stopDateUpdateTimer();
+        setBackPressHandlingEnabled(false);
+    }
+    
+    /**
+     * Lifecycle method to call when the view/fragment is resumed.
+     * Restarts timers and enables back press handling.
+     */
+    public void onResume() {
+        setBackPressHandlingEnabled(true);
+        startDateUpdateTimer();
     }
     
     /**

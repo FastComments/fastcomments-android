@@ -53,7 +53,7 @@ public class FastCommentsSDK {
     public String blockingErrorMessage;
 
     private SubscribeToChangesResult liveEventSubscription;
-    private final LiveEventSubscriber liveEventSubscriber;
+    private LiveEventSubscriber liveEventSubscriber;
     private String tenantIdWS;
     private String urlIdWS;
     private String userIdWS;
@@ -1134,14 +1134,19 @@ public class FastCommentsSDK {
         }
     }
 
-    /**
-     * Cleanup resources, including WebSocket connections
-     */
     public void cleanup() {
         if (liveEventSubscription != null) {
             liveEventSubscription.close();
             liveEventSubscription = null;
         }
+        
+        if (liveEventSubscriber != null) {
+            liveEventSubscriber = null;
+        }
+        
+        tenantIdWS = null;
+        urlIdWS = null;
+        userIdWS = null;
     }
     
     /**
