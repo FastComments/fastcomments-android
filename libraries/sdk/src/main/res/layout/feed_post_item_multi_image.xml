@@ -152,11 +152,17 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- ViewPager for 4+ images -->
-            <androidx.viewpager2.widget.ViewPager2
-                android:id="@+id/imageViewPager"
+            <!-- ViewPager for 2+ images wrapped in NestedScrollableHost -->
+            <com.fastcomments.sdk.NestedScrollableHost
                 android:layout_width="match_parent"
-                android:layout_height="300dp" />
+                android:layout_height="300dp">
+                
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/imageViewPager"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+                    
+            </com.fastcomments.sdk.NestedScrollableHost>
 
             <!-- Image Counter (smaller size) -->
             <TextView
