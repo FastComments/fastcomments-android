@@ -1455,7 +1455,9 @@ public class LiveChatView extends FrameLayout {
      * Stops the timer for updating relative dates
      */
     private void stopDateUpdateTimer() {
-        dateUpdateHandler.removeCallbacks(dateUpdateRunnable);
+        if (dateUpdateHandler != null) {
+            dateUpdateHandler.removeCallbacks(dateUpdateRunnable);
+        }
     }
 
     /**

@@ -314,7 +314,10 @@ public class FastCommentsFeedView extends FrameLayout {
                         // Update adapter with the current list from SDK
                         // This ensures the adapter's list is in sync with the SDK after a post is deleted
                         if (sdk != null && adapter != null) {
-                            adapter.updatePosts(sdk.getFeedPosts());
+                            List<FeedPost> posts = sdk.getFeedPosts();
+                            if (posts != null) {
+                                adapter.updatePosts(posts);
+                            }
                         }
                         
                         // Log for debugging
@@ -363,8 +366,11 @@ public class FastCommentsFeedView extends FrameLayout {
             sdk.restorePaginationState(state.getFeedState());
             
             // Update adapter with restored posts
-            if (adapter != null && sdk.getFeedPosts() != null && !sdk.getFeedPosts().isEmpty()) {
-                adapter.updatePosts(sdk.getFeedPosts());
+            if (adapter != null && sdk != null) {
+                List<FeedPost> posts = sdk.getFeedPosts();
+                if (posts != null && !posts.isEmpty()) {
+                    adapter.updatePosts(posts);
+                }
             }
         }
         
@@ -467,6 +473,9 @@ public class FastCommentsFeedView extends FrameLayout {
                     swipeRefreshLayout.setRefreshing(false);
                     hideError();
 
+                    if (sdk == null) {
+                        return;
+                    }
                     List<FeedPost> posts = sdk.getFeedPosts();
                     
                     if (posts.isEmpty()) {
@@ -541,6 +550,9 @@ public class FastCommentsFeedView extends FrameLayout {
                     swipeRefreshLayout.setRefreshing(false);
                     hideError();
 
+                    if (sdk == null) {
+                        return;
+                    }
                     List<FeedPost> posts = sdk.getFeedPosts();
                     
                     if (posts.isEmpty()) {
@@ -789,6 +801,9 @@ public class FastCommentsFeedView extends FrameLayout {
         }
         
         // Get the updated posts list from SDK
+        if (sdk == null) {
+            return;
+        }
         List<FeedPost> posts = sdk.getFeedPosts();
         if (posts == null || posts.isEmpty()) {
             return;
@@ -977,7 +992,12 @@ public class FastCommentsFeedView extends FrameLayout {
                     
                     // Update adapter with the current list from SDK
                     // This ensures the adapter's internal list matches the SDK's list
-                    adapter.updatePosts(sdk.getFeedPosts());
+                    if (sdk != null) {
+                        List<FeedPost> posts = sdk.getFeedPosts();
+                        if (posts != null) {
+                            adapter.updatePosts(posts);
+                        }
+                    }
                 });
                 return CONSUME;
             }
