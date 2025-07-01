@@ -48,7 +48,6 @@ public class FastCommentsSDK {
     public int currentPage;
     public int currentSkip;
     public int pageSize = 30;
-    public long lastGenDate;
     public Set<String> broadcastIdsSent;
     public String blockingErrorMessage;
 
@@ -230,7 +229,6 @@ public class FastCommentsSDK {
                     .skipChildren(skip)
                     .limit(limit)
                     .limitChildren(limit)
-                    .lastGenDate(lastGenDate)
                     .includeConfig(includeConfig)
                     .countAll(Boolean.TRUE.equals(config.countAll))
                     .countChildren(true)
@@ -301,7 +299,6 @@ public class FastCommentsSDK {
                     .skipChildren(skip)
                     .limit(limit)
                     .limitChildren(limit)
-                    .lastGenDate(lastGenDate)
                     .countChildren(true)
                     .locale(config.locale)
                     .executeAsync(new ApiCallback<GetCommentsPublic200Response>() {
