@@ -699,7 +699,14 @@ public class FastCommentsFeedSDK {
         }
 
         // Create a new FastCommentsSDK with this config
-        return new FastCommentsSDK(config);
+        FastCommentsSDK commentsSDK = new FastCommentsSDK(config);
+        
+        // Pass the theme from the feed SDK to the comments SDK
+        if (this.theme != null) {
+            commentsSDK.setTheme(this.theme);
+        }
+        
+        return commentsSDK;
     }
 
 
