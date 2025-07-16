@@ -120,6 +120,18 @@ public class CommentsDialog extends Dialog {
         FastCommentsSDK commentsSDK = feedSDK.createCommentsSDKForPost(post);
         commentsView = new FastCommentsView(getContext(), commentsSDK);
         
+        // Apply theme colors to dialog header if theme is available
+        if (feedSDK.getTheme() != null) {
+            FrameLayout headerContainer = findViewById(R.id.headerContainer);
+            headerContainer.setBackgroundColor(
+                ThemeColorResolver.getDialogHeaderBackgroundColor(getContext(), feedSDK.getTheme())
+            );
+            
+            titleTextView.setTextColor(
+                ThemeColorResolver.getDialogHeaderTextColor(getContext(), feedSDK.getTheme())
+            );
+        }
+        
         // Set user click listener if one was provided
         if (userClickListener != null) {
             commentsView.setOnUserClickListener(userClickListener);
