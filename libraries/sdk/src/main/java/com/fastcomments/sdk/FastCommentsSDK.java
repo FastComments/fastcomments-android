@@ -1144,6 +1144,10 @@ public class FastCommentsSDK {
         tenantIdWS = null;
         urlIdWS = null;
         userIdWS = null;
+
+        if (commentsTree != null) {
+            commentsTree.clear();
+        }
     }
     
     /**

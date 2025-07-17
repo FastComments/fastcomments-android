@@ -991,5 +991,8 @@ public class CommentsTree {
         newRootComments.clear();
         newRootCommentsButton = null;
         userPresenceCache.clear();
+        if (adapter != null) {
+            adapter = null;
+        }
     }
 }
