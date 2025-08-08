@@ -564,7 +564,19 @@ public class FeedPostCreateView extends FrameLayout {
         params.setLinks(post.getLinks());
         params.setFromUserId(post.getFromUserId());
         params.setFromUserDisplayName(post.getFromUserDisplayName());
-        params.setTags(post.getTags());
+        
+        // Use tags from TagSupplier if available, otherwise use post's tags
+        if (sdk != null && sdk.getTagSupplier() != null) {
+            List<String> supplierTags = sdk.getTagSupplier().getTags(sdk.getCurrentUser());
+            if (supplierTags != null && !supplierTags.isEmpty()) {
+                params.setTags(supplierTags);
+            } else {
+                params.setTags(post.getTags());
+            }
+        } else {
+            params.setTags(post.getTags());
+        }
+        
         params.setMeta(post.getMeta());
 
         return params;

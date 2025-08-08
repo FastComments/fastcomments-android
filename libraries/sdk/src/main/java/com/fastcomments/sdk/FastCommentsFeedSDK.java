@@ -83,6 +83,7 @@ public class FastCommentsFeedSDK {
     private String tenantIdWS;
     private String urlIdWS;
     private String userIdWS;
+    private TagSupplier tagSupplier;
 
     /**
      * Constructs a FastCommentsFeedSDK instance with the given configuration
@@ -115,6 +116,25 @@ public class FastCommentsFeedSDK {
      */
     public FastCommentsTheme getTheme() {
         return theme;
+    }
+    
+    /**
+     * Set a TagSupplier to provide tags for filtering feed posts.
+     * The tags returned by the supplier will be used when fetching posts from the API.
+     *
+     * @param tagSupplier The TagSupplier implementation, or null to disable tag filtering
+     */
+    public void setTagSupplier(TagSupplier tagSupplier) {
+        this.tagSupplier = tagSupplier;
+    }
+    
+    /**
+     * Get the current TagSupplier
+     *
+     * @return The current TagSupplier or null if not set
+     */
+    public TagSupplier getTagSupplier() {
+        return tagSupplier;
     }
     
     /**
@@ -304,11 +324,18 @@ public class FastCommentsFeedSDK {
      */
     private void loadFeedPosts(FCCallback<PublicFeedPostsResponse> callback) {
         try {
+            // Get tags from TagSupplier if available
+            List<String> tags = null;
+            if (tagSupplier != null) {
+                tags = tagSupplier.getTags(currentUser);
+            }
+            
             api.getFeedPostsPublic(config.tenantId)
                     .afterId(lastPostId)
                     .limit(pageSize)
                     .sso(config.getSSOToken())
                     .includeUserInfo(lastPostId == null) // only include for initial req
+                    .tags(tags)
                     .executeAsync(new ApiCallback<GetFeedPostsPublic200Response>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
