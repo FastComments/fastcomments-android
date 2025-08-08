@@ -104,15 +104,6 @@
             <!-- Links will be added dynamically here -->
         </LinearLayout>
 
-        <!-- Tags Container -->
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/tagsChipGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            app:chipSpacingHorizontal="4dp"
-            android:visibility="gone"
-            tools:visibility="visible" />
 
         <!-- Like Count -->
         <TextView

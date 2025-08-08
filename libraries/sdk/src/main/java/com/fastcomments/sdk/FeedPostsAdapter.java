@@ -27,8 +27,6 @@ import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.FeedPostLink;
 import com.fastcomments.model.FeedPostMediaItem;
 import com.fastcomments.model.FeedPostMediaItemAsset;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -388,7 +386,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         private final TextView postTimeTextView;
         private final TextView contentTextView;
         private final ImageView avatarImageView;
-        private final ChipGroup tagsChipGroup;
         private final TextView likeCountTextView;
         private final Button commentButton;
         private final Button likeButton;
@@ -421,7 +418,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             postTimeTextView = itemView.findViewById(R.id.postTimeTextView);
             contentTextView = itemView.findViewById(R.id.contentTextView);
             avatarImageView = itemView.findViewById(R.id.avatarImageView);
-            tagsChipGroup = itemView.findViewById(R.id.tagsChipGroup);
             likeCountTextView = itemView.findViewById(R.id.likeCountTextView);
             commentButton = itemView.findViewById(R.id.commentButton);
             likeButton = itemView.findViewById(R.id.likeButton);
@@ -555,8 +551,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 contentTextView.setVisibility(View.GONE);
             }
 
-            // Set tags if available
-            setupTags(post);
 
             // Handle like count and comment count display
             updateLikeAndCommentCounts(post);
@@ -1167,27 +1161,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             }
         }
 
-        private void setupTags(FeedPost post) {
-            tagsChipGroup.removeAllViews();
-
-            if (post.getTags() != null && !post.getTags().isEmpty()) {
-                tagsChipGroup.setVisibility(View.VISIBLE);
-
-                for (String tag : post.getTags()) {
-                    Chip chip = new Chip(context);
-                    chip.setText(tag);
-                    chip.setClickable(true);
-                    chip.setCheckable(false);
-                    chip.setChipBackgroundColorResource(android.R.color.transparent);
-                    chip.setChipStrokeWidth(1f);
-                    chip.setChipStrokeColorResource(android.R.color.darker_gray);
-
-                    tagsChipGroup.addView(chip);
-                }
-            } else {
-                tagsChipGroup.setVisibility(View.GONE);
-            }
-        }
 
         /**
          * Get the best quality image URL for full-screen viewing

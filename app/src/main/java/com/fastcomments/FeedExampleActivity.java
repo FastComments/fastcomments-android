@@ -19,11 +19,13 @@ import com.fastcomments.sdk.FastCommentsFeedSDK;
 import com.fastcomments.sdk.FastCommentsFeedView;
 import com.fastcomments.sdk.FeedPostCreateView;
 import com.fastcomments.sdk.OnUserClickListener;
+import com.fastcomments.sdk.TagSupplier;
 import com.fastcomments.sdk.UserClickContext;
 import com.fastcomments.sdk.UserClickSource;
 import com.fastcomments.sdk.UserInfo;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -73,6 +75,12 @@ public class FeedExampleActivity extends AppCompatActivity {
         
         // Set the SDK instance for the view
         feedView.setSDK(feedSDK);
+        
+        feedView.setTagSupplier(currentUser -> {
+            // You can customize the user's experience. Only feed items with the same tags will be returned.
+            // return null or don't set a supplier to get a "global" feed.
+            return null;
+        });
 
         // Create and add the FeedPostCreateView
         setupPostCreationView();

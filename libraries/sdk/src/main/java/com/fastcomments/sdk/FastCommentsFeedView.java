@@ -421,6 +421,18 @@ public class FastCommentsFeedView extends FrameLayout {
     public void setOnUserClickListener(OnUserClickListener listener) {
         this.userClickListener = listener;
     }
+    
+    /**
+     * Set a TagSupplier to provide tags for filtering feed posts.
+     * The tags returned by the supplier will be used when fetching posts from the API.
+     *
+     * @param tagSupplier The TagSupplier implementation, or null to disable tag filtering
+     */
+    public void setTagSupplier(TagSupplier tagSupplier) {
+        if (sdk != null) {
+            sdk.setTagSupplier(tagSupplier);
+        }
+    }
 
     /**
      * Flag to track when loading more posts
