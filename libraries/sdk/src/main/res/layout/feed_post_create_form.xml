@@ -144,6 +144,21 @@
                     android:contentDescription="@string/attach_image"
                     android:src="@android:drawable/ic_menu_gallery" />
 
+                <!-- Custom toolbar buttons container -->
+                <HorizontalScrollView
+                    android:id="@+id/customToolbarScrollView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/customToolbarContainer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" />
+
+                </HorizontalScrollView>
+
             </LinearLayout>
 
             <!-- Right side buttons -->

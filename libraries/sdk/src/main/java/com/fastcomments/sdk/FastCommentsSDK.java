@@ -1577,4 +1577,121 @@ public class FastCommentsSDK {
             CallbackWrapper.handleAPIException(mainHandler, callback, e);
         }
     }
+
+    // ===== TOOLBAR CONFIGURATION METHODS =====
+
+    private boolean toolbarEnabled = false;
+    private boolean defaultFormattingEnabled = true;
+    private List<CustomToolbarButton> globalCustomButtons = new ArrayList<>();
+
+    /**
+     * Enable or disable the comment toolbar globally
+     *
+     * @param enabled true to enable toolbar, false to disable
+     */
+    public void setCommentToolbarEnabled(boolean enabled) {
+        this.toolbarEnabled = enabled;
+    }
+
+    /**
+     * Check if the comment toolbar is enabled globally
+     *
+     * @return true if toolbar is enabled
+     */
+    public boolean isCommentToolbarEnabled() {
+        return toolbarEnabled;
+    }
+
+    /**
+     * Enable or disable default formatting buttons globally
+     *
+     * @param enabled true to enable default formatting buttons
+     */
+    public void setDefaultFormattingButtonsEnabled(boolean enabled) {
+        this.defaultFormattingEnabled = enabled;
+    }
+
+    /**
+     * Check if default formatting buttons are enabled globally
+     *
+     * @return true if default formatting is enabled
+     */
+    public boolean isDefaultFormattingButtonsEnabled() {
+        return defaultFormattingEnabled;
+    }
+
+    /**
+     * Add a custom toolbar button that will appear on all comment input instances
+     *
+     * @param button The custom button to add globally
+     */
+    public void addGlobalCustomToolbarButton(CustomToolbarButton button) {
+        if (button != null && !globalCustomButtons.contains(button)) {
+            globalCustomButtons.add(button);
+        }
+    }
+
+    /**
+     * Remove a global custom toolbar button
+     *
+     * @param button The custom button to remove
+     */
+    public void removeGlobalCustomToolbarButton(CustomToolbarButton button) {
+        globalCustomButtons.remove(button);
+    }
+
+    /**
+     * Remove a global custom toolbar button by ID
+     *
+     * @param buttonId The ID of the button to remove
+     */
+    public void removeGlobalCustomToolbarButton(String buttonId) {
+        CustomToolbarButton toRemove = null;
+        for (CustomToolbarButton button : globalCustomButtons) {
+            if (buttonId.equals(button.getId())) {
+                toRemove = button;
+                break;
+            }
+        }
+        if (toRemove != null) {
+            globalCustomButtons.remove(toRemove);
+        }
+    }
+
+    /**
+     * Clear all global custom toolbar buttons
+     */
+    public void clearGlobalCustomToolbarButtons() {
+        globalCustomButtons.clear();
+    }
+
+    /**
+     * Get the list of global custom toolbar buttons
+     *
+     * @return List of global custom buttons
+     */
+    public List<CustomToolbarButton> getGlobalCustomToolbarButtons() {
+        return new ArrayList<>(globalCustomButtons);
+    }
+
+    /**
+     * Apply global toolbar configuration to a BottomCommentInputView instance
+     *
+     * @param inputView The input view to configure
+     */
+    public void applyGlobalToolbarConfiguration(BottomCommentInputView inputView) {
+        if (inputView != null) {
+            // Set global toolbar visibility
+            inputView.setToolbarVisible(toolbarEnabled);
+
+            // Set default formatting buttons
+            inputView.setDefaultFormattingEnabled(defaultFormattingEnabled);
+
+            // Clear any existing custom buttons and add global ones
+            inputView.clearCustomToolbarButtons();
+            for (CustomToolbarButton button : globalCustomButtons) {
+                inputView.addCustomToolbarButton(button);
+            }
+        }
+    }
 }

@@ -2,6 +2,7 @@ package com.fastcomments.sdk;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,11 +11,13 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -64,14 +67,18 @@ public class FeedPostCreateView extends FrameLayout {
     private Button cancelPostButton;
     private Button submitPostButton;
     private ProgressBar postProgressBar;
+    private HorizontalScrollView customToolbarScrollView;
+    private LinearLayout customToolbarContainer;
 
     // State variables
-    private final List<Uri> selectedMediaUris = new ArrayList<>();
+    private final List<Uri> selectedMediaUris = new ArrayList<>(0);
+    private final List<FeedPostMediaItem> remoteMediaItems = new ArrayList<>(0);
     private SelectedMediaAdapter mediaAdapter;
     private FeedPostLink attachedLink;
     private final Handler mainHandler;
     private FastCommentsFeedSDK sdk;
     private OnPostCreateListener listener;
+    private final List<FeedCustomToolbarButton> customButtons = new ArrayList<>(0);
 
     /**
      * Interface for post create events
@@ -127,6 +134,8 @@ public class FeedPostCreateView extends FrameLayout {
         cancelPostButton = findViewById(R.id.cancelPostButton);
         submitPostButton = findViewById(R.id.submitPostButton);
         postProgressBar = findViewById(R.id.postProgressBar);
+        customToolbarScrollView = findViewById(R.id.customToolbarScrollView);
+        customToolbarContainer = findViewById(R.id.customToolbarContainer);
 
         // Make sure button texts are set explicitly
         submitPostButton.setText(R.string.post);
@@ -207,6 +216,13 @@ public class FeedPostCreateView extends FrameLayout {
      */
     public void setSDK(FastCommentsFeedSDK sdk) {
         this.sdk = sdk;
+
+        // Add all global toolbar buttons from the SDK
+        if (sdk != null) {
+            for (FeedCustomToolbarButton button : sdk.getGlobalFeedToolbarButtons()) {
+                addCustomToolbarButton(button);
+            }
+        }
     }
 
     /**
@@ -284,17 +300,76 @@ public class FeedPostCreateView extends FrameLayout {
     }
 
     /**
+     * Add an image URI programmatically to the feed post
+     * This method can be used by custom toolbar buttons to add images
+     *
+     * @param imageUri URI of the image to add
+     * @return true if image was added successfully, false if max images reached or invalid URI
+     */
+    public boolean addImageUri(Uri imageUri) {
+        if (imageUri == null) {
+            return false;
+        }
+
+        // Check if we've reached maximum images (both local and remote)
+        if (selectedMediaUris.size() + remoteMediaItems.size() >= MAX_IMAGES) {
+            showError(getContext().getString(R.string.max_images_reached));
+            return false;
+        }
+
+        String scheme = imageUri.getScheme();
+        if ("http".equals(scheme) || "https".equals(scheme)) {
+            // Handle as remote media - add directly to remoteMediaItems
+            FeedPostMediaItem mediaItem = new FeedPostMediaItem();
+            FeedPostMediaItemAsset asset = new FeedPostMediaItemAsset()
+                .src(imageUri.toString())
+                .w(400)  // Default dimensions for GIFs
+                .h(300);
+            mediaItem.setSizes(java.util.Arrays.asList(asset));
+            remoteMediaItems.add(mediaItem);
+
+            // Add to adapter for UI preview
+            mediaAdapter.addMedia(imageUri);
+        } else {
+            // Handle as local file - existing logic
+            mediaAdapter.addMedia(imageUri);
+            selectedMediaUris.add(imageUri);
+        }
+
+        // Show media preview container and update submit button
+        if (mediaPreviewContainer.getVisibility() != VISIBLE) {
+            mediaPreviewContainer.setVisibility(VISIBLE);
+        }
+        updateSubmitButtonState();
+
+        return true;
+    }
+
+    /**
      * Remove a media item at the specified position
      *
      * @param position Position of the media item to remove
      */
     private void removeMedia(int position) {
-        if (position >= 0 && position < selectedMediaUris.size()) {
-            selectedMediaUris.remove(position);
+        int totalMedia = selectedMediaUris.size() + remoteMediaItems.size();
+        if (position >= 0 && position < totalMedia) {
+            // Remove from UI adapter first
             mediaAdapter.removeMedia(position);
 
+            // Determine if this is a local or remote item and remove from appropriate list
+            if (position < selectedMediaUris.size()) {
+                // It's a local URI
+                selectedMediaUris.remove(position);
+            } else {
+                // It's a remote media item
+                int remoteIndex = position - selectedMediaUris.size();
+                if (remoteIndex < remoteMediaItems.size()) {
+                    remoteMediaItems.remove(remoteIndex);
+                }
+            }
+
             // Hide media container if no media items left
-            if (selectedMediaUris.isEmpty()) {
+            if (selectedMediaUris.isEmpty() && remoteMediaItems.isEmpty()) {
                 mediaPreviewContainer.setVisibility(GONE);
             }
 
@@ -360,6 +435,7 @@ public class FeedPostCreateView extends FrameLayout {
         postContentEditText.setText("");
         mediaAdapter.clearMedia();
         selectedMediaUris.clear();
+        remoteMediaItems.clear();
         mediaPreviewContainer.setVisibility(GONE);
         removeLink();
         postErrorTextView.setVisibility(GONE);
@@ -376,6 +452,7 @@ public class FeedPostCreateView extends FrameLayout {
     private void updateSubmitButtonState() {
         boolean hasContent = !TextUtils.isEmpty(postContentEditText.getText()) ||
                 !selectedMediaUris.isEmpty() ||
+                !remoteMediaItems.isEmpty() ||
                 attachedLink != null;
 
         submitPostButton.setEnabled(hasContent);
@@ -418,7 +495,7 @@ public class FeedPostCreateView extends FrameLayout {
         String content = postContentEditText.getText() != null ?
                 postContentEditText.getText().toString().trim() : "";
 
-        boolean hasContent = !content.isEmpty() || !selectedMediaUris.isEmpty() || attachedLink != null;
+        boolean hasContent = !content.isEmpty() || !selectedMediaUris.isEmpty() || !remoteMediaItems.isEmpty() || attachedLink != null;
 
         if (!hasContent) {
             showError(getContext().getString(R.string.content_required));
@@ -431,6 +508,9 @@ public class FeedPostCreateView extends FrameLayout {
         createPostFromInput(content, new FCCallback<FeedPost>() {
             @Override
             public boolean onFailure(APIError error) {
+                Log.e("FeedPostCreateView", "Create post from input failed: " +
+                    (error != null ? error.getReason() : "Unknown error") +
+                    ", translated: " + (error != null ? error.getTranslatedError() : "None"));
                 mainHandler.post(() -> {
                     // Hide loading state
                     setSubmitting(false);
@@ -457,6 +537,9 @@ public class FeedPostCreateView extends FrameLayout {
                     sdk.createPost(params, new FCCallback<FeedPost>() {
                         @Override
                         public boolean onFailure(APIError error) {
+                            Log.e("FeedPostCreateView", "Post creation failed: " +
+                                (error != null ? error.getReason() : "Unknown error") +
+                                ", translated: " + (error != null ? error.getTranslatedError() : "None"));
                             mainHandler.post(() -> {
                                 // Hide loading state
                                 setSubmitting(false);
@@ -528,23 +611,34 @@ public class FeedPostCreateView extends FrameLayout {
             post.setLinks(Collections.singletonList(attachedLink));
         }
 
-        // Upload media items and attach them to the post
+        // Handle media items (both local uploads and remote URLs)
         if (!selectedMediaUris.isEmpty()) {
+            // Upload local images first
             sdk.uploadImages(getContext(), selectedMediaUris, new FCCallback<List<FeedPostMediaItem>>() {
                 @Override
                 public boolean onFailure(APIError error) {
+                    Log.e("FeedPostCreateView", "Image upload failed: " +
+                        (error != null ? error.getReason() : "Unknown error"));
                     mainHandler.post(() -> feedPostCallback.onFailure(error));
                     return CONSUME;
                 }
 
                 @Override
-                public boolean onSuccess(List<FeedPostMediaItem> response) {
-                    post.setMedia(response);
+                public boolean onSuccess(List<FeedPostMediaItem> uploadedItems) {
+                    // Combine uploaded items with remote media items
+                    List<FeedPostMediaItem> allMediaItems = new ArrayList<>(uploadedItems);
+                    allMediaItems.addAll(remoteMediaItems);
+                    post.setMedia(allMediaItems);
                     mainHandler.post(() -> feedPostCallback.onSuccess(post));
                     return CONSUME;
                 }
             });
+        } else if (!remoteMediaItems.isEmpty()) {
+            // Only remote media, no uploads needed
+            post.setMedia(new ArrayList<>(remoteMediaItems));
+            feedPostCallback.onSuccess(post);
         } else {
+            // No media at all
             feedPostCallback.onSuccess(post);
         }
     }
@@ -589,6 +683,7 @@ public class FeedPostCreateView extends FrameLayout {
         postContentEditText.setText("");
         mediaAdapter.clearMedia();
         selectedMediaUris.clear();
+        remoteMediaItems.clear();
         mediaPreviewContainer.setVisibility(GONE);
         removeLink();
         hideError();
@@ -610,5 +705,175 @@ public class FeedPostCreateView extends FrameLayout {
 
         // Disable remove buttons during submission
         removeLinkButton.setEnabled(!submitting);
+
+        // Disable custom toolbar buttons during submission
+        for (int i = 0; i < customToolbarContainer.getChildCount(); i++) {
+            customToolbarContainer.getChildAt(i).setEnabled(!submitting);
+        }
+    }
+
+    // Custom toolbar button management methods
+
+    /**
+     * Add a custom toolbar button to the feed post creation toolbar
+     *
+     * @param button The custom button to add
+     */
+    public void addCustomToolbarButton(FeedCustomToolbarButton button) {
+        // Check if button already exists
+        for (FeedCustomToolbarButton existingButton : customButtons) {
+            if (existingButton.getId().equals(button.getId())) {
+                return; // Button already exists
+            }
+        }
+
+        customButtons.add(button);
+        addToolbarButtonView(button);
+        updateToolbarVisibility();
+    }
+
+    /**
+     * Remove a custom toolbar button by ID
+     *
+     * @param buttonId The ID of the button to remove
+     */
+    public void removeCustomToolbarButton(String buttonId) {
+        FeedCustomToolbarButton buttonToRemove = null;
+        for (FeedCustomToolbarButton button : customButtons) {
+            if (button.getId().equals(buttonId)) {
+                buttonToRemove = button;
+                break;
+            }
+        }
+
+        if (buttonToRemove != null) {
+            customButtons.remove(buttonToRemove);
+            rebuildToolbar();
+        }
+    }
+
+    /**
+     * Clear all custom toolbar buttons
+     */
+    public void clearCustomToolbarButtons() {
+        customButtons.clear();
+        rebuildToolbar();
+    }
+
+    /**
+     * Rebuild the toolbar with current buttons
+     */
+    private void rebuildToolbar() {
+        // Clear existing buttons
+        customToolbarContainer.removeAllViews();
+
+        // Add current buttons
+        for (FeedCustomToolbarButton button : customButtons) {
+            addToolbarButtonView(button);
+        }
+
+        updateToolbarVisibility();
+    }
+
+    /**
+     * Add a custom toolbar button view
+     */
+    private void addToolbarButtonView(FeedCustomToolbarButton customButton) {
+        ImageButton button = new ImageButton(getContext());
+        button.setImageResource(customButton.getIconResourceId());
+
+        if (customButton.getContentDescriptionResourceId() != 0) {
+            button.setContentDescription(getContext().getString(customButton.getContentDescriptionResourceId()));
+        }
+
+        TypedValue outValue = new TypedValue();
+        getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true);
+        button.setBackgroundResource(outValue.resourceId);
+        button.setOnClickListener(v -> customButton.onClick(this, v));
+
+        // Ensure icon scales properly within button bounds
+        button.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        int padding = (int) (4 * getContext().getResources().getDisplayMetrics().density);
+        button.setPadding(padding, padding, padding, padding);
+
+        // Apply theme colors
+        FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
+        int actionButtonColor = ThemeColorResolver.getActionButtonColor(getContext(), theme);
+        button.setImageTintList(ColorStateList.valueOf(actionButtonColor));
+
+        // Set consistent size to match image button (40dp)
+        int size = (int) (40 * getContext().getResources().getDisplayMetrics().density);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
+        params.setMargins(4, 0, 4, 0);
+        button.setLayoutParams(params);
+
+        // Update button state
+        button.setEnabled(customButton.isEnabled(this));
+        button.setVisibility(customButton.isVisible(this) ? View.VISIBLE : View.GONE);
+
+        customToolbarContainer.addView(button);
+        customButton.onAttached(this, button);
+    }
+
+    /**
+     * Update toolbar visibility based on whether there are custom buttons
+     */
+    private void updateToolbarVisibility() {
+        customToolbarScrollView.setVisibility(customButtons.isEmpty() ? GONE : VISIBLE);
+    }
+
+    // Text manipulation methods for custom buttons
+
+    /**
+     * Insert text at the current cursor position in the post content
+     *
+     * @param text The text to insert
+     */
+    public void insertTextAtCursor(String text) {
+        if (postContentEditText != null) {
+            int start = postContentEditText.getSelectionStart();
+            int end = postContentEditText.getSelectionEnd();
+            Editable editable = postContentEditText.getText();
+            editable.replace(Math.min(start, end), Math.max(start, end), text);
+        }
+    }
+
+    /**
+     * Get the currently selected text
+     *
+     * @return The selected text, or null if no selection
+     */
+    public String getSelectedText() {
+        if (postContentEditText != null) {
+            int start = postContentEditText.getSelectionStart();
+            int end = postContentEditText.getSelectionEnd();
+            if (start != end) {
+                return postContentEditText.getText().subSequence(start, end).toString();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Replace the selected text with new text
+     *
+     * @param text The text to replace the selection with
+     */
+    public void replaceSelection(String text) {
+        if (postContentEditText != null) {
+            int start = postContentEditText.getSelectionStart();
+            int end = postContentEditText.getSelectionEnd();
+            Editable editable = postContentEditText.getText();
+            editable.replace(start, end, text);
+        }
+    }
+
+    /**
+     * Request focus on the post content input
+     */
+    public void requestInputFocus() {
+        if (postContentEditText != null) {
+            postContentEditText.requestFocus();
+        }
     }
 }

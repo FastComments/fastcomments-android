@@ -160,4 +160,17 @@
     <!-- Mention strings -->
     <string name="mention_no_results">No users found</string>
     <string name="mention_searching">Searching for users...</string>
+
+    <!-- Formatting toolbar strings -->
+    <string name="format_bold">Bold</string>
+    <string name="format_italic">Italic</string>
+    <string name="format_code">Code</string>
+    <string name="link_url_hint">URL</string>
+    <string name="link_text_hint">Link text (optional)</string>
+    <string name="add">Add</string>
+
+    <!-- Custom toolbar button examples -->
+    <string name="add_gif">Add GIF</string>
+    <string name="add_emoji">Add Emoji</string>
+    <string name="mention_user">Mention User</string>
 </resources>
