@@ -7,7 +7,9 @@ import static org.mockito.Mockito.when;
 import android.content.Context;
 import android.widget.ImageButton;
 
+import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.model.FeedPost;
+import com.fastcomments.model.FeedPostLink;
 import com.fastcomments.model.FeedPostMediaItem;
 import com.fastcomments.model.FeedPostMediaItemAsset;
 
@@ -42,7 +44,7 @@ public class FeedPostsAdapterTest {
         MockitoAnnotations.openMocks(this);
         
         // Set up SDK config
-        FastCommentsConfig config = new FastCommentsConfig();
+        CommentWidgetConfig config = new CommentWidgetConfig();
         when(sdk.getConfig()).thenReturn(config);
     }
 
@@ -96,7 +98,7 @@ public class FeedPostsAdapterTest {
         FeedPostMediaItem item = new FeedPostMediaItem();
         FeedPostMediaItemAsset sizes = new FeedPostMediaItemAsset();
         sizes.setSrc("https://example.com/image.jpg");
-        item.setSizes(sizes);
+        item.setSizes(Arrays.asList(sizes));
         media.add(item);
         
         post.setMedia(media);
@@ -113,14 +115,14 @@ public class FeedPostsAdapterTest {
         FeedPostMediaItem item1 = new FeedPostMediaItem();
         FeedPostMediaItemAsset sizes1 = new FeedPostMediaItemAsset();
         sizes1.setSrc("https://example.com/image1.jpg");
-        item1.setSizes(sizes1);
+        item1.setSizes(Arrays.asList(sizes1));
         media.add(item1);
         
         // Add second image
         FeedPostMediaItem item2 = new FeedPostMediaItem();
         FeedPostMediaItemAsset sizes2 = new FeedPostMediaItemAsset();
         sizes2.setSrc("https://example.com/image2.jpg");
-        item2.setSizes(sizes2);
+        item2.setSizes(Arrays.asList(sizes2));
         media.add(item2);
         
         post.setMedia(media);
@@ -130,13 +132,13 @@ public class FeedPostsAdapterTest {
     private FeedPost createTaskPost() {
         FeedPost post = new FeedPost();
         post.setContentHTML("<p>This is a task post with action links</p>");
-        
+
         // Add links
         FeedPostLink link = new FeedPostLink();
         link.setTitle("Take Action");
-        link.setLink("https://example.com/action");
+        link.setUrl("https://example.com/action");
         post.setLinks(Arrays.asList(link));
-        
+
         return post;
     }
 }

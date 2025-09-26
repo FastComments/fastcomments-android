@@ -84,6 +84,7 @@ public class FastCommentsFeedSDK {
     private String urlIdWS;
     private String userIdWS;
     private TagSupplier tagSupplier;
+    private final List<FeedCustomToolbarButton> globalFeedToolbarButtons = new ArrayList<>(0);
 
     /**
      * Constructs a FastCommentsFeedSDK instance with the given configuration
@@ -1386,5 +1387,45 @@ public class FastCommentsFeedSDK {
         } catch (ApiException e) {
             CallbackWrapper.handleAPIException(mainHandler, callback, e);
         }
+    }
+
+    /**
+     * Add a global feed toolbar button that will be applied to all FeedPostCreateView instances
+     *
+     * @param button The toolbar button to add
+     */
+    public void addGlobalFeedToolbarButton(FeedCustomToolbarButton button) {
+        if (button != null && !globalFeedToolbarButtons.contains(button)) {
+            globalFeedToolbarButtons.add(button);
+        }
+    }
+
+    /**
+     * Remove a global feed toolbar button by its ID
+     *
+     * @param buttonId The ID of the button to remove
+     * @return true if a button was removed, false otherwise
+     */
+    public boolean removeGlobalFeedToolbarButton(String buttonId) {
+        if (buttonId == null) {
+            return false;
+        }
+        return globalFeedToolbarButtons.removeIf(button -> buttonId.equals(button.getId()));
+    }
+
+    /**
+     * Clear all global feed toolbar buttons
+     */
+    public void clearGlobalFeedToolbarButtons() {
+        globalFeedToolbarButtons.clear();
+    }
+
+    /**
+     * Get a copy of the current global feed toolbar buttons
+     *
+     * @return List of global feed toolbar buttons
+     */
+    public List<FeedCustomToolbarButton> getGlobalFeedToolbarButtons() {
+        return new ArrayList<>(globalFeedToolbarButtons);
     }
 }

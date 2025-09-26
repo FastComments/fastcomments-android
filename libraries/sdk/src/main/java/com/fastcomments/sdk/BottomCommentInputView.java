@@ -5,11 +5,13 @@ import android.content.res.ColorStateList;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -35,6 +37,9 @@ public class BottomCommentInputView extends FrameLayout {
     private LinearLayout replyIndicator;
     private TextView replyingToText;
     private ImageButton cancelReplyButton;
+    private HorizontalScrollView toolbarContainer;
+    private LinearLayout toolbar;
+    private View toolbarSeparator;
     private ImageView userAvatar;
     private EditText commentInput;
     private ImageButton sendButton;
@@ -56,6 +61,12 @@ public class BottomCommentInputView extends FrameLayout {
     private String currentMentionText = "";
     private boolean isSearchingUsers = false;
     private PopupWindow mentionPopup;
+
+    // For toolbar functionality
+    private List<CustomToolbarButton> customButtons = new ArrayList<>();
+    private boolean toolbarVisible = false;
+    private boolean defaultFormattingEnabled = true;
+    private int lastCursorPosition = 0;
 
     public interface OnCommentSubmitListener {
         void onCommentSubmit(String text, String parentId);
@@ -87,6 +98,9 @@ public class BottomCommentInputView extends FrameLayout {
         replyIndicator = findViewById(R.id.replyIndicator);
         replyingToText = findViewById(R.id.replyingToText);
         cancelReplyButton = findViewById(R.id.cancelReplyButton);
+        toolbarContainer = findViewById(R.id.toolbarContainer);
+        toolbar = findViewById(R.id.toolbar);
+        toolbarSeparator = findViewById(R.id.toolbarSeparator);
         userAvatar = findViewById(R.id.userAvatar);
         commentInput = findViewById(R.id.commentInput);
         sendButton = findViewById(R.id.sendButton);
@@ -129,6 +143,13 @@ public class BottomCommentInputView extends FrameLayout {
         // Cancel reply button
         cancelReplyButton.setOnClickListener(v -> {
             clearReplyState();
+        });
+
+        // Track cursor position for insertions when EditText loses focus
+        commentInput.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                lastCursorPosition = commentInput.getSelectionStart();
+            }
         });
     }
 
@@ -261,6 +282,13 @@ public class BottomCommentInputView extends FrameLayout {
     public void setSDK(FastCommentsSDK sdk) {
         this.sdk = sdk;
         applyTheme();
+
+        // Apply global toolbar configuration from SDK
+        if (sdk != null) {
+            sdk.applyGlobalToolbarConfiguration(this);
+        } else {
+            rebuildToolbar(); // Initialize toolbar when SDK is set
+        }
     }
 
     /**
@@ -508,7 +536,411 @@ public class BottomCommentInputView extends FrameLayout {
             cancelReplyButton.setImageTintList(ColorStateList.valueOf(actionButtonColor));
         }
     }
-    
+
+    // ===== TOOLBAR MANAGEMENT METHODS =====
+
+    /**
+     * Set whether the toolbar is visible
+     *
+     * @param visible true to show toolbar, false to hide
+     */
+    public void setToolbarVisible(boolean visible) {
+        this.toolbarVisible = visible;
+        updateToolbarVisibility();
+    }
+
+    /**
+     * Check if the toolbar is currently visible
+     *
+     * @return true if toolbar is visible
+     */
+    public boolean isToolbarVisible() {
+        return toolbarVisible;
+    }
+
+    /**
+     * Set whether default formatting buttons should be shown
+     *
+     * @param enabled true to show default formatting buttons
+     */
+    public void setDefaultFormattingEnabled(boolean enabled) {
+        this.defaultFormattingEnabled = enabled;
+        rebuildToolbar();
+    }
+
+    /**
+     * Check if default formatting buttons are enabled
+     *
+     * @return true if default formatting is enabled
+     */
+    public boolean isDefaultFormattingEnabled() {
+        return defaultFormattingEnabled;
+    }
+
+    /**
+     * Add a custom toolbar button
+     *
+     * @param button The custom button to add
+     */
+    public void addCustomToolbarButton(CustomToolbarButton button) {
+        if (button != null && !customButtons.contains(button)) {
+            customButtons.add(button);
+            rebuildToolbar();
+        }
+    }
+
+    /**
+     * Remove a custom toolbar button
+     *
+     * @param button The custom button to remove
+     */
+    public void removeCustomToolbarButton(CustomToolbarButton button) {
+        if (customButtons.remove(button)) {
+            rebuildToolbar();
+        }
+    }
+
+    /**
+     * Remove a custom toolbar button by ID
+     *
+     * @param buttonId The ID of the button to remove
+     */
+    public void removeCustomToolbarButton(String buttonId) {
+        CustomToolbarButton toRemove = null;
+        for (CustomToolbarButton button : customButtons) {
+            if (buttonId.equals(button.getId())) {
+                toRemove = button;
+                break;
+            }
+        }
+        if (toRemove != null) {
+            removeCustomToolbarButton(toRemove);
+        }
+    }
+
+    /**
+     * Clear all custom toolbar buttons
+     */
+    public void clearCustomToolbarButtons() {
+        customButtons.clear();
+        rebuildToolbar();
+    }
+
+    /**
+     * Update toolbar visibility based on current state
+     */
+    private void updateToolbarVisibility() {
+        boolean shouldShow = toolbarVisible && (defaultFormattingEnabled || !customButtons.isEmpty());
+        toolbarContainer.setVisibility(shouldShow ? View.VISIBLE : View.GONE);
+        toolbarSeparator.setVisibility(shouldShow ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * Rebuild the entire toolbar with current buttons
+     */
+    private void rebuildToolbar() {
+        // Clear existing buttons
+        toolbar.removeAllViews();
+
+        // Add default formatting buttons if enabled
+        if (defaultFormattingEnabled) {
+            addDefaultFormattingButtons();
+        }
+
+        // Add custom buttons
+        for (CustomToolbarButton button : customButtons) {
+            addToolbarButtonView(button);
+        }
+
+        // Update visibility
+        updateToolbarVisibility();
+    }
+
+    /**
+     * Add default formatting buttons to the toolbar
+     */
+    private void addDefaultFormattingButtons() {
+        // Bold button
+        addDefaultToolbarButton(R.drawable.ic_format_bold, R.string.format_bold, v -> {
+            wrapSelection("<b>", "</b>");
+        });
+
+        // Italic button
+        addDefaultToolbarButton(R.drawable.ic_format_italic, R.string.format_italic, v -> {
+            wrapSelection("<i>", "</i>");
+        });
+
+        // Link button
+        addDefaultToolbarButton(R.drawable.link_icon, R.string.add_link, v -> {
+            showLinkDialog();
+        });
+
+        // Code button
+        addDefaultToolbarButton(R.drawable.ic_code, R.string.format_code, v -> {
+            wrapSelection("<code>", "</code>");
+        });
+    }
+
+    /**
+     * Add a default toolbar button
+     */
+    private void addDefaultToolbarButton(int iconRes, int contentDescriptionRes, View.OnClickListener clickListener) {
+        ImageButton button = new ImageButton(getContext());
+        button.setImageResource(iconRes);
+        button.setContentDescription(getContext().getString(contentDescriptionRes));
+        TypedValue outValue = new TypedValue();
+        getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true);
+        button.setBackgroundResource(outValue.resourceId);
+        button.setOnClickListener(clickListener);
+
+        // Ensure icon scales properly within button bounds
+        button.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        int padding = (int) (4 * getContext().getResources().getDisplayMetrics().density);
+        button.setPadding(padding, padding, padding, padding);
+
+        // Apply theme colors
+        FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
+        int actionButtonColor = ThemeColorResolver.getActionButtonColor(getContext(), theme);
+        button.setImageTintList(ColorStateList.valueOf(actionButtonColor));
+
+        // Set consistent size (reduced from 32dp to 28dp for better proportion)
+        int size = (int) (28 * getContext().getResources().getDisplayMetrics().density);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
+        params.setMargins(4, 0, 4, 0);
+        button.setLayoutParams(params);
+
+        toolbar.addView(button);
+    }
+
+    /**
+     * Add a custom toolbar button view
+     */
+    private void addToolbarButtonView(CustomToolbarButton customButton) {
+        ImageButton button = new ImageButton(getContext());
+        button.setImageResource(customButton.getIconResourceId());
+
+        if (customButton.getContentDescriptionResourceId() != 0) {
+            button.setContentDescription(getContext().getString(customButton.getContentDescriptionResourceId()));
+        }
+
+        TypedValue outValue = new TypedValue();
+        getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true);
+        button.setBackgroundResource(outValue.resourceId);
+        button.setOnClickListener(v -> customButton.onClick(this, v));
+
+        if (customButton.onLongClick(this, button)) {
+            button.setOnLongClickListener(v -> customButton.onLongClick(this, v));
+        }
+
+        // Ensure icon scales properly within button bounds
+        button.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        int padding = (int) (4 * getContext().getResources().getDisplayMetrics().density);
+        button.setPadding(padding, padding, padding, padding);
+
+        // Apply theme colors
+        FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
+        int actionButtonColor = ThemeColorResolver.getActionButtonColor(getContext(), theme);
+        button.setImageTintList(ColorStateList.valueOf(actionButtonColor));
+
+        // Set consistent size (reduced from 32dp to 28dp for better proportion)
+        int size = (int) (28 * getContext().getResources().getDisplayMetrics().density);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
+        params.setMargins(4, 0, 4, 0);
+        button.setLayoutParams(params);
+
+        // Update button state
+        button.setEnabled(customButton.isEnabled(this));
+        button.setVisibility(customButton.isVisible(this) ? View.VISIBLE : View.GONE);
+
+        toolbar.addView(button);
+
+        // Notify button it was attached
+        customButton.onAttached(this, button);
+    }
+
+    /**
+     * Show dialog to add a link
+     */
+    private void showLinkDialog() {
+        // Create a simple dialog for adding links
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+        builder.setTitle(R.string.add_link);
+
+        // Create input fields
+        LinearLayout layout = new LinearLayout(getContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(16, 16, 16, 16);
+
+        EditText urlInput = new EditText(getContext());
+        urlInput.setHint(R.string.link_url_hint);
+        urlInput.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        layout.addView(urlInput);
+
+        EditText textInput = new EditText(getContext());
+        textInput.setHint(R.string.link_text_hint);
+
+        // Pre-fill with selected text if any
+        String selectedText = getSelectedText();
+        if (!selectedText.isEmpty()) {
+            textInput.setText(selectedText);
+        }
+        layout.addView(textInput);
+
+        builder.setView(layout);
+
+        builder.setPositiveButton(R.string.add, (dialog, which) -> {
+            String url = urlInput.getText().toString().trim();
+            String text = textInput.getText().toString().trim();
+
+            if (!url.isEmpty()) {
+                if (text.isEmpty()) {
+                    text = url;
+                }
+                String linkHtml = "<a href=\"" + url + "\">" + text + "</a>";
+
+                if (!selectedText.isEmpty()) {
+                    replaceSelection(linkHtml);
+                } else {
+                    insertHtmlAtCursor(linkHtml);
+                }
+            }
+        });
+
+        builder.setNegativeButton(R.string.cancel, null);
+        builder.show();
+    }
+
+    // ===== TEXT MANIPULATION METHODS =====
+
+    /**
+     * Insert plain text at the current cursor position
+     *
+     * @param text The text to insert
+     */
+    public void insertTextAtCursor(String text) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+
+        int start = Math.max(commentInput.getSelectionStart(), 0);
+        int end = Math.max(commentInput.getSelectionEnd(), 0);
+
+        // If no selection, use last known cursor position when EditText had focus
+        if (start == end && start == 0 && lastCursorPosition > 0) {
+            start = end = Math.min(lastCursorPosition, commentInput.getText().length());
+        }
+
+        commentInput.getText().replace(Math.min(start, end), Math.max(start, end), text);
+
+        // Move cursor to end of inserted text
+        int newPosition = Math.min(start, end) + text.length();
+        commentInput.setSelection(newPosition);
+        lastCursorPosition = newPosition;
+
+        // Update send button state
+        updateSendButtonState();
+    }
+
+    /**
+     * Insert HTML content at the current cursor position
+     *
+     * @param html The HTML content to insert
+     */
+    public void insertHtmlAtCursor(String html) {
+        insertTextAtCursor(html);
+    }
+
+    /**
+     * Wrap the currently selected text with start and end tags
+     *
+     * @param startTag The opening tag (e.g., "<b>")
+     * @param endTag The closing tag (e.g., "</b>")
+     */
+    public void wrapSelection(String startTag, String endTag) {
+        int start = Math.max(commentInput.getSelectionStart(), 0);
+        int end = Math.max(commentInput.getSelectionEnd(), 0);
+
+        if (start == end) {
+            // No selection, just insert the tags at cursor
+            insertTextAtCursor(startTag + endTag);
+            // Move cursor between the tags
+            int newPosition = start + startTag.length();
+            commentInput.setSelection(newPosition);
+            lastCursorPosition = newPosition;
+        } else {
+            // Wrap the selected text
+            String selectedText = commentInput.getText().subSequence(
+                Math.min(start, end), Math.max(start, end)).toString();
+            String wrappedText = startTag + selectedText + endTag;
+
+            commentInput.getText().replace(Math.min(start, end), Math.max(start, end), wrappedText);
+
+            // Select the content between the tags
+            int newStart = Math.min(start, end) + startTag.length();
+            int newEnd = newStart + selectedText.length();
+            commentInput.setSelection(newStart, newEnd);
+            lastCursorPosition = newEnd;
+        }
+
+        updateSendButtonState();
+    }
+
+    /**
+     * Get the currently selected text
+     *
+     * @return The selected text, or empty string if no selection
+     */
+    public String getSelectedText() {
+        int start = Math.max(commentInput.getSelectionStart(), 0);
+        int end = Math.max(commentInput.getSelectionEnd(), 0);
+
+        if (start == end) {
+            return "";
+        }
+
+        return commentInput.getText().subSequence(
+            Math.min(start, end), Math.max(start, end)).toString();
+    }
+
+    /**
+     * Replace the currently selected text
+     *
+     * @param text The replacement text
+     */
+    public void replaceSelection(String text) {
+        int start = Math.max(commentInput.getSelectionStart(), 0);
+        int end = Math.max(commentInput.getSelectionEnd(), 0);
+
+        commentInput.getText().replace(Math.min(start, end), Math.max(start, end), text);
+
+        // Move cursor to end of replacement text
+        int newPosition = Math.min(start, end) + text.length();
+        commentInput.setSelection(newPosition);
+        lastCursorPosition = newPosition;
+
+        updateSendButtonState();
+    }
+
+    /**
+     * Get the current cursor position
+     *
+     * @return The cursor position
+     */
+    public int getCursorPosition() {
+        return Math.max(commentInput.getSelectionStart(), 0);
+    }
+
+    /**
+     * Set the cursor position
+     *
+     * @param position The new cursor position
+     */
+    public void setCursorPosition(int position) {
+        int safePosition = Math.max(0, Math.min(position, commentInput.getText().length()));
+        commentInput.setSelection(safePosition);
+        lastCursorPosition = safePosition;
+    }
+
     /**
      * Clean up resources when the view is detached
      */
