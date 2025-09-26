@@ -58,6 +58,8 @@ dependencies {
     implementation("com.github.chrisbanes:PhotoView:2.3.0")
 
     testImplementation(libs.junit)
+    testImplementation("org.mockito:mockito-core:5.8.0")
+    testImplementation("org.robolectric:robolectric:4.11.1")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
