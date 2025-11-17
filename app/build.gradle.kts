@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.fastcomments"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.fastcomments"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
