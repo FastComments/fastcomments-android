@@ -65,21 +65,25 @@ public class PostImagesAdapter extends RecyclerView.Adapter<PostImagesAdapter.Im
             imageView = itemView.findViewById(R.id.postImageView);
             playButton = itemView.findViewById(R.id.playButton);
 
-            // Set click listener to show full image gallery
-            itemView.setOnClickListener(v -> {
+            // Set click listener on both itemView and imageView to ensure taps work
+            // This is necessary because ViewPager2's gesture detection can intercept taps on the container
+            View.OnClickListener clickListener = v -> {
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
                     FeedPostMediaItem mediaItem = mediaItems.get(position);
-                    
+
                     // Show gallery mode starting at the clicked image position
                     new FullImageDialog(context, mediaItems, position).show();
-                    
+
                     // Also notify the listener if set
                     if (listener != null) {
                         listener.onImageClick(mediaItem);
                     }
                 }
-            });
+            };
+
+            itemView.setOnClickListener(clickListener);
+            imageView.setOnClickListener(clickListener);
         }
 
         void bind(FeedPostMediaItem mediaItem) {
