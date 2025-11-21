@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">fastcomments</string>
+    <string name="no_comments_yet">Henüz yorum yok. İlk yorumu yapan siz olun!</string>
+    <string name="error_loading_comments">Yorumlar yüklenirken hata oluştu. Lütfen tekrar deneyin.</string>
+    <string name="error_posting_comment">Yorum gönderilirken hata oluştu. Lütfen tekrar deneyin.</string>
+    <string name="comment_posted_successfully">Yorum başarıyla gönderildi</string>
+    <string name="generic_loading_error">Yorumlar yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</string>
+    <string name="anonymous">Anonim</string>
+    <string name="comment_hint">Yorum yazın…</string>
+    <string name="reply_hint">Yanıt yazın…</string>
+    <string name="submit_comment">Gönder</string>
+    <string name="reply">Yanıtla</string>
+    <string name="cancel_replying">Yanıtı İptal Et</string>
+    <string name="cancel_reply_title">Yanıt İptal Edilsin mi?</string>
+    <string name="cancel_reply_confirm">Bu yanıtı iptal etmek istediğinizden emin misiniz? Metniniz kaybolacak.</string>
+    <string name="show_replies">Yanıtları Göster (%1$d)</string>
+    <string name="loading_replies">Yükleniyor...</string>
+    <string name="error_loading_replies">Yanıtlar yüklenemedi</string>
+    <string name="hide_replies">Yanıtları Gizle</string>
+    <string name="user_avatar">Kullanıcı Avatarı</string>
+    <string name="empty_comment_error">Yorum boş olamaz</string>
+    <string name="cancel">İptal</string>
+    <string name="replying_to">%s kullanıcısına yanıt</string>
+    <string name="new_comment">Yorum ekle</string>
+    <string name="add_comment_hint">Yorum ekle...</string>
+    <string name="send_comment">Yorum gönder</string>
+    <string name="next_comments">Sonraki (%1$d)</string>
+    <string name="load_all">Tümünü Yükle (%1$d)</string>
+    <string name="loading_more">Yükleniyor...</string>
+
+    <!-- Live commenting strings -->
+    <string name="show_new_comments">%1$d Yeni Yorumu Göster</string>
+    <string name="show_new_replies">%1$d Yeni Yanıtı Göster</string>
+    <string name="load_older_messages">Eski Mesajları Yükle (%1$d)</string>
+    <string name="load_all_messages">Tüm %1$d Mesajı Yükle</string>
+    <string name="chat_hint">Mesaj yazın…</string>
+
+    <!-- Voting strings -->
+    <string name="upvote">Yukarı Oy</string>
+    <string name="downvote">Aşağı Oy</string>
+    <string name="like">Beğen</string>
+    <string name="upvoted">Yukarı Oy Verildi</string>
+    <string name="downvoted">Aşağı Oy Verildi</string>
+    <string name="liked">Beğenildi</string>
+    <string name="vote_success">Oy kaydedildi</string>
+    <string name="vote_removed">Oy kaldırıldı</string>
+    <string name="error_voting">Oy kaydedilirken hata oluştu</string>
+    <string name="you_upvoted">%1$s\'in yorumuna yukarı oy verdiniz</string>
+    <string name="you_downvoted">%1$s\'in yorumuna aşağı oy verdiniz</string>
+    <string name="you_liked">%1$s\'in yorumunu beğendiniz</string>
+    <string name="you_removed_upvote">%1$s\'in yorumundan yukarı oyunuzu kaldırdınız</string>
+    <string name="you_removed_downvote">%1$s\'in yorumundan aşağı oyunuzu kaldırdınız</string>
+    <string name="you_removed_like">%1$s\'in yorumundan beğeninizi kaldırdınız</string>
+    <string name="login_to_vote">Oy vermek için lütfen giriş yapın</string>
+    <string name="vote_count_zero">0</string>
+    <string name="like_count_singular">%d beğeni</string>
+    <string name="like_count_plural">%d beğeni</string>
+    <string name="comment_count_singular">%d yorum</string>
+    <string name="comment_count_plural">%d yorum</string>
+    <string name="like_comment_count">%1$s • %2$s</string>
+
+    <!-- User authentication dialog -->
+    <string name="vote_login_title">Oy Vermek İçin Giriş Yapın</string>
+    <string name="comment_login_title">Yorum Yapmak İçin Giriş Yapın</string>
+    <string name="enter_username_email_message">Devam etmek için lütfen adınızı ve e-posta adresinizi girin</string>
+    <string name="enter_username_message">Devam etmek için lütfen adınızı girin</string>
+    <string name="vote_anon_notice">Misafir kullanıcı olarak devam edebilirsiniz.</string>
+    <string name="comment_anon_notice">Misafir olarak yorum yapabilirsiniz, ancak adınız yorumunuzla birlikte gösterilecektir.</string>
+    <string name="username_hint">Adınız</string>
+    <string name="email_hint">E-posta Adresi</string>
+    <string name="username_required">Ad gereklidir</string>
+    <string name="email_required">E-posta gereklidir</string>
+    <string name="submit">Gönder</string>
+    <string name="unverified">Doğrulanmamış</string>
+    <string name="pinned_comment">Sabitlenmiş Yorum</string>
+    <string name="online_indicator">Kullanıcı Çevrimiçi</string>
+    <string name="badge_icon">Rozet Simgesi</string>
+    <string name="badge_awarded">Rozet Kazandınız!</string>
+    <string name="close">Kapat</string>
+    <string name="edit_comment">Yorumu Düzenle</string>
+    <string name="delete_comment">Yorumu Sil</string>
+    <string name="flag_comment">Yorumu Bildir</string>
+    <string name="block_user">Kullanıcıyı Engelle</string>
+    <string name="menu_button">Menü Düğmesi</string>
+    <string name="edit_your_comment">Yorumunuzu Düzenleyin</string>
+    <string name="save_changes">Değişiklikleri Kaydet</string>
+    <string name="cancel_edit">İptal</string>
+    <string name="flag_success">Yorum bildirildi</string>
+    <string name="block_success">Kullanıcı engellendi</string>
+    <string name="error_editing_comment">Yorum düzenlenirken hata oluştu. Lütfen tekrar deneyin.</string>
+    <string name="comment_edited_successfully">Yorum başarıyla düzenlendi</string>
+    <string name="error_flagging_comment">Yorum bildirilirken hata oluştu. Lütfen tekrar deneyin.</string>
+    <string name="comment_flagged_successfully">Yorum başarıyla bildirildi</string>
+    <string name="error_blocking_user">Kullanıcı engellenirken hata oluştu. Lütfen tekrar deneyin.</string>
+    <string name="user_blocked_successfully">Kullanıcı başarıyla engellendi</string>
+    <string name="block_user_title">Kullanıcıyı Engelle</string>
+    <string name="block_user_confirm">%1$s kullanıcısını engellemek ve yorumlarını gizlemek istediğinizden emin misiniz?</string>
+    <string name="block">Engelle</string>
+    <string name="delete_comment_title">Yorumu Sil</string>
+    <string name="delete_comment_confirm">Bu yorumu silmek istediğinizden emin misiniz?</string>
+    <string name="delete">Sil</string>
+    <string name="error_deleting_comment">Yorum silinirken hata oluştu. Lütfen tekrar deneyin.</string>
+    <string name="comment_deleted_successfully">Yorum başarıyla silindi</string>
+    <string name="delete_post_title">Gönderiyi Sil</string>
+    <string name="delete_post_confirm">Bu gönderiyi silmek istediğinizden emin misiniz?</string>
+    <string name="error_deleting_post">Gönderi silinirken hata oluştu. Lütfen tekrar deneyin.</string>
+    <string name="post_deleted_successfully">Gönderi başarıyla silindi</string>
+    <string name="comments">Yorumlar</string>
+
+    <!-- Feed view strings -->
+    <string name="no_posts_yet">Görüntülenecek gönderi yok.</string>
+    <string name="error_loading_posts">Gönderiler yüklenirken hata oluştu. Lütfen tekrar deneyin.</string>
+    <string name="post_image">Gönderi resmi</string>
+    <string name="play_video">Video oynat</string>
+    <string name="link_icon">Link simgesi</string>
+    <string name="comment">Yorum Yap</string>
+    <string name="share">Paylaş</string>
+    <string name="minutes_ago">%1$d dk önce</string>
+    <string name="hours_ago">%1$d sa önce</string>
+    <string name="days_ago">%1$d gün önce</string>
+    <string name="just_now">Az önce</string>
+    <string name="yesterday">Dün</string>
+    <string name="post_liked">Gönderi beğenildi</string>
+    <string name="post_like_removed">Beğeni kaldırıldı</string>
+    <string name="error_liking_post">Bu gönderiyi beğenme veya beğeniyi kaldırma işlemi başarısız oldu.</string>
+    <string name="previous_image">Önceki resim</string>
+    <string name="next_image">Sonraki resim</string>
+    <string name="image_counter">%1$d/%2$d</string>
+    <string name="view_details">Detayları Görüntüle</string>
+    <string name="learn_more">Daha Fazla Bilgi</string>
+
+    <!-- Post creation strings -->
+    <string name="create_post_hint">Ne düşünüyorsun?</string>
+    <string name="post">Gönder</string>
+    <string name="attach_image">Resim ekle</string>
+    <string name="attach_link">Link ekle</string>
+    <string name="remove_image">Resmi kaldır</string>
+    <string name="remove_link">Linki kaldır</string>
+    <string name="posting">Gönderiliyor...</string>
+    <string name="post_success">Gönderi başarıyla oluşturuldu</string>
+    <string name="post_error">Gönderi oluşturulurken hata oluştu. Lütfen tekrar deneyin.</string>
+    <string name="add_link">Link Ekle</string>
+    <string name="link_url">Link URL\'si</string>
+    <string name="link_title">Link Başlığı (İsteğe Bağlı)</string>
+    <string name="link_description">Link Açıklaması (İsteğe Bağlı)</string>
+    <string name="link_url_required">Link URL\'si gereklidir</string>
+    <string name="invalid_url">Lütfen geçerli bir URL girin</string>
+    <string name="selected_media">Seçilen medya</string>
+    <string name="image_required">Lütfen bir resim seçin</string>
+    <string name="max_images_reached">Maksimum resim sayısına ulaşıldı</string>
+    <string name="content_required">Gönderi içeriği gereklidir</string>
+    <string name="media_upload_failure">Medya yükleme başarısız oldu</string>
+    <string name="create_new_post">Yeni Gönderi Oluştur</string>
+
+    <!-- Comment cancellation dialog -->
+    <string name="cancel_comment_title">Yorum İptal Edilsin mi?</string>
+    <string name="cancel_comment_confirm">İptal etmek istediğinizden emin misiniz? Metniniz kaybolacak.</string>
+
+    <!-- Mention strings -->
+    <string name="mention_no_results">Kullanıcı bulunamadı</string>
+    <string name="mention_searching">Kullanıcılar aranıyor...</string>
+
+    <!-- Formatting toolbar strings -->
+    <string name="format_bold">Kalın</string>
+    <string name="format_italic">İtalik</string>
+    <string name="format_code">Kod</string>
+    <string name="link_url_hint">URL</string>
+    <string name="link_text_hint">Link metni (isteğe bağlı)</string>
+    <string name="add">Ekle</string>
+
+    <!-- Custom toolbar button examples -->
+    <string name="add_gif">GIF Ekle</string>
+    <string name="add_emoji">Emoji Ekle</string>
+    <string name="mention_user">Kullanıcıdan Bahset</string>
+</resources>

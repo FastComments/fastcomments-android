@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">fastcomments</string>
+    <string name="no_comments_yet">Nu există încă comentarii. Fii primul care comentează!</string>
+    <string name="error_loading_comments">Eroare la încărcarea comentariilor. Te rugăm să încerci din nou.</string>
+    <string name="error_posting_comment">Eroare la postarea comentariului. Te rugăm să încerci din nou.</string>
+    <string name="comment_posted_successfully">Comentariu postat cu succes</string>
+    <string name="generic_loading_error">A apărut o eroare la încărcarea comentariilor. Te rugăm să încerci mai târziu.</string>
+    <string name="anonymous">Anonim</string>
+    <string name="comment_hint">Scrie un comentariu…</string>
+    <string name="reply_hint">Scrie un răspuns…</string>
+    <string name="submit_comment">Trimite</string>
+    <string name="reply">Răspunde</string>
+    <string name="cancel_replying">Anulează răspunsul</string>
+    <string name="cancel_reply_title">Anulezi răspunsul?</string>
+    <string name="cancel_reply_confirm">Ești sigur că vrei să anulezi acest răspuns? Textul tău va fi pierdut.</string>
+    <string name="show_replies">Arată răspunsuri (%1$d)</string>
+    <string name="loading_replies">Se încarcă...</string>
+    <string name="error_loading_replies">Încărcarea răspunsurilor a eșuat</string>
+    <string name="hide_replies">Ascunde răspunsuri</string>
+    <string name="user_avatar">Avatar utilizator</string>
+    <string name="empty_comment_error">Comentariul nu poate fi gol</string>
+    <string name="cancel">Anulează</string>
+    <string name="replying_to">Răspuns la %s</string>
+    <string name="new_comment">Adaugă un comentariu</string>
+    <string name="add_comment_hint">Adaugă un comentariu...</string>
+    <string name="send_comment">Trimite comentariu</string>
+    <string name="next_comments">Următorul (%1$d)</string>
+    <string name="load_all">Încarcă tot (%1$d)</string>
+    <string name="loading_more">Se încarcă...</string>
+
+    <!-- Live commenting strings -->
+    <string name="show_new_comments">Arată %1$d comentarii noi</string>
+    <string name="show_new_replies">Arată %1$d răspunsuri noi</string>
+    <string name="load_older_messages">Încarcă mesaje mai vechi (%1$d)</string>
+    <string name="load_all_messages">Încarcă toate cele %1$d mesaje</string>
+    <string name="chat_hint">Scrie un mesaj…</string>
+
+    <!-- Voting strings -->
+    <string name="upvote">Vot pozitiv</string>
+    <string name="downvote">Vot negativ</string>
+    <string name="like">Apreciază</string>
+    <string name="upvoted">Votat pozitiv</string>
+    <string name="downvoted">Votat negativ</string>
+    <string name="liked">Apreciat</string>
+    <string name="vote_success">Vot înregistrat</string>
+    <string name="vote_removed">Vot eliminat</string>
+    <string name="error_voting">Eroare la înregistrarea votului</string>
+    <string name="you_upvoted">Ai votat pozitiv comentariul lui %1$s</string>
+    <string name="you_downvoted">Ai votat negativ comentariul lui %1$s</string>
+    <string name="you_liked">Ai apreciat comentariul lui %1$s</string>
+    <string name="you_removed_upvote">Ai eliminat votul pozitiv de la comentariul lui %1$s</string>
+    <string name="you_removed_downvote">Ai eliminat votul negativ de la comentariul lui %1$s</string>
+    <string name="you_removed_like">Ai eliminat aprecierea de la comentariul lui %1$s</string>
+    <string name="login_to_vote">Te rugăm să te autentifici pentru a vota</string>
+    <string name="vote_count_zero">0</string>
+    <string name="like_count_singular">%d apreciere</string>
+    <string name="like_count_plural">%d aprecieri</string>
+    <string name="comment_count_singular">%d comentariu</string>
+    <string name="comment_count_plural">%d comentarii</string>
+    <string name="like_comment_count">%1$s • %2$s</string>
+
+    <!-- User authentication dialog -->
+    <string name="vote_login_title">Autentifică-te pentru a vota</string>
+    <string name="comment_login_title">Autentifică-te pentru a comenta</string>
+    <string name="enter_username_email_message">Te rugăm să introduci numele și adresa de email pentru a continua</string>
+    <string name="enter_username_message">Te rugăm să introduci numele pentru a continua</string>
+    <string name="vote_anon_notice">Poți continua ca utilizator invitat.</string>
+    <string name="comment_anon_notice">Poți comenta ca invitat, dar numele tău va fi afișat cu comentariul tău.</string>
+    <string name="username_hint">Numele tău</string>
+    <string name="email_hint">Adresă de email</string>
+    <string name="username_required">Numele este obligatoriu</string>
+    <string name="email_required">Email-ul este obligatoriu</string>
+    <string name="submit">Trimite</string>
+    <string name="unverified">Neverificat</string>
+    <string name="pinned_comment">Comentariu fixat</string>
+    <string name="online_indicator">Utilizatorul este online</string>
+    <string name="badge_icon">Pictogramă insignă</string>
+    <string name="badge_awarded">Insignă acordată!</string>
+    <string name="close">Închide</string>
+    <string name="edit_comment">Editează comentariu</string>
+    <string name="delete_comment">Șterge comentariu</string>
+    <string name="flag_comment">Raportează comentariu</string>
+    <string name="block_user">Blochează utilizator</string>
+    <string name="menu_button">Buton meniu</string>
+    <string name="edit_your_comment">Editează comentariul tău</string>
+    <string name="save_changes">Salvează modificările</string>
+    <string name="cancel_edit">Anulează</string>
+    <string name="flag_success">Comentariul a fost raportat</string>
+    <string name="block_success">Utilizatorul a fost blocat</string>
+    <string name="error_editing_comment">Eroare la editarea comentariului. Te rugăm să încerci din nou.</string>
+    <string name="comment_edited_successfully">Comentariu editat cu succes</string>
+    <string name="error_flagging_comment">Eroare la raportarea comentariului. Te rugăm să încerci din nou.</string>
+    <string name="comment_flagged_successfully">Comentariu raportat cu succes</string>
+    <string name="error_blocking_user">Eroare la blocarea utilizatorului. Te rugăm să încerci din nou.</string>
+    <string name="user_blocked_successfully">Utilizator blocat cu succes</string>
+    <string name="block_user_title">Blochează utilizator</string>
+    <string name="block_user_confirm">Ești sigur că vrei să blochezi pe %1$s și să ascunzi comentariile acestuia?</string>
+    <string name="block">Blochează</string>
+    <string name="delete_comment_title">Șterge comentariu</string>
+    <string name="delete_comment_confirm">Ești sigur că vrei să ștergi acest comentariu?</string>
+    <string name="delete">Șterge</string>
+    <string name="error_deleting_comment">Eroare la ștergerea comentariului. Te rugăm să încerci din nou.</string>
+    <string name="comment_deleted_successfully">Comentariu șters cu succes</string>
+    <string name="delete_post_title">Șterge postare</string>
+    <string name="delete_post_confirm">Ești sigur că vrei să ștergi această postare?</string>
+    <string name="error_deleting_post">Eroare la ștergerea postării. Te rugăm să încerci din nou.</string>
+    <string name="post_deleted_successfully">Postare ștearsă cu succes</string>
+    <string name="comments">Comentarii</string>
+
+    <!-- Feed view strings -->
+    <string name="no_posts_yet">Nu există postări de afișat.</string>
+    <string name="error_loading_posts">Eroare la încărcarea postărilor. Te rugăm să încerci din nou.</string>
+    <string name="post_image">Imagine postare</string>
+    <string name="play_video">Redă video</string>
+    <string name="link_icon">Pictogramă link</string>
+    <string name="comment">Comentează</string>
+    <string name="share">Distribuie</string>
+    <string name="minutes_ago">acum %1$d min</string>
+    <string name="hours_ago">acum %1$d ore</string>
+    <string name="days_ago">acum %1$d zile</string>
+    <string name="just_now">Chiar acum</string>
+    <string name="yesterday">Ieri</string>
+    <string name="post_liked">Postare apreciată</string>
+    <string name="post_like_removed">Apreciere eliminată</string>
+    <string name="error_liking_post">Aprecierea sau eliminarea aprecierii pentru acea postare a eșuat.</string>
+    <string name="previous_image">Imagine anterioară</string>
+    <string name="next_image">Imagine următoare</string>
+    <string name="image_counter">%1$d/%2$d</string>
+    <string name="view_details">Vezi detalii</string>
+    <string name="learn_more">Află mai multe</string>
+
+    <!-- Post creation strings -->
+    <string name="create_post_hint">La ce te gândești?</string>
+    <string name="post">Postează</string>
+    <string name="attach_image">Atașează imagine</string>
+    <string name="attach_link">Atașează link</string>
+    <string name="remove_image">Elimină imagine</string>
+    <string name="remove_link">Elimină link</string>
+    <string name="posting">Se postează...</string>
+    <string name="post_success">Postare creată cu succes</string>
+    <string name="post_error">Eroare la crearea postării. Te rugăm să încerci din nou.</string>
+    <string name="add_link">Adaugă link</string>
+    <string name="link_url">URL link</string>
+    <string name="link_title">Titlu link (Opțional)</string>
+    <string name="link_description">Descriere link (Opțional)</string>
+    <string name="link_url_required">URL-ul link-ului este obligatoriu</string>
+    <string name="invalid_url">Te rugăm să introduci un URL valid</string>
+    <string name="selected_media">Media selectată</string>
+    <string name="image_required">Te rugăm să selectezi o imagine</string>
+    <string name="max_images_reached">Numărul maxim de imagini a fost atins</string>
+    <string name="content_required">Conținutul postării este obligatoriu</string>
+    <string name="media_upload_failure">Încărcarea media a eșuat</string>
+    <string name="create_new_post">Creează postare nouă</string>
+
+    <!-- Comment cancellation dialog -->
+    <string name="cancel_comment_title">Anulezi comentariul?</string>
+    <string name="cancel_comment_confirm">Ești sigur că vrei să anulezi? Textul tău va fi pierdut.</string>
+
+    <!-- Mention strings -->
+    <string name="mention_no_results">Nu s-au găsit utilizatori</string>
+    <string name="mention_searching">Se caută utilizatori...</string>
+
+    <!-- Formatting toolbar strings -->
+    <string name="format_bold">Îngroșat</string>
+    <string name="format_italic">Italic</string>
+    <string name="format_code">Cod</string>
+    <string name="link_url_hint">URL</string>
+    <string name="link_text_hint">Text link (opțional)</string>
+    <string name="add">Adaugă</string>
+
+    <!-- Custom toolbar button examples -->
+    <string name="add_gif">Adaugă GIF</string>
+    <string name="add_emoji">Adaugă emoji</string>
+    <string name="mention_user">Menționează utilizator</string>
+</resources>

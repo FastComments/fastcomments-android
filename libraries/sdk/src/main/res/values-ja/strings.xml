@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">fastcomments</string>
+    <string name="no_comments_yet">まだコメントはありません。最初にコメントしましょう！</string>
+    <string name="error_loading_comments">コメントの読み込み中にエラーが発生しました。もう一度お試しください。</string>
+    <string name="error_posting_comment">コメントの投稿中にエラーが発生しました。もう一度お試しください。</string>
+    <string name="comment_posted_successfully">コメントが正常に投稿されました</string>
+    <string name="generic_loading_error">コメントの読み込み中にエラーが発生しました。後でもう一度お試しください。</string>
+    <string name="anonymous">匿名</string>
+    <string name="comment_hint">コメントを書く…</string>
+    <string name="reply_hint">返信を書く…</string>
+    <string name="submit_comment">送信</string>
+    <string name="reply">返信</string>
+    <string name="cancel_replying">返信をキャンセル</string>
+    <string name="cancel_reply_title">返信をキャンセルしますか？</string>
+    <string name="cancel_reply_confirm">本当にこの返信をキャンセルしますか？テキストは失われます。</string>
+    <string name="show_replies">返信を表示 (%1$d)</string>
+    <string name="loading_replies">読み込み中...</string>
+    <string name="error_loading_replies">返信の読み込みに失敗しました</string>
+    <string name="hide_replies">返信を非表示</string>
+    <string name="user_avatar">ユーザーアバター</string>
+    <string name="empty_comment_error">コメントは空にできません</string>
+    <string name="cancel">キャンセル</string>
+    <string name="replying_to">%s への返信</string>
+    <string name="new_comment">コメントを追加</string>
+    <string name="add_comment_hint">コメントを追加...</string>
+    <string name="send_comment">コメントを送信</string>
+    <string name="next_comments">次へ (%1$d)</string>
+    <string name="load_all">すべて読み込む (%1$d)</string>
+    <string name="loading_more">読み込み中...</string>
+
+    <!-- Live commenting strings -->
+    <string name="show_new_comments">%1$d 件の新しいコメントを表示</string>
+    <string name="show_new_replies">%1$d 件の新しい返信を表示</string>
+    <string name="load_older_messages">古いメッセージを読み込む (%1$d)</string>
+    <string name="load_all_messages">すべての %1$d 件のメッセージを読み込む</string>
+    <string name="chat_hint">メッセージを入力…</string>
+
+    <!-- Voting strings -->
+    <string name="upvote">高評価</string>
+    <string name="downvote">低評価</string>
+    <string name="like">いいね</string>
+    <string name="upvoted">高評価済み</string>
+    <string name="downvoted">低評価済み</string>
+    <string name="liked">いいね済み</string>
+    <string name="vote_success">投票が記録されました</string>
+    <string name="vote_removed">投票が削除されました</string>
+    <string name="error_voting">投票の記録中にエラーが発生しました</string>
+    <string name="you_upvoted">%1$s のコメントに高評価しました</string>
+    <string name="you_downvoted">%1$s のコメントに低評価しました</string>
+    <string name="you_liked">%1$s のコメントにいいねしました</string>
+    <string name="you_removed_upvote">%1$s のコメントから高評価を削除しました</string>
+    <string name="you_removed_downvote">%1$s のコメントから低評価を削除しました</string>
+    <string name="you_removed_like">%1$s のコメントからいいねを削除しました</string>
+    <string name="login_to_vote">投票するにはログインしてください</string>
+    <string name="vote_count_zero">0</string>
+    <string name="like_count_singular">%d いいね</string>
+    <string name="like_count_plural">%d いいね</string>
+    <string name="comment_count_singular">%d コメント</string>
+    <string name="comment_count_plural">%d コメント</string>
+    <string name="like_comment_count">%1$s • %2$s</string>
+
+    <!-- User authentication dialog -->
+    <string name="vote_login_title">ログインして投票</string>
+    <string name="comment_login_title">ログインしてコメント</string>
+    <string name="enter_username_email_message">続行するには名前とメールアドレスを入力してください</string>
+    <string name="enter_username_message">続行するには名前を入力してください</string>
+    <string name="vote_anon_notice">ゲストユーザーとして続行できます。</string>
+    <string name="comment_anon_notice">ゲストとしてコメントできますが、あなたの名前がコメントと一緒に表示されます。</string>
+    <string name="username_hint">お名前</string>
+    <string name="email_hint">メールアドレス</string>
+    <string name="username_required">名前は必須です</string>
+    <string name="email_required">メールは必須です</string>
+    <string name="submit">送信</string>
+    <string name="unverified">未確認</string>
+    <string name="pinned_comment">固定されたコメント</string>
+    <string name="online_indicator">ユーザーはオンラインです</string>
+    <string name="badge_icon">バッジアイコン</string>
+    <string name="badge_awarded">バッジが授与されました！</string>
+    <string name="close">閉じる</string>
+    <string name="edit_comment">コメントを編集</string>
+    <string name="delete_comment">コメントを削除</string>
+    <string name="flag_comment">コメントを報告</string>
+    <string name="block_user">ユーザーをブロック</string>
+    <string name="menu_button">メニューボタン</string>
+    <string name="edit_your_comment">コメントを編集</string>
+    <string name="save_changes">変更を保存</string>
+    <string name="cancel_edit">キャンセル</string>
+    <string name="flag_success">コメントが報告されました</string>
+    <string name="block_success">ユーザーがブロックされました</string>
+    <string name="error_editing_comment">コメントの編集中にエラーが発生しました。もう一度お試しください。</string>
+    <string name="comment_edited_successfully">コメントが正常に編集されました</string>
+    <string name="error_flagging_comment">コメントの報告中にエラーが発生しました。もう一度お試しください。</string>
+    <string name="comment_flagged_successfully">コメントが正常に報告されました</string>
+    <string name="error_blocking_user">ユーザーのブロック中にエラーが発生しました。もう一度お試しください。</string>
+    <string name="user_blocked_successfully">ユーザーが正常にブロックされました</string>
+    <string name="block_user_title">ユーザーをブロック</string>
+    <string name="block_user_confirm">本当に %1$s をブロックしてそのコメントを非表示にしますか？</string>
+    <string name="block">ブロック</string>
+    <string name="delete_comment_title">コメントを削除</string>
+    <string name="delete_comment_confirm">本当にこのコメントを削除しますか？</string>
+    <string name="delete">削除</string>
+    <string name="error_deleting_comment">コメントの削除中にエラーが発生しました。もう一度お試しください。</string>
+    <string name="comment_deleted_successfully">コメントが正常に削除されました</string>
+    <string name="delete_post_title">投稿を削除</string>
+    <string name="delete_post_confirm">本当にこの投稿を削除しますか？</string>
+    <string name="error_deleting_post">投稿の削除中にエラーが発生しました。もう一度お試しください。</string>
+    <string name="post_deleted_successfully">投稿が正常に削除されました</string>
+    <string name="comments">コメント</string>
+
+    <!-- Feed view strings -->
+    <string name="no_posts_yet">表示する投稿はありません。</string>
+    <string name="error_loading_posts">投稿の読み込み中にエラーが発生しました。もう一度お試しください。</string>
+    <string name="post_image">投稿画像</string>
+    <string name="play_video">動画を再生</string>
+    <string name="link_icon">リンクアイコン</string>
+    <string name="comment">コメント</string>
+    <string name="share">共有</string>
+    <string name="minutes_ago">%1$d 分前</string>
+    <string name="hours_ago">%1$d 時間前</string>
+    <string name="days_ago">%1$d 日前</string>
+    <string name="just_now">たった今</string>
+    <string name="yesterday">昨日</string>
+    <string name="post_liked">投稿にいいねしました</string>
+    <string name="post_like_removed">いいねを削除しました</string>
+    <string name="error_liking_post">その投稿にいいねまたはいいね解除できませんでした。</string>
+    <string name="previous_image">前の画像</string>
+    <string name="next_image">次の画像</string>
+    <string name="image_counter">%1$d/%2$d</string>
+    <string name="view_details">詳細を表示</string>
+    <string name="learn_more">もっと詳しく</string>
+
+    <!-- Post creation strings -->
+    <string name="create_post_hint">何を考えていますか？</string>
+    <string name="post">投稿</string>
+    <string name="attach_image">画像を添付</string>
+    <string name="attach_link">リンクを添付</string>
+    <string name="remove_image">画像を削除</string>
+    <string name="remove_link">リンクを削除</string>
+    <string name="posting">投稿中...</string>
+    <string name="post_success">投稿が正常に作成されました</string>
+    <string name="post_error">投稿の作成中にエラーが発生しました。もう一度お試しください。</string>
+    <string name="add_link">リンクを追加</string>
+    <string name="link_url">リンクURL</string>
+    <string name="link_title">リンクタイトル（オプション）</string>
+    <string name="link_description">リンク説明（オプション）</string>
+    <string name="link_url_required">リンクURLは必須です</string>
+    <string name="invalid_url">有効なURLを入力してください</string>
+    <string name="selected_media">選択されたメディア</string>
+    <string name="image_required">画像を選択してください</string>
+    <string name="max_images_reached">画像の最大数に達しました</string>
+    <string name="content_required">投稿内容は必須です</string>
+    <string name="media_upload_failure">メディアのアップロードに失敗しました</string>
+    <string name="create_new_post">新しい投稿を作成</string>
+
+    <!-- Comment cancellation dialog -->
+    <string name="cancel_comment_title">コメントをキャンセルしますか？</string>
+    <string name="cancel_comment_confirm">本当にキャンセルしますか？テキストは失われます。</string>
+
+    <!-- Mention strings -->
+    <string name="mention_no_results">ユーザーが見つかりません</string>
+    <string name="mention_searching">ユーザーを検索中...</string>
+
+    <!-- Formatting toolbar strings -->
+    <string name="format_bold">太字</string>
+    <string name="format_italic">斜体</string>
+    <string name="format_code">コード</string>
+    <string name="link_url_hint">URL</string>
+    <string name="link_text_hint">リンクテキスト（オプション）</string>
+    <string name="add">追加</string>
+
+    <!-- Custom toolbar button examples -->
+    <string name="add_gif">GIFを追加</string>
+    <string name="add_emoji">絵文字を追加</string>
+    <string name="mention_user">ユーザーをメンション</string>
+</resources>
