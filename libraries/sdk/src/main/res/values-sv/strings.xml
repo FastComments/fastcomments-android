@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">fastcomments</string>
+    <string name="no_comments_yet">Inga kommentarer ännu. Bli först med att kommentera!</string>
+    <string name="error_loading_comments">Fel vid laddning av kommentarer. Försök igen.</string>
+    <string name="error_posting_comment">Fel vid publicering av kommentar. Försök igen.</string>
+    <string name="comment_posted_successfully">Kommentar publicerad</string>
+    <string name="generic_loading_error">Ett fel uppstod vid laddning av kommentarer. Försök igen senare.</string>
+    <string name="anonymous">Anonym</string>
+    <string name="comment_hint">Skriv en kommentar…</string>
+    <string name="reply_hint">Skriv ett svar…</string>
+    <string name="submit_comment">Skicka</string>
+    <string name="reply">Svara</string>
+    <string name="cancel_replying">Avbryt svar</string>
+    <string name="cancel_reply_title">Avbryt svar?</string>
+    <string name="cancel_reply_confirm">Är du säker på att du vill avbryta detta svar? Din text kommer att förloras.</string>
+    <string name="show_replies">Visa svar (%1$d)</string>
+    <string name="loading_replies">Laddar...</string>
+    <string name="error_loading_replies">Misslyckades med att ladda svar</string>
+    <string name="hide_replies">Dölj svar</string>
+    <string name="user_avatar">Användaravatar</string>
+    <string name="empty_comment_error">Kommentaren kan inte vara tom</string>
+    <string name="cancel">Avbryt</string>
+    <string name="replying_to">Svarar till %s</string>
+    <string name="new_comment">Lägg till en kommentar</string>
+    <string name="add_comment_hint">Lägg till en kommentar...</string>
+    <string name="send_comment">Skicka kommentar</string>
+    <string name="next_comments">Nästa (%1$d)</string>
+    <string name="load_all">Ladda alla (%1$d)</string>
+    <string name="loading_more">Laddar...</string>
+
+    <!-- Live commenting strings -->
+    <string name="show_new_comments">Visa %1$d nya kommentarer</string>
+    <string name="show_new_replies">Visa %1$d nya svar</string>
+    <string name="load_older_messages">Ladda äldre meddelanden (%1$d)</string>
+    <string name="load_all_messages">Ladda alla %1$d meddelanden</string>
+    <string name="chat_hint">Skriv ett meddelande…</string>
+
+    <!-- Voting strings -->
+    <string name="upvote">Rösta upp</string>
+    <string name="downvote">Rösta ner</string>
+    <string name="like">Gilla</string>
+    <string name="upvoted">Uppröstad</string>
+    <string name="downvoted">Nedröstad</string>
+    <string name="liked">Gillad</string>
+    <string name="vote_success">Röst registrerad</string>
+    <string name="vote_removed">Röst borttagen</string>
+    <string name="error_voting">Fel vid registrering av röst</string>
+    <string name="you_upvoted">Du röstade upp %1$s\'s kommentar</string>
+    <string name="you_downvoted">Du röstade ner %1$s\'s kommentar</string>
+    <string name="you_liked">Du gillade %1$s\'s kommentar</string>
+    <string name="you_removed_upvote">Du tog bort din uppröstning från %1$s\'s kommentar</string>
+    <string name="you_removed_downvote">Du tog bort din nedröstning från %1$s\'s kommentar</string>
+    <string name="you_removed_like">Du tog bort din gillning från %1$s\'s kommentar</string>
+    <string name="login_to_vote">Vänligen logga in för att rösta</string>
+    <string name="vote_count_zero">0</string>
+    <string name="like_count_singular">%d gillning</string>
+    <string name="like_count_plural">%d gillningar</string>
+    <string name="comment_count_singular">%d kommentar</string>
+    <string name="comment_count_plural">%d kommentarer</string>
+    <string name="like_comment_count">%1$s • %2$s</string>
+
+    <!-- User authentication dialog -->
+    <string name="vote_login_title">Logga in för att rösta</string>
+    <string name="comment_login_title">Logga in för att kommentera</string>
+    <string name="enter_username_email_message">Vänligen ange ditt namn och e-postadress för att fortsätta</string>
+    <string name="enter_username_message">Vänligen ange ditt namn för att fortsätta</string>
+    <string name="vote_anon_notice">Du kan fortsätta som gästanvändare.</string>
+    <string name="comment_anon_notice">Du kan kommentera som gäst, men ditt namn kommer att visas med din kommentar.</string>
+    <string name="username_hint">Ditt namn</string>
+    <string name="email_hint">E-postadress</string>
+    <string name="username_required">Namn krävs</string>
+    <string name="email_required">E-post krävs</string>
+    <string name="submit">Skicka</string>
+    <string name="unverified">Overifierad</string>
+    <string name="pinned_comment">Fäst kommentar</string>
+    <string name="online_indicator">Användaren är online</string>
+    <string name="badge_icon">Märkesikon</string>
+    <string name="badge_awarded">Märke tilldelat!</string>
+    <string name="close">Stäng</string>
+    <string name="edit_comment">Redigera kommentar</string>
+    <string name="delete_comment">Ta bort kommentar</string>
+    <string name="flag_comment">Rapportera kommentar</string>
+    <string name="block_user">Blockera användare</string>
+    <string name="menu_button">Menyknapp</string>
+    <string name="edit_your_comment">Redigera din kommentar</string>
+    <string name="save_changes">Spara ändringar</string>
+    <string name="cancel_edit">Avbryt</string>
+    <string name="flag_success">Kommentaren har rapporterats</string>
+    <string name="block_success">Användaren har blockerats</string>
+    <string name="error_editing_comment">Fel vid redigering av kommentar. Försök igen.</string>
+    <string name="comment_edited_successfully">Kommentar redigerad</string>
+    <string name="error_flagging_comment">Fel vid rapportering av kommentar. Försök igen.</string>
+    <string name="comment_flagged_successfully">Kommentar rapporterad</string>
+    <string name="error_blocking_user">Fel vid blockering av användare. Försök igen.</string>
+    <string name="user_blocked_successfully">Användare blockerad</string>
+    <string name="block_user_title">Blockera användare</string>
+    <string name="block_user_confirm">Är du säker på att du vill blockera %1$s och dölja deras kommentarer?</string>
+    <string name="block">Blockera</string>
+    <string name="delete_comment_title">Ta bort kommentar</string>
+    <string name="delete_comment_confirm">Är du säker på att du vill ta bort denna kommentar?</string>
+    <string name="delete">Ta bort</string>
+    <string name="error_deleting_comment">Fel vid borttagning av kommentar. Försök igen.</string>
+    <string name="comment_deleted_successfully">Kommentar borttagen</string>
+    <string name="delete_post_title">Ta bort inlägg</string>
+    <string name="delete_post_confirm">Är du säker på att du vill ta bort detta inlägg?</string>
+    <string name="error_deleting_post">Fel vid borttagning av inlägg. Försök igen.</string>
+    <string name="post_deleted_successfully">Inlägg borttaget</string>
+    <string name="comments">Kommentarer</string>
+
+    <!-- Feed view strings -->
+    <string name="no_posts_yet">Inga inlägg att visa.</string>
+    <string name="error_loading_posts">Fel vid laddning av inlägg. Försök igen.</string>
+    <string name="post_image">Inläggsbild</string>
+    <string name="play_video">Spela video</string>
+    <string name="link_icon">Länkikon</string>
+    <string name="comment">Kommentera</string>
+    <string name="share">Dela</string>
+    <string name="minutes_ago">%1$d min sedan</string>
+    <string name="hours_ago">%1$d tim sedan</string>
+    <string name="days_ago">%1$d dagar sedan</string>
+    <string name="just_now">Just nu</string>
+    <string name="yesterday">Igår</string>
+    <string name="post_liked">Inlägg gillat</string>
+    <string name="post_like_removed">Gillning borttagen</string>
+    <string name="error_liking_post">Misslyckades med att gilla eller ta bort gillning för det inlägget.</string>
+    <string name="previous_image">Föregående bild</string>
+    <string name="next_image">Nästa bild</string>
+    <string name="image_counter">%1$d/%2$d</string>
+    <string name="view_details">Visa detaljer</string>
+    <string name="learn_more">Läs mer</string>
+
+    <!-- Post creation strings -->
+    <string name="create_post_hint">Vad tänker du på?</string>
+    <string name="post">Publicera</string>
+    <string name="attach_image">Bifoga bild</string>
+    <string name="attach_link">Bifoga länk</string>
+    <string name="remove_image">Ta bort bild</string>
+    <string name="remove_link">Ta bort länk</string>
+    <string name="posting">Publicerar...</string>
+    <string name="post_success">Inlägg skapat</string>
+    <string name="post_error">Fel vid skapande av inlägg. Försök igen.</string>
+    <string name="add_link">Lägg till länk</string>
+    <string name="link_url">Länk-URL</string>
+    <string name="link_title">Länktitel (Valfritt)</string>
+    <string name="link_description">Länkbeskrivning (Valfritt)</string>
+    <string name="link_url_required">Länk-URL krävs</string>
+    <string name="invalid_url">Vänligen ange en giltig URL</string>
+    <string name="selected_media">Vald media</string>
+    <string name="image_required">Vänligen välj en bild</string>
+    <string name="max_images_reached">Maximalt antal bilder uppnått</string>
+    <string name="content_required">Inläggsinnehåll krävs</string>
+    <string name="media_upload_failure">Misslyckades med att ladda upp media</string>
+    <string name="create_new_post">Skapa nytt inlägg</string>
+
+    <!-- Comment cancellation dialog -->
+    <string name="cancel_comment_title">Avbryt kommentar?</string>
+    <string name="cancel_comment_confirm">Är du säker på att du vill avbryta? Din text kommer att förloras.</string>
+
+    <!-- Mention strings -->
+    <string name="mention_no_results">Inga användare hittades</string>
+    <string name="mention_searching">Söker efter användare...</string>
+
+    <!-- Formatting toolbar strings -->
+    <string name="format_bold">Fet</string>
+    <string name="format_italic">Kursiv</string>
+    <string name="format_code">Kod</string>
+    <string name="link_url_hint">URL</string>
+    <string name="link_text_hint">Länktext (valfritt)</string>
+    <string name="add">Lägg till</string>
+
+    <!-- Custom toolbar button examples -->
+    <string name="add_gif">Lägg till GIF</string>
+    <string name="add_emoji">Lägg till emoji</string>
+    <string name="mention_user">Nämn användare</string>
+</resources>

@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">fastcomments</string>
+    <string name="no_comments_yet">Pas encore de commentaires. Soyez le premier à commenter !</string>
+    <string name="error_loading_comments">Erreur lors du chargement des commentaires. Veuillez réessayer.</string>
+    <string name="error_posting_comment">Erreur lors de la publication du commentaire. Veuillez réessayer.</string>
+    <string name="comment_posted_successfully">Commentaire publié avec succès</string>
+    <string name="generic_loading_error">Une erreur s\'est produite lors du chargement des commentaires. Veuillez réessayer plus tard.</string>
+    <string name="anonymous">Anonyme</string>
+    <string name="comment_hint">Écrire un commentaire…</string>
+    <string name="reply_hint">Écrire une réponse…</string>
+    <string name="submit_comment">Soumettre</string>
+    <string name="reply">Répondre</string>
+    <string name="cancel_replying">Annuler la réponse</string>
+    <string name="cancel_reply_title">Annuler la réponse ?</string>
+    <string name="cancel_reply_confirm">Êtes-vous sûr de vouloir annuler cette réponse ? Votre texte sera perdu.</string>
+    <string name="show_replies">Afficher les réponses (%1$d)</string>
+    <string name="loading_replies">Chargement...</string>
+    <string name="error_loading_replies">Échec du chargement des réponses</string>
+    <string name="hide_replies">Masquer les réponses</string>
+    <string name="user_avatar">Avatar de l\'utilisateur</string>
+    <string name="empty_comment_error">Le commentaire ne peut pas être vide</string>
+    <string name="cancel">Annuler</string>
+    <string name="replying_to">Répondre à %s</string>
+    <string name="new_comment">Ajouter un commentaire</string>
+    <string name="add_comment_hint">Ajouter un commentaire...</string>
+    <string name="send_comment">Envoyer le commentaire</string>
+    <string name="next_comments">Suivant (%1$d)</string>
+    <string name="load_all">Tout charger (%1$d)</string>
+    <string name="loading_more">Chargement...</string>
+
+    <!-- Live commenting strings -->
+    <string name="show_new_comments">Afficher %1$d nouveaux commentaires</string>
+    <string name="show_new_replies">Afficher %1$d nouvelles réponses</string>
+    <string name="load_older_messages">Charger les messages plus anciens (%1$d)</string>
+    <string name="load_all_messages">Charger tous les %1$d messages</string>
+    <string name="chat_hint">Tapez un message…</string>
+
+    <!-- Voting strings -->
+    <string name="upvote">Vote positif</string>
+    <string name="downvote">Vote négatif</string>
+    <string name="like">J\'aime</string>
+    <string name="upvoted">Voté positivement</string>
+    <string name="downvoted">Voté négativement</string>
+    <string name="liked">Aimé</string>
+    <string name="vote_success">Vote enregistré</string>
+    <string name="vote_removed">Vote supprimé</string>
+    <string name="error_voting">Erreur lors de l\'enregistrement du vote</string>
+    <string name="you_upvoted">Vous avez voté positivement le commentaire de %1$s</string>
+    <string name="you_downvoted">Vous avez voté négativement le commentaire de %1$s</string>
+    <string name="you_liked">Vous avez aimé le commentaire de %1$s</string>
+    <string name="you_removed_upvote">Vous avez supprimé votre vote positif du commentaire de %1$s</string>
+    <string name="you_removed_downvote">Vous avez supprimé votre vote négatif du commentaire de %1$s</string>
+    <string name="you_removed_like">Vous avez supprimé votre j\'aime du commentaire de %1$s</string>
+    <string name="login_to_vote">Veuillez vous connecter pour voter</string>
+    <string name="vote_count_zero">0</string>
+    <string name="like_count_singular">%d j\'aime</string>
+    <string name="like_count_plural">%d j\'aime</string>
+    <string name="comment_count_singular">%d commentaire</string>
+    <string name="comment_count_plural">%d commentaires</string>
+    <string name="like_comment_count">%1$s • %2$s</string>
+
+    <!-- User authentication dialog -->
+    <string name="vote_login_title">Se connecter pour voter</string>
+    <string name="comment_login_title">Se connecter pour commenter</string>
+    <string name="enter_username_email_message">Veuillez entrer votre nom et votre adresse e-mail pour continuer</string>
+    <string name="enter_username_message">Veuillez entrer votre nom pour continuer</string>
+    <string name="vote_anon_notice">Vous pouvez continuer en tant qu\'invité.</string>
+    <string name="comment_anon_notice">Vous pouvez commenter en tant qu\'invité, mais votre nom sera affiché avec votre commentaire.</string>
+    <string name="username_hint">Votre nom</string>
+    <string name="email_hint">Adresse e-mail</string>
+    <string name="username_required">Le nom est requis</string>
+    <string name="email_required">L\'adresse e-mail est requise</string>
+    <string name="submit">Soumettre</string>
+    <string name="unverified">Non vérifié</string>
+    <string name="pinned_comment">Commentaire épinglé</string>
+    <string name="online_indicator">L\'utilisateur est en ligne</string>
+    <string name="badge_icon">Icône de badge</string>
+    <string name="badge_awarded">Badge décerné !</string>
+    <string name="close">Fermer</string>
+    <string name="edit_comment">Modifier le commentaire</string>
+    <string name="delete_comment">Supprimer le commentaire</string>
+    <string name="flag_comment">Signaler le commentaire</string>
+    <string name="block_user">Bloquer l\'utilisateur</string>
+    <string name="menu_button">Bouton de menu</string>
+    <string name="edit_your_comment">Modifier votre commentaire</string>
+    <string name="save_changes">Enregistrer les modifications</string>
+    <string name="cancel_edit">Annuler</string>
+    <string name="flag_success">Le commentaire a été signalé</string>
+    <string name="block_success">L\'utilisateur a été bloqué</string>
+    <string name="error_editing_comment">Erreur lors de la modification du commentaire. Veuillez réessayer.</string>
+    <string name="comment_edited_successfully">Commentaire modifié avec succès</string>
+    <string name="error_flagging_comment">Erreur lors du signalement du commentaire. Veuillez réessayer.</string>
+    <string name="comment_flagged_successfully">Commentaire signalé avec succès</string>
+    <string name="error_blocking_user">Erreur lors du blocage de l\'utilisateur. Veuillez réessayer.</string>
+    <string name="user_blocked_successfully">Utilisateur bloqué avec succès</string>
+    <string name="block_user_title">Bloquer l\'utilisateur</string>
+    <string name="block_user_confirm">Êtes-vous sûr de vouloir bloquer %1$s et masquer leurs commentaires ?</string>
+    <string name="block">Bloquer</string>
+    <string name="delete_comment_title">Supprimer le commentaire</string>
+    <string name="delete_comment_confirm">Êtes-vous sûr de vouloir supprimer ce commentaire ?</string>
+    <string name="delete">Supprimer</string>
+    <string name="error_deleting_comment">Erreur lors de la suppression du commentaire. Veuillez réessayer.</string>
+    <string name="comment_deleted_successfully">Commentaire supprimé avec succès</string>
+    <string name="delete_post_title">Supprimer la publication</string>
+    <string name="delete_post_confirm">Êtes-vous sûr de vouloir supprimer cette publication ?</string>
+    <string name="error_deleting_post">Erreur lors de la suppression de la publication. Veuillez réessayer.</string>
+    <string name="post_deleted_successfully">Publication supprimée avec succès</string>
+    <string name="comments">Commentaires</string>
+
+    <!-- Feed view strings -->
+    <string name="no_posts_yet">Aucune publication à afficher.</string>
+    <string name="error_loading_posts">Erreur lors du chargement des publications. Veuillez réessayer.</string>
+    <string name="post_image">Image de publication</string>
+    <string name="play_video">Lire la vidéo</string>
+    <string name="link_icon">Icône de lien</string>
+    <string name="comment">Commenter</string>
+    <string name="share">Partager</string>
+    <string name="minutes_ago">il y a %1$d min</string>
+    <string name="hours_ago">il y a %1$d h</string>
+    <string name="days_ago">il y a %1$d jours</string>
+    <string name="just_now">À l\'instant</string>
+    <string name="yesterday">Hier</string>
+    <string name="post_liked">Publication aimée</string>
+    <string name="post_like_removed">J\'aime supprimé</string>
+    <string name="error_liking_post">Échec de l\'ajout ou de la suppression du j\'aime pour cette publication.</string>
+    <string name="previous_image">Image précédente</string>
+    <string name="next_image">Image suivante</string>
+    <string name="image_counter">%1$d/%2$d</string>
+    <string name="view_details">Voir les détails</string>
+    <string name="learn_more">En savoir plus</string>
+
+    <!-- Post creation strings -->
+    <string name="create_post_hint">À quoi pensez-vous ?</string>
+    <string name="post">Publier</string>
+    <string name="attach_image">Joindre une image</string>
+    <string name="attach_link">Joindre un lien</string>
+    <string name="remove_image">Supprimer l\'image</string>
+    <string name="remove_link">Supprimer le lien</string>
+    <string name="posting">Publication...</string>
+    <string name="post_success">Publication créée avec succès</string>
+    <string name="post_error">Erreur lors de la création de la publication. Veuillez réessayer.</string>
+    <string name="add_link">Ajouter un lien</string>
+    <string name="link_url">URL du lien</string>
+    <string name="link_title">Titre du lien (Optionnel)</string>
+    <string name="link_description">Description du lien (Optionnel)</string>
+    <string name="link_url_required">L\'URL du lien est requise</string>
+    <string name="invalid_url">Veuillez entrer une URL valide</string>
+    <string name="selected_media">Média sélectionné</string>
+    <string name="image_required">Veuillez sélectionner une image</string>
+    <string name="max_images_reached">Nombre maximum d\'images atteint</string>
+    <string name="content_required">Le contenu de la publication est requis</string>
+    <string name="media_upload_failure">Échec du téléchargement du média</string>
+    <string name="create_new_post">Créer une nouvelle publication</string>
+
+    <!-- Comment cancellation dialog -->
+    <string name="cancel_comment_title">Annuler le commentaire ?</string>
+    <string name="cancel_comment_confirm">Êtes-vous sûr de vouloir annuler ? Votre texte sera perdu.</string>
+
+    <!-- Mention strings -->
+    <string name="mention_no_results">Aucun utilisateur trouvé</string>
+    <string name="mention_searching">Recherche d\'utilisateurs...</string>
+
+    <!-- Formatting toolbar strings -->
+    <string name="format_bold">Gras</string>
+    <string name="format_italic">Italique</string>
+    <string name="format_code">Code</string>
+    <string name="link_url_hint">URL</string>
+    <string name="link_text_hint">Texte du lien (optionnel)</string>
+    <string name="add">Ajouter</string>
+
+    <!-- Custom toolbar button examples -->
+    <string name="add_gif">Ajouter un GIF</string>
+    <string name="add_emoji">Ajouter un emoji</string>
+    <string name="mention_user">Mentionner un utilisateur</string>
+</resources>

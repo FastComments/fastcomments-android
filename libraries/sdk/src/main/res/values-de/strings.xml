@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">fastcomments</string>
+    <string name="no_comments_yet">Noch keine Kommentare. Sei der Erste, der kommentiert!</string>
+    <string name="error_loading_comments">Fehler beim Laden der Kommentare. Bitte versuche es erneut.</string>
+    <string name="error_posting_comment">Fehler beim Posten des Kommentars. Bitte versuche es erneut.</string>
+    <string name="comment_posted_successfully">Kommentar erfolgreich gepostet</string>
+    <string name="generic_loading_error">Beim Laden der Kommentare ist ein Fehler aufgetreten. Bitte versuche es später erneut.</string>
+    <string name="anonymous">Anonym</string>
+    <string name="comment_hint">Schreibe einen Kommentar…</string>
+    <string name="reply_hint">Schreibe eine Antwort…</string>
+    <string name="submit_comment">Absenden</string>
+    <string name="reply">Antworten</string>
+    <string name="cancel_replying">Antworten abbrechen</string>
+    <string name="cancel_reply_title">Antwort abbrechen?</string>
+    <string name="cancel_reply_confirm">Bist du sicher, dass du diese Antwort abbrechen möchtest? Dein Text geht verloren.</string>
+    <string name="show_replies">Antworten anzeigen (%1$d)</string>
+    <string name="loading_replies">Lädt...</string>
+    <string name="error_loading_replies">Fehler beim Laden der Antworten</string>
+    <string name="hide_replies">Antworten ausblenden</string>
+    <string name="user_avatar">Benutzer-Avatar</string>
+    <string name="empty_comment_error">Kommentar darf nicht leer sein</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="replying_to">Antwort an %s</string>
+    <string name="new_comment">Kommentar hinzufügen</string>
+    <string name="add_comment_hint">Kommentar hinzufügen...</string>
+    <string name="send_comment">Kommentar senden</string>
+    <string name="next_comments">Weiter (%1$d)</string>
+    <string name="load_all">Alle laden (%1$d)</string>
+    <string name="loading_more">Lädt...</string>
+
+    <!-- Live commenting strings -->
+    <string name="show_new_comments">%1$d neue Kommentare anzeigen</string>
+    <string name="show_new_replies">%1$d neue Antworten anzeigen</string>
+    <string name="load_older_messages">Ältere Nachrichten laden (%1$d)</string>
+    <string name="load_all_messages">Alle %1$d Nachrichten laden</string>
+    <string name="chat_hint">Nachricht eingeben…</string>
+
+    <!-- Voting strings -->
+    <string name="upvote">Upvote</string>
+    <string name="downvote">Downvote</string>
+    <string name="like">Gefällt mir</string>
+    <string name="upvoted">Upgevoted</string>
+    <string name="downvoted">Downgevoted</string>
+    <string name="liked">Gefällt mir markiert</string>
+    <string name="vote_success">Stimme erfasst</string>
+    <string name="vote_removed">Stimme entfernt</string>
+    <string name="error_voting">Fehler beim Erfassen der Stimme</string>
+    <string name="you_upvoted">Du hast %1$s\'s Kommentar upgevoted</string>
+    <string name="you_downvoted">Du hast %1$s\'s Kommentar downgevoted</string>
+    <string name="you_liked">Du hast %1$s\'s Kommentar mit „Gefällt mir" markiert</string>
+    <string name="you_removed_upvote">Du hast dein Upvote von %1$s\'s Kommentar entfernt</string>
+    <string name="you_removed_downvote">Du hast dein Downvote von %1$s\'s Kommentar entfernt</string>
+    <string name="you_removed_like">Du hast dein „Gefällt mir" von %1$s\'s Kommentar entfernt</string>
+    <string name="login_to_vote">Bitte melde dich an, um abzustimmen</string>
+    <string name="vote_count_zero">0</string>
+    <string name="like_count_singular">%d Gefällt mir</string>
+    <string name="like_count_plural">%d Gefällt mir</string>
+    <string name="comment_count_singular">%d Kommentar</string>
+    <string name="comment_count_plural">%d Kommentare</string>
+    <string name="like_comment_count">%1$s • %2$s</string>
+
+    <!-- User authentication dialog -->
+    <string name="vote_login_title">Zum Abstimmen anmelden</string>
+    <string name="comment_login_title">Zum Kommentieren anmelden</string>
+    <string name="enter_username_email_message">Bitte gib deinen Namen und deine E-Mail-Adresse ein, um fortzufahren</string>
+    <string name="enter_username_message">Bitte gib deinen Namen ein, um fortzufahren</string>
+    <string name="vote_anon_notice">Du kannst als Gast fortfahren.</string>
+    <string name="comment_anon_notice">Du kannst als Gast kommentieren, aber dein Name wird mit deinem Kommentar angezeigt.</string>
+    <string name="username_hint">Dein Name</string>
+    <string name="email_hint">E-Mail-Adresse</string>
+    <string name="username_required">Name ist erforderlich</string>
+    <string name="email_required">E-Mail ist erforderlich</string>
+    <string name="submit">Absenden</string>
+    <string name="unverified">Nicht verifiziert</string>
+    <string name="pinned_comment">Angehefteter Kommentar</string>
+    <string name="online_indicator">Benutzer ist online</string>
+    <string name="badge_icon">Abzeichen-Symbol</string>
+    <string name="badge_awarded">Abzeichen verliehen!</string>
+    <string name="close">Schließen</string>
+    <string name="edit_comment">Kommentar bearbeiten</string>
+    <string name="delete_comment">Kommentar löschen</string>
+    <string name="flag_comment">Kommentar melden</string>
+    <string name="block_user">Benutzer blockieren</string>
+    <string name="menu_button">Menü-Button</string>
+    <string name="edit_your_comment">Bearbeite deinen Kommentar</string>
+    <string name="save_changes">Änderungen speichern</string>
+    <string name="cancel_edit">Abbrechen</string>
+    <string name="flag_success">Kommentar wurde gemeldet</string>
+    <string name="block_success">Benutzer wurde blockiert</string>
+    <string name="error_editing_comment">Fehler beim Bearbeiten des Kommentars. Bitte versuche es erneut.</string>
+    <string name="comment_edited_successfully">Kommentar erfolgreich bearbeitet</string>
+    <string name="error_flagging_comment">Fehler beim Melden des Kommentars. Bitte versuche es erneut.</string>
+    <string name="comment_flagged_successfully">Kommentar erfolgreich gemeldet</string>
+    <string name="error_blocking_user">Fehler beim Blockieren des Benutzers. Bitte versuche es erneut.</string>
+    <string name="user_blocked_successfully">Benutzer erfolgreich blockiert</string>
+    <string name="block_user_title">Benutzer blockieren</string>
+    <string name="block_user_confirm">Bist du sicher, dass du %1$s blockieren und deren Kommentare ausblenden möchtest?</string>
+    <string name="block">Blockieren</string>
+    <string name="delete_comment_title">Kommentar löschen</string>
+    <string name="delete_comment_confirm">Bist du sicher, dass du diesen Kommentar löschen möchtest?</string>
+    <string name="delete">Löschen</string>
+    <string name="error_deleting_comment">Fehler beim Löschen des Kommentars. Bitte versuche es erneut.</string>
+    <string name="comment_deleted_successfully">Kommentar erfolgreich gelöscht</string>
+    <string name="delete_post_title">Beitrag löschen</string>
+    <string name="delete_post_confirm">Bist du sicher, dass du diesen Beitrag löschen möchtest?</string>
+    <string name="error_deleting_post">Fehler beim Löschen des Beitrags. Bitte versuche es erneut.</string>
+    <string name="post_deleted_successfully">Beitrag erfolgreich gelöscht</string>
+    <string name="comments">Kommentare</string>
+
+    <!-- Feed view strings -->
+    <string name="no_posts_yet">Keine Beiträge zum Anzeigen.</string>
+    <string name="error_loading_posts">Fehler beim Laden der Beiträge. Bitte versuche es erneut.</string>
+    <string name="post_image">Beitragsbild</string>
+    <string name="play_video">Video abspielen</string>
+    <string name="link_icon">Link-Symbol</string>
+    <string name="comment">Kommentieren</string>
+    <string name="share">Teilen</string>
+    <string name="minutes_ago">vor %1$d Min.</string>
+    <string name="hours_ago">vor %1$d Std.</string>
+    <string name="days_ago">vor %1$d Tagen</string>
+    <string name="just_now">Gerade eben</string>
+    <string name="yesterday">Gestern</string>
+    <string name="post_liked">Beitrag gefällt mir</string>
+    <string name="post_like_removed">Gefällt mir entfernt</string>
+    <string name="error_liking_post">Fehler beim Liken oder Unliken des Beitrags.</string>
+    <string name="previous_image">Vorheriges Bild</string>
+    <string name="next_image">Nächstes Bild</string>
+    <string name="image_counter">%1$d/%2$d</string>
+    <string name="view_details">Details anzeigen</string>
+    <string name="learn_more">Mehr erfahren</string>
+
+    <!-- Post creation strings -->
+    <string name="create_post_hint">Was denkst du gerade?</string>
+    <string name="post">Posten</string>
+    <string name="attach_image">Bild anhängen</string>
+    <string name="attach_link">Link anhängen</string>
+    <string name="remove_image">Bild entfernen</string>
+    <string name="remove_link">Link entfernen</string>
+    <string name="posting">Poste...</string>
+    <string name="post_success">Beitrag erfolgreich erstellt</string>
+    <string name="post_error">Fehler beim Erstellen des Beitrags. Bitte versuche es erneut.</string>
+    <string name="add_link">Link hinzufügen</string>
+    <string name="link_url">Link-URL</string>
+    <string name="link_title">Link-Titel (Optional)</string>
+    <string name="link_description">Link-Beschreibung (Optional)</string>
+    <string name="link_url_required">Link-URL ist erforderlich</string>
+    <string name="invalid_url">Bitte gib eine gültige URL ein</string>
+    <string name="selected_media">Ausgewählte Medien</string>
+    <string name="image_required">Bitte wähle ein Bild aus</string>
+    <string name="max_images_reached">Maximale Anzahl an Bildern erreicht</string>
+    <string name="content_required">Beitragsinhalt ist erforderlich</string>
+    <string name="media_upload_failure">Fehler beim Hochladen der Medien</string>
+    <string name="create_new_post">Neuen Beitrag erstellen</string>
+
+    <!-- Comment cancellation dialog -->
+    <string name="cancel_comment_title">Kommentar abbrechen?</string>
+    <string name="cancel_comment_confirm">Bist du sicher, dass du abbrechen möchtest? Dein Text geht verloren.</string>
+
+    <!-- Mention strings -->
+    <string name="mention_no_results">Keine Benutzer gefunden</string>
+    <string name="mention_searching">Suche nach Benutzern...</string>
+
+    <!-- Formatting toolbar strings -->
+    <string name="format_bold">Fett</string>
+    <string name="format_italic">Kursiv</string>
+    <string name="format_code">Code</string>
+    <string name="link_url_hint">URL</string>
+    <string name="link_text_hint">Link-Text (optional)</string>
+    <string name="add">Hinzufügen</string>
+
+    <!-- Custom toolbar button examples -->
+    <string name="add_gif">GIF hinzufügen</string>
+    <string name="add_emoji">Emoji hinzufügen</string>
+    <string name="mention_user">Benutzer erwähnen</string>
+</resources>

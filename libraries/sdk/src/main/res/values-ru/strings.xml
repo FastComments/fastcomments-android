@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">fastcomments</string>
+    <string name="no_comments_yet">Пока нет комментариев. Будьте первым, кто оставит комментарий!</string>
+    <string name="error_loading_comments">Ошибка загрузки комментариев. Пожалуйста, попробуйте снова.</string>
+    <string name="error_posting_comment">Ошибка публикации комментария. Пожалуйста, попробуйте снова.</string>
+    <string name="comment_posted_successfully">Комментарий успешно опубликован</string>
+    <string name="generic_loading_error">Произошла ошибка при загрузке комментариев. Пожалуйста, попробуйте позже.</string>
+    <string name="anonymous">Аноним</string>
+    <string name="comment_hint">Напишите комментарий…</string>
+    <string name="reply_hint">Напишите ответ…</string>
+    <string name="submit_comment">Отправить</string>
+    <string name="reply">Ответить</string>
+    <string name="cancel_replying">Отменить ответ</string>
+    <string name="cancel_reply_title">Отменить ответ?</string>
+    <string name="cancel_reply_confirm">Вы уверены, что хотите отменить этот ответ? Ваш текст будет потерян.</string>
+    <string name="show_replies">Показать ответы (%1$d)</string>
+    <string name="loading_replies">Загрузка...</string>
+    <string name="error_loading_replies">Не удалось загрузить ответы</string>
+    <string name="hide_replies">Скрыть ответы</string>
+    <string name="user_avatar">Аватар пользователя</string>
+    <string name="empty_comment_error">Комментарий не может быть пустым</string>
+    <string name="cancel">Отмена</string>
+    <string name="replying_to">Ответ для %s</string>
+    <string name="new_comment">Добавить комментарий</string>
+    <string name="add_comment_hint">Добавить комментарий...</string>
+    <string name="send_comment">Отправить комментарий</string>
+    <string name="next_comments">Далее (%1$d)</string>
+    <string name="load_all">Загрузить все (%1$d)</string>
+    <string name="loading_more">Загрузка...</string>
+
+    <!-- Live commenting strings -->
+    <string name="show_new_comments">Показать %1$d новых комментариев</string>
+    <string name="show_new_replies">Показать %1$d новых ответов</string>
+    <string name="load_older_messages">Загрузить старые сообщения (%1$d)</string>
+    <string name="load_all_messages">Загрузить все %1$d сообщений</string>
+    <string name="chat_hint">Введите сообщение…</string>
+
+    <!-- Voting strings -->
+    <string name="upvote">Плюс</string>
+    <string name="downvote">Минус</string>
+    <string name="like">Нравится</string>
+    <string name="upvoted">Плюс поставлен</string>
+    <string name="downvoted">Минус поставлен</string>
+    <string name="liked">Нравится</string>
+    <string name="vote_success">Голос записан</string>
+    <string name="vote_removed">Голос удален</string>
+    <string name="error_voting">Ошибка записи голоса</string>
+    <string name="you_upvoted">Вы поставили плюс комментарию %1$s</string>
+    <string name="you_downvoted">Вы поставили минус комментарию %1$s</string>
+    <string name="you_liked">Вам понравился комментарий %1$s</string>
+    <string name="you_removed_upvote">Вы убрали плюс с комментария %1$s</string>
+    <string name="you_removed_downvote">Вы убрали минус с комментария %1$s</string>
+    <string name="you_removed_like">Вы убрали отметку «Нравится» с комментария %1$s</string>
+    <string name="login_to_vote">Пожалуйста, войдите, чтобы голосовать</string>
+    <string name="vote_count_zero">0</string>
+    <string name="like_count_singular">%d отметка «Нравится»</string>
+    <string name="like_count_plural">%d отметок «Нравится»</string>
+    <string name="comment_count_singular">%d комментарий</string>
+    <string name="comment_count_plural">%d комментариев</string>
+    <string name="like_comment_count">%1$s • %2$s</string>
+
+    <!-- User authentication dialog -->
+    <string name="vote_login_title">Войдите, чтобы голосовать</string>
+    <string name="comment_login_title">Войдите, чтобы комментировать</string>
+    <string name="enter_username_email_message">Пожалуйста, введите ваше имя и email для продолжения</string>
+    <string name="enter_username_message">Пожалуйста, введите ваше имя для продолжения</string>
+    <string name="vote_anon_notice">Вы можете продолжить как гость.</string>
+    <string name="comment_anon_notice">Вы можете комментировать как гость, но ваше имя будет показано с вашим комментарием.</string>
+    <string name="username_hint">Ваше имя</string>
+    <string name="email_hint">Адрес электронной почты</string>
+    <string name="username_required">Имя обязательно</string>
+    <string name="email_required">Email обязателен</string>
+    <string name="submit">Отправить</string>
+    <string name="unverified">Не подтвержден</string>
+    <string name="pinned_comment">Закрепленный комментарий</string>
+    <string name="online_indicator">Пользователь онлайн</string>
+    <string name="badge_icon">Значок</string>
+    <string name="badge_awarded">Значок получен!</string>
+    <string name="close">Закрыть</string>
+    <string name="edit_comment">Редактировать комментарий</string>
+    <string name="delete_comment">Удалить комментарий</string>
+    <string name="flag_comment">Пожаловаться на комментарий</string>
+    <string name="block_user">Заблокировать пользователя</string>
+    <string name="menu_button">Кнопка меню</string>
+    <string name="edit_your_comment">Редактировать ваш комментарий</string>
+    <string name="save_changes">Сохранить изменения</string>
+    <string name="cancel_edit">Отмена</string>
+    <string name="flag_success">Жалоба на комментарий отправлена</string>
+    <string name="block_success">Пользователь заблокирован</string>
+    <string name="error_editing_comment">Ошибка редактирования комментария. Пожалуйста, попробуйте снова.</string>
+    <string name="comment_edited_successfully">Комментарий успешно отредактирован</string>
+    <string name="error_flagging_comment">Ошибка отправки жалобы на комментарий. Пожалуйста, попробуйте снова.</string>
+    <string name="comment_flagged_successfully">Жалоба на комментарий успешно отправлена</string>
+    <string name="error_blocking_user">Ошибка блокировки пользователя. Пожалуйста, попробуйте снова.</string>
+    <string name="user_blocked_successfully">Пользователь успешно заблокирован</string>
+    <string name="block_user_title">Заблокировать пользователя</string>
+    <string name="block_user_confirm">Вы уверены, что хотите заблокировать %1$s и скрыть его комментарии?</string>
+    <string name="block">Заблокировать</string>
+    <string name="delete_comment_title">Удалить комментарий</string>
+    <string name="delete_comment_confirm">Вы уверены, что хотите удалить этот комментарий?</string>
+    <string name="delete">Удалить</string>
+    <string name="error_deleting_comment">Ошибка удаления комментария. Пожалуйста, попробуйте снова.</string>
+    <string name="comment_deleted_successfully">Комментарий успешно удален</string>
+    <string name="delete_post_title">Удалить публикацию</string>
+    <string name="delete_post_confirm">Вы уверены, что хотите удалить эту публикацию?</string>
+    <string name="error_deleting_post">Ошибка удаления публикации. Пожалуйста, попробуйте снова.</string>
+    <string name="post_deleted_successfully">Публикация успешно удалена</string>
+    <string name="comments">Комментарии</string>
+
+    <!-- Feed view strings -->
+    <string name="no_posts_yet">Нет публикаций для отображения.</string>
+    <string name="error_loading_posts">Ошибка загрузки публикаций. Пожалуйста, попробуйте снова.</string>
+    <string name="post_image">Изображение публикации</string>
+    <string name="play_video">Воспроизвести видео</string>
+    <string name="link_icon">Значок ссылки</string>
+    <string name="comment">Комментировать</string>
+    <string name="share">Поделиться</string>
+    <string name="minutes_ago">%1$d мин назад</string>
+    <string name="hours_ago">%1$d ч назад</string>
+    <string name="days_ago">%1$d дн назад</string>
+    <string name="just_now">Только что</string>
+    <string name="yesterday">Вчера</string>
+    <string name="post_liked">Публикация понравилась</string>
+    <string name="post_like_removed">Отметка «Нравится» удалена</string>
+    <string name="error_liking_post">Не удалось поставить или убрать отметку «Нравится» для этой публикации.</string>
+    <string name="previous_image">Предыдущее изображение</string>
+    <string name="next_image">Следующее изображение</string>
+    <string name="image_counter">%1$d/%2$d</string>
+    <string name="view_details">Посмотреть подробности</string>
+    <string name="learn_more">Узнать больше</string>
+
+    <!-- Post creation strings -->
+    <string name="create_post_hint">О чем вы думаете?</string>
+    <string name="post">Опубликовать</string>
+    <string name="attach_image">Прикрепить изображение</string>
+    <string name="attach_link">Прикрепить ссылку</string>
+    <string name="remove_image">Удалить изображение</string>
+    <string name="remove_link">Удалить ссылку</string>
+    <string name="posting">Публикация...</string>
+    <string name="post_success">Публикация успешно создана</string>
+    <string name="post_error">Ошибка создания публикации. Пожалуйста, попробуйте снова.</string>
+    <string name="add_link">Добавить ссылку</string>
+    <string name="link_url">URL ссылки</string>
+    <string name="link_title">Заголовок ссылки (необязательно)</string>
+    <string name="link_description">Описание ссылки (необязательно)</string>
+    <string name="link_url_required">URL ссылки обязателен</string>
+    <string name="invalid_url">Пожалуйста, введите корректный URL</string>
+    <string name="selected_media">Выбранные медиа</string>
+    <string name="image_required">Пожалуйста, выберите изображение</string>
+    <string name="max_images_reached">Достигнуто максимальное количество изображений</string>
+    <string name="content_required">Содержание публикации обязательно</string>
+    <string name="media_upload_failure">Не удалось загрузить медиа</string>
+    <string name="create_new_post">Создать новую публикацию</string>
+
+    <!-- Comment cancellation dialog -->
+    <string name="cancel_comment_title">Отменить комментарий?</string>
+    <string name="cancel_comment_confirm">Вы уверены, что хотите отменить? Ваш текст будет потерян.</string>
+
+    <!-- Mention strings -->
+    <string name="mention_no_results">Пользователи не найдены</string>
+    <string name="mention_searching">Поиск пользователей...</string>
+
+    <!-- Formatting toolbar strings -->
+    <string name="format_bold">Жирный</string>
+    <string name="format_italic">Курсив</string>
+    <string name="format_code">Код</string>
+    <string name="link_url_hint">URL</string>
+    <string name="link_text_hint">Текст ссылки (необязательно)</string>
+    <string name="add">Добавить</string>
+
+    <!-- Custom toolbar button examples -->
+    <string name="add_gif">Добавить GIF</string>
+    <string name="add_emoji">Добавить эмодзи</string>
+    <string name="mention_user">Упомянуть пользователя</string>
+</resources>
