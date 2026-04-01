@@ -17,7 +17,9 @@ import android.widget.Button;
 import com.fastcomments.core.VoteStyle;
 import com.fastcomments.model.APIEmptyResponse;
 import com.fastcomments.model.BlockSuccess;
-import com.fastcomments.model.PickFCommentApprovedOrCommentHTML;
+import com.fastcomments.model.FComment;
+import com.fastcomments.model.SetCommentTextResult;
+import com.fastcomments.model.APIStatus;
 import com.fastcomments.model.PublicComment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -35,8 +37,6 @@ import com.fastcomments.model.APIError;
 import com.fastcomments.model.GetCommentsResponseWithPresencePublicComment;
 import com.fastcomments.model.VoteResponse;
 import com.fastcomments.model.VoteDeleteResponse;
-import com.fastcomments.model.ImportedAPIStatusFAILED;
-
 import java.util.Objects;
 
 public class FastCommentsView extends FrameLayout {
@@ -694,7 +694,7 @@ public class FastCommentsView extends FrameLayout {
                 CommentEditDialog dialog = new CommentEditDialog(getContext(), sdk);
                 dialog.setOnSaveCallback(newText -> {
                     // Call API to edit the comment
-                    sdk.editComment(commentId, newText, new FCCallback<PickFCommentApprovedOrCommentHTML>() {
+                    sdk.editComment(commentId, newText, new FCCallback<SetCommentTextResult>() {
                         @Override
                         public boolean onFailure(APIError error) {
                             // Show error message
@@ -718,7 +718,7 @@ public class FastCommentsView extends FrameLayout {
                         }
 
                         @Override
-                        public boolean onSuccess(PickFCommentApprovedOrCommentHTML updatedComment) {
+                        public boolean onSuccess(SetCommentTextResult updatedComment) {
                             // Show success message
                             getHandler().post(() -> {
                                 android.widget.Toast.makeText(

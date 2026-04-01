@@ -2,13 +2,18 @@ package com.fastcomments.sdk;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Typeface;
 import android.text.Editable;
+import android.text.Spanned;
 import android.text.TextWatcher;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.StyleSpan;
+import android.text.style.TypefaceSpan;
+import android.text.style.URLSpan;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -27,7 +32,11 @@ import com.fastcomments.model.APIError;
 import com.fastcomments.model.UserSessionInfo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Modern bottom comment input view with user avatar and send button
@@ -41,7 +50,7 @@ public class BottomCommentInputView extends FrameLayout {
     private LinearLayout toolbar;
     private View toolbarSeparator;
     private ImageView userAvatar;
-    private EditText commentInput;
+    private RichEditText commentInput;
     private ImageButton sendButton;
     private ProgressBar sendProgress;
     private TextView errorMessage;
@@ -67,6 +76,13 @@ public class BottomCommentInputView extends FrameLayout {
     private boolean toolbarVisible = false;
     private boolean defaultFormattingEnabled = true;
     private int lastCursorPosition = 0;
+
+    // For WYSIWYG formatting
+    private final Set<String> activeFormatsForNextChar = new HashSet<>();
+    private final Map<String, ImageButton> defaultToolbarButtons = new LinkedHashMap<>();
+    private int lastTextChangeStart = 0;
+    private int lastTextChangeCount = 0;
+    private RichTextHelper.EditableImageGetter editableImageGetter;
 
     public interface OnCommentSubmitListener {
         void onCommentSubmit(String text, String parentId);
@@ -108,12 +124,21 @@ public class BottomCommentInputView extends FrameLayout {
         errorMessage = findViewById(R.id.errorMessage);
         mentionSuggestionsList = findViewById(R.id.mentionSuggestionsList);
 
+        // Create reusable image getter for WYSIWYG HTML parsing
+        editableImageGetter = new RichTextHelper.EditableImageGetter(commentInput);
+
+        // Listen for cursor/selection changes to update toolbar active states
+        commentInput.setOnSelectionChangedListener((selStart, selEnd) -> {
+            activeFormatsForNextChar.clear();
+            updateToolbarActiveStates();
+        });
+
         setupListeners();
         setupMentions();
     }
 
     private void setupListeners() {
-        // Text change listener to enable/disable send button and handle mentions
+        // Text change listener to enable/disable send button, handle mentions, and apply WYSIWYG spans
         commentInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -122,21 +147,59 @@ public class BottomCommentInputView extends FrameLayout {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 updateSendButtonState();
                 hideError();
-                
+
+                // Track change range for WYSIWYG span application
+                lastTextChangeStart = start;
+                lastTextChangeCount = count;
+
                 // Handle @mentions
                 handleMentionInput(s, start, before, count);
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+                // Apply active formatting to newly typed characters
+                if (!activeFormatsForNextChar.isEmpty() && lastTextChangeCount > 0) {
+                    int applyStart = lastTextChangeStart;
+                    int applyEnd = lastTextChangeStart + lastTextChangeCount;
+                    if (applyEnd <= s.length()) {
+                        for (String format : activeFormatsForNextChar) {
+                            switch (format) {
+                                case "bold":
+                                    if (!hasMatchingStyleSpan(s, Typeface.BOLD, applyStart, applyEnd)) {
+                                        s.setSpan(new StyleSpan(Typeface.BOLD), applyStart, applyEnd,
+                                                Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
+                                    }
+                                    break;
+                                case "italic":
+                                    if (!hasMatchingStyleSpan(s, Typeface.ITALIC, applyStart, applyEnd)) {
+                                        s.setSpan(new StyleSpan(Typeface.ITALIC), applyStart, applyEnd,
+                                                Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
+                                    }
+                                    break;
+                                case "code":
+                                    if (!hasMatchingSpan(s, TypefaceSpan.class, applyStart, applyEnd)) {
+                                        s.setSpan(new TypefaceSpan("monospace"), applyStart, applyEnd,
+                                                Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
+                                        s.setSpan(new BackgroundColorSpan(0x20808080), applyStart, applyEnd,
+                                                Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                }
+                updateToolbarActiveStates();
+            }
         });
 
-        // Send button click
+        // Send button click — serialize spans to HTML
         sendButton.setOnClickListener(v -> {
-            String text = commentInput.getText().toString().trim();
-            if (!text.isEmpty() && submitListener != null) {
+            String plainText = commentInput.getText().toString().trim();
+            if (!plainText.isEmpty() && submitListener != null) {
+                String html = getText();
                 String parentId = parentComment != null ? parentComment.getComment().getId() : null;
-                submitListener.onCommentSubmit(text, parentId);
+                submitListener.onCommentSubmit(html, parentId);
             }
         });
 
@@ -212,8 +275,15 @@ public class BottomCommentInputView extends FrameLayout {
     }
 
     public void clearText() {
+        activeFormatsForNextChar.clear();
+        if (editableImageGetter != null) {
+            editableImageGetter.clearTargets();
+        }
+        commentInput.setSuppressSelectionEvents(true);
         commentInput.setText("");
+        commentInput.setSuppressSelectionEvents(false);
         updateSendButtonState();
+        updateToolbarActiveStates();
     }
 
     public void setSubmitting(boolean submitting) {
@@ -241,7 +311,7 @@ public class BottomCommentInputView extends FrameLayout {
     }
 
     public String getText() {
-        return commentInput.getText().toString().trim();
+        return RichTextHelper.toHtml(commentInput.getText()).trim();
     }
 
     public void requestInputFocus() {
@@ -499,24 +569,23 @@ public class BottomCommentInputView extends FrameLayout {
         if (mention == null || mentionStartPosition < 0) {
             return;
         }
-        
+
         // Add the mention to the selected mentions list
         mention.setMentioned(true);
         selectedMentions.add(mention);
-        
-        // Replace the @query with @username
-        String text = commentInput.getText().toString();
-        String beforeMention = text.substring(0, mentionStartPosition);
-        String afterMention = text.substring(mentionStartPosition + currentMentionText.length() + 1);
-        String newText = beforeMention + "@" + mention.getUsername() + " " + afterMention;
-        
-        // Update the EditText with new text
-        commentInput.setText(newText);
-        
+
+        // Replace the @query with @username using Editable ops to preserve spans
+        Editable editable = commentInput.getText();
+        int deleteEnd = mentionStartPosition + currentMentionText.length() + 1;
+        deleteEnd = Math.min(deleteEnd, editable.length());
+        editable.delete(mentionStartPosition, deleteEnd);
+        String insertText = "@" + mention.getUsername() + " ";
+        editable.insert(mentionStartPosition, insertText);
+
         // Move cursor after the inserted mention
-        int newPosition = mentionStartPosition + mention.getUsername().length() + 2; // +2 for @ and space
-        commentInput.setSelection(newPosition);
-        
+        int newPosition = mentionStartPosition + insertText.length();
+        commentInput.setSelection(Math.min(newPosition, editable.length()));
+
         // Reset the mention state
         cancelMention();
     }
@@ -660,31 +729,39 @@ public class BottomCommentInputView extends FrameLayout {
      * Add default formatting buttons to the toolbar
      */
     private void addDefaultFormattingButtons() {
+        defaultToolbarButtons.clear();
+
         // Bold button
-        addDefaultToolbarButton(R.drawable.ic_format_bold, R.string.format_bold, v -> {
-            wrapSelection("<b>", "</b>");
-        });
+        ImageButton boldBtn = addDefaultToolbarButton(R.drawable.ic_format_bold, R.string.format_bold,
+                v -> toggleFormat("bold"));
+        defaultToolbarButtons.put("bold", boldBtn);
 
         // Italic button
-        addDefaultToolbarButton(R.drawable.ic_format_italic, R.string.format_italic, v -> {
-            wrapSelection("<i>", "</i>");
-        });
+        ImageButton italicBtn = addDefaultToolbarButton(R.drawable.ic_format_italic, R.string.format_italic,
+                v -> toggleFormat("italic"));
+        defaultToolbarButtons.put("italic", italicBtn);
 
         // Link button
-        addDefaultToolbarButton(R.drawable.link_icon, R.string.add_link, v -> {
-            showLinkDialog();
-        });
+        ImageButton linkBtn = addDefaultToolbarButton(R.drawable.link_icon, R.string.add_link,
+                v -> showLinkDialog());
+        defaultToolbarButtons.put("link", linkBtn);
 
         // Code button
-        addDefaultToolbarButton(R.drawable.ic_code, R.string.format_code, v -> {
-            wrapSelection("<code>", "</code>");
+        ImageButton codeBtn = addDefaultToolbarButton(R.drawable.ic_code, R.string.format_code,
+                v -> toggleFormat("code"));
+        codeBtn.setOnLongClickListener(v -> {
+            toggleFormat("codeblock");
+            return true;
         });
+        defaultToolbarButtons.put("code", codeBtn);
     }
 
     /**
      * Add a default toolbar button
+     *
+     * @return The created ImageButton, for tracking active states
      */
-    private void addDefaultToolbarButton(int iconRes, int contentDescriptionRes, View.OnClickListener clickListener) {
+    private ImageButton addDefaultToolbarButton(int iconRes, int contentDescriptionRes, View.OnClickListener clickListener) {
         ImageButton button = new ImageButton(getContext());
         button.setImageResource(iconRes);
         button.setContentDescription(getContext().getString(contentDescriptionRes));
@@ -710,6 +787,7 @@ public class BottomCommentInputView extends FrameLayout {
         button.setLayoutParams(params);
 
         toolbar.addView(button);
+        return button;
     }
 
     /**
@@ -762,11 +840,9 @@ public class BottomCommentInputView extends FrameLayout {
      * Show dialog to add a link
      */
     private void showLinkDialog() {
-        // Create a simple dialog for adding links
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
         builder.setTitle(R.string.add_link);
 
-        // Create input fields
         LinearLayout layout = new LinearLayout(getContext());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(16, 16, 16, 16);
@@ -780,6 +856,9 @@ public class BottomCommentInputView extends FrameLayout {
         textInput.setHint(R.string.link_text_hint);
 
         // Pre-fill with selected text if any
+        int selStart = Math.max(commentInput.getSelectionStart(), 0);
+        int selEnd = Math.max(commentInput.getSelectionEnd(), 0);
+        boolean hasSelection = selStart != selEnd;
         String selectedText = getSelectedText();
         if (!selectedText.isEmpty()) {
             textInput.setText(selectedText);
@@ -790,19 +869,30 @@ public class BottomCommentInputView extends FrameLayout {
 
         builder.setPositiveButton(R.string.add, (dialog, which) -> {
             String url = urlInput.getText().toString().trim();
-            String text = textInput.getText().toString().trim();
+            String linkText = textInput.getText().toString().trim();
 
             if (!url.isEmpty()) {
-                if (text.isEmpty()) {
-                    text = url;
+                if (linkText.isEmpty()) {
+                    linkText = url;
                 }
-                String linkHtml = "<a href=\"" + url + "\">" + text + "</a>";
-
-                if (!selectedText.isEmpty()) {
-                    replaceSelection(linkHtml);
+                Editable editable = commentInput.getText();
+                if (hasSelection) {
+                    // Replace selection with link text and apply URLSpan
+                    int rStart = Math.min(selStart, selEnd);
+                    int rEnd = Math.max(selStart, selEnd);
+                    editable.replace(rStart, rEnd, linkText);
+                    int linkEnd = rStart + linkText.length();
+                    RichTextHelper.applyLink(editable, rStart, linkEnd, url);
+                    commentInput.setSelection(linkEnd);
                 } else {
-                    insertHtmlAtCursor(linkHtml);
+                    // Insert link text at cursor and apply URLSpan
+                    int pos = Math.max(commentInput.getSelectionStart(), 0);
+                    editable.insert(pos, linkText);
+                    int linkEnd = pos + linkText.length();
+                    RichTextHelper.applyLink(editable, pos, linkEnd, url);
+                    commentInput.setSelection(linkEnd);
                 }
+                updateSendButtonState();
             }
         });
 
@@ -842,46 +932,57 @@ public class BottomCommentInputView extends FrameLayout {
     }
 
     /**
-     * Insert HTML content at the current cursor position
+     * Insert HTML content at the current cursor position.
+     * Converts HTML to Spanned so formatting renders visually (WYSIWYG).
      *
      * @param html The HTML content to insert
      */
     public void insertHtmlAtCursor(String html) {
-        insertTextAtCursor(html);
+        if (html == null || html.isEmpty()) return;
+
+        // If cursor is at 0 but we had a previous position, restore it
+        int start = Math.max(commentInput.getSelectionStart(), 0);
+        int end = Math.max(commentInput.getSelectionEnd(), 0);
+        if (start == end && start == 0 && lastCursorPosition > 0) {
+            int restored = Math.min(lastCursorPosition, commentInput.getText().length());
+            commentInput.setSelection(restored);
+        }
+
+        lastCursorPosition = RichTextHelper.insertHtmlAtCursor(commentInput, html, editableImageGetter);
+        updateSendButtonState();
     }
 
     /**
-     * Wrap the currently selected text with start and end tags
+     * Wrap the currently selected text with formatting.
+     * Recognized HTML tags are converted to WYSIWYG spans; unrecognized tags
+     * fall back to literal string insertion for backward compatibility.
      *
-     * @param startTag The opening tag (e.g., "<b>")
-     * @param endTag The closing tag (e.g., "</b>")
+     * @param startTag The opening tag (e.g., "&lt;b&gt;")
+     * @param endTag The closing tag (e.g., "&lt;/b&gt;")
      */
     public void wrapSelection(String startTag, String endTag) {
-        int start = Math.max(commentInput.getSelectionStart(), 0);
-        int end = Math.max(commentInput.getSelectionEnd(), 0);
-
-        if (start == end) {
-            // No selection, just insert the tags at cursor
-            insertTextAtCursor(startTag + endTag);
-            // Move cursor between the tags
-            int newPosition = start + startTag.length();
-            commentInput.setSelection(newPosition);
-            lastCursorPosition = newPosition;
-        } else {
-            // Wrap the selected text
-            String selectedText = commentInput.getText().subSequence(
-                Math.min(start, end), Math.max(start, end)).toString();
-            String wrappedText = startTag + selectedText + endTag;
-
-            commentInput.getText().replace(Math.min(start, end), Math.max(start, end), wrappedText);
-
-            // Select the content between the tags
-            int newStart = Math.min(start, end) + startTag.length();
-            int newEnd = newStart + selectedText.length();
-            commentInput.setSelection(newStart, newEnd);
-            lastCursorPosition = newEnd;
+        // Try to map HTML tags to WYSIWYG format toggles
+        // (uses toggleFormat which supports no-selection cursor-position toggling)
+        String formatName = RichTextHelper.parseHtmlTags(startTag, endTag);
+        if (formatName != null) {
+            toggleFormat(formatName);
+            return;
         }
 
+        // Check for <a href="..."> link tags
+        String href = RichTextHelper.extractHref(startTag);
+        if (href != null) {
+            int start = Math.max(commentInput.getSelectionStart(), 0);
+            int end = Math.max(commentInput.getSelectionEnd(), 0);
+            if (start != end) {
+                RichTextHelper.applyLink(commentInput.getText(), Math.min(start, end), Math.max(start, end), href);
+            }
+            updateSendButtonState();
+            return;
+        }
+
+        // Unrecognized tags — fall back to literal string insertion
+        lastCursorPosition = RichTextHelper.wrapSelectionLiteral(commentInput, startTag, endTag);
         updateSendButtonState();
     }
 
@@ -941,6 +1042,141 @@ public class BottomCommentInputView extends FrameLayout {
         lastCursorPosition = safePosition;
     }
 
+    // ===== WYSIWYG FORMATTING METHODS =====
+
+    /**
+     * Toggle a named format on the current selection, or set it as the active format
+     * for the next typed character if there's no selection.
+     */
+    private void toggleFormat(String formatName) {
+        Editable editable = commentInput.getText();
+        int selStart = Math.max(commentInput.getSelectionStart(), 0);
+        int selEnd = Math.max(commentInput.getSelectionEnd(), 0);
+
+        if (selStart != selEnd) {
+            // Selection exists — apply/remove span directly
+            int start = Math.min(selStart, selEnd);
+            int end = Math.max(selStart, selEnd);
+            switch (formatName) {
+                case "bold":
+                    RichTextHelper.toggleBold(editable, start, end);
+                    break;
+                case "italic":
+                    RichTextHelper.toggleItalic(editable, start, end);
+                    break;
+                case "code":
+                    RichTextHelper.toggleCode(editable, start, end);
+                    break;
+                case "codeblock":
+                    RichTextHelper.toggleCodeBlock(editable, start, end);
+                    break;
+            }
+        } else {
+            // No selection — check if the format is currently active from an existing span.
+            // If active from a span, truncate it at the cursor (change end to EXCLUSIVE_EXCLUSIVE)
+            // so new characters don't inherit. If not active, add to the set so new chars get the format.
+            boolean activeFromSpan;
+            switch (formatName) {
+                case "bold":
+                    activeFromSpan = RichTextHelper.isBoldActive(editable, selStart);
+                    break;
+                case "italic":
+                    activeFromSpan = RichTextHelper.isItalicActive(editable, selStart);
+                    break;
+                case "code":
+                case "codeblock":
+                    activeFromSpan = RichTextHelper.isCodeActive(editable, selStart);
+                    break;
+                default:
+                    activeFromSpan = false;
+            }
+
+            if (activeFromSpan) {
+                // Currently bold from a span — truncate it so new chars aren't bold
+                switch (formatName) {
+                    case "bold":
+                        RichTextHelper.truncateBoldAtCursor(editable, selStart);
+                        break;
+                    case "italic":
+                        RichTextHelper.truncateItalicAtCursor(editable, selStart);
+                        break;
+                    case "code":
+                    case "codeblock":
+                        RichTextHelper.truncateCodeAtCursor(editable, selStart);
+                        break;
+                }
+                activeFormatsForNextChar.remove(formatName);
+            } else if (activeFormatsForNextChar.contains(formatName)) {
+                // Was queued for next char — turn it off
+                activeFormatsForNextChar.remove(formatName);
+            } else {
+                // Not active at all — turn on for next typed char
+                activeFormatsForNextChar.add(formatName);
+            }
+        }
+        updateToolbarActiveStates();
+    }
+
+    /**
+     * Check if an existing SPAN_EXCLUSIVE_INCLUSIVE StyleSpan already covers the range.
+     */
+    private boolean hasMatchingStyleSpan(Editable s, int style, int start, int end) {
+        for (StyleSpan span : s.getSpans(start, end, StyleSpan.class)) {
+            if (span.getStyle() == style && s.getSpanStart(span) <= start && s.getSpanEnd(span) >= end) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if an existing span of the given type already covers the range.
+     */
+    private <T> boolean hasMatchingSpan(Editable s, Class<T> type, int start, int end) {
+        for (T span : s.getSpans(start, end, type)) {
+            if (s.getSpanStart(span) <= start && s.getSpanEnd(span) >= end) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Update toolbar button visual states based on cursor position and active formats.
+     */
+    private void updateToolbarActiveStates() {
+        if (defaultToolbarButtons.isEmpty()) return;
+
+        Editable editable = commentInput.getText();
+        int pos = Math.max(commentInput.getSelectionStart(), 0);
+
+        boolean boldActive = RichTextHelper.isBoldActive(editable, pos)
+                || activeFormatsForNextChar.contains("bold");
+        boolean italicActive = RichTextHelper.isItalicActive(editable, pos)
+                || activeFormatsForNextChar.contains("italic");
+        boolean codeActive = RichTextHelper.isCodeActive(editable, pos)
+                || activeFormatsForNextChar.contains("code")
+                || activeFormatsForNextChar.contains("codeblock");
+        boolean linkActive = RichTextHelper.isLinkActive(editable, pos);
+
+        setButtonActiveState(defaultToolbarButtons.get("bold"), boldActive);
+        setButtonActiveState(defaultToolbarButtons.get("italic"), italicActive);
+        setButtonActiveState(defaultToolbarButtons.get("code"), codeActive);
+        setButtonActiveState(defaultToolbarButtons.get("link"), linkActive);
+    }
+
+    private void setButtonActiveState(ImageButton button, boolean active) {
+        if (button == null) return;
+        if (active) {
+            button.setBackgroundColor(0x33000000);
+        } else {
+            TypedValue outValue = new TypedValue();
+            getContext().getTheme().resolveAttribute(
+                    android.R.attr.selectableItemBackgroundBorderless, outValue, true);
+            button.setBackgroundResource(outValue.resourceId);
+        }
+    }
+
     /**
      * Clean up resources when the view is detached
      */
@@ -950,6 +1186,10 @@ public class BottomCommentInputView extends FrameLayout {
         // Dismiss popup to prevent memory leaks
         if (mentionPopup != null && mentionPopup.isShowing()) {
             mentionPopup.dismiss();
+        }
+        // Clear Glide targets
+        if (editableImageGetter != null) {
+            editableImageGetter.clearTargets();
         }
     }
 }

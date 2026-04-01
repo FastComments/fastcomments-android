@@ -57,6 +57,13 @@ public class FastCommentsSDK {
     private String urlIdWS;
     private String userIdWS;
     private String editKey;
+    private Integer presencePollState;
+    private Runnable presencePollingRunnable;
+    private PresenceUpdateListener presenceUpdateListener;
+
+    public interface PresenceUpdateListener {
+        void onSubscriberCountChanged(int subscriberCount);
+    }
 
     public FastCommentsSDK(@NonNull CommentWidgetConfig config) {
         this.api = new PublicApi();
@@ -181,6 +188,8 @@ public class FastCommentsSDK {
                 // Determine if we have more comments to load from the response
                 hasMore = response.getHasMore() != null ? response.getHasMore() : false;
 
+                presencePollState = response.getPresencePollState();
+
                 commentsTree.build(response.getComments());
 
                 // Subscribe to live events if we have all required parameters
@@ -189,6 +198,9 @@ public class FastCommentsSDK {
                         (liveEventSubscription == null || needsWebsocketReconnect)) {
                     subscribeToLiveEvents();
                 }
+
+                // Start presence polling if backend requests it
+                startPresencePolling();
 
                 callback.onSuccess(response);
                 return CONSUME;
@@ -351,7 +363,7 @@ public class FastCommentsSDK {
     private CommentData createCommentData(String commentText, String parentId, List<UserMention> mentions) {
         CommentData commentData = new CommentData();
         commentData.setComment(commentText);
-        commentData.setDate(Double.valueOf(new Date().getTime()));
+        commentData.setDate(new Date().getTime());
         commentData.setUrlId(config.urlId);
         commentData.setUrl(config.url != null ? config.url : config.urlId);
 
@@ -437,7 +449,7 @@ public class FastCommentsSDK {
     public void postComment(String commentText, String parentId, List<UserMention> mentions, final FCCallback<PublicComment> callback) {
         if (commentText == null || commentText.trim().isEmpty()) {
             callback.onFailure(new APIError()
-                    .status(ImportedAPIStatusFAILED.FAILED)
+                    .status(APIStatus.FAILED)
                     .reason("Comment text is required")
                     .code("empty_comment"));
             return;
@@ -620,12 +632,12 @@ public class FastCommentsSDK {
      */
     public void deleteCommentVote(String commentId, String voteId, String commenterName, String commenterEmail, final FCCallback<VoteDeleteResponse> callback) {
         if (commentId == null || commentId.isEmpty()) {
-            callback.onFailure(new APIError().status(ImportedAPIStatusFAILED.FAILED).reason("Comment ID is required").code("invalid_comment_id"));
+            callback.onFailure(new APIError().status(APIStatus.FAILED).reason("Comment ID is required").code("invalid_comment_id"));
             return;
         }
 
         if (voteId == null || voteId.isEmpty()) {
-            callback.onFailure(new APIError().status(ImportedAPIStatusFAILED.FAILED).reason("Vote ID is required").code("invalid_vote_id"));
+            callback.onFailure(new APIError().status(APIStatus.FAILED).reason("Vote ID is required").code("invalid_vote_id"));
             return;
         }
 
@@ -780,8 +792,39 @@ public class FastCommentsSDK {
      */
     private void handleConnectionStatusChange(boolean isConnected, Long lastEventTime) {
         if (isConnected) {
-            // WebSocket is connected, fetch initial presence status
+            if (lastEventTime != null) {
+                // Reconnect — clear stale presence state before re-fetching
+                commentsTree.resetPresence();
+            }
             fetchUserPresenceStatuses();
+        }
+    }
+
+    private boolean isPresenceDisabled() {
+        return presencePollState != null && presencePollState == 0;
+    }
+
+    private void startPresencePolling() {
+        stopPresencePolling();
+        if (presencePollState == null || presencePollState != 1) {
+            return;
+        }
+        final long offset = (long) (Math.random() * 10000);
+        final long interval = 30000 + offset;
+        presencePollingRunnable = new Runnable() {
+            @Override
+            public void run() {
+                fetchUserPresenceStatuses();
+                mainHandler.postDelayed(this, interval);
+            }
+        };
+        mainHandler.postDelayed(presencePollingRunnable, interval);
+    }
+
+    private void stopPresencePolling() {
+        if (presencePollingRunnable != null) {
+            mainHandler.removeCallbacks(presencePollingRunnable);
+            presencePollingRunnable = null;
         }
     }
 
@@ -789,6 +832,9 @@ public class FastCommentsSDK {
      * Fetch presence statuses for users in visible comments
      */
     private void fetchUserPresenceStatuses() {
+        if (isPresenceDisabled()) {
+            return;
+        }
         // Extract user IDs from visible comments
         Set<String> userIds = new HashSet<>();
 
@@ -1113,6 +1159,10 @@ public class FastCommentsSDK {
     /**
      * Handle a presence change event (users coming online or going offline)
      */
+    public void setPresenceUpdateListener(PresenceUpdateListener listener) {
+        this.presenceUpdateListener = listener;
+    }
+
     private void handlePresenceChange(LiveEvent eventData) {
         // Process users who joined (came online)
         List<String> usersJoined = eventData.getUj();
@@ -1129,18 +1179,26 @@ public class FastCommentsSDK {
                 commentsTree.updateUserPresence(userId, false);
             }
         }
+
+        // Notify subscriber count changes
+        Integer sc = eventData.getSc();
+        if (sc != null && presenceUpdateListener != null) {
+            presenceUpdateListener.onSubscriberCountChanged(Math.max(sc, 1));
+        }
     }
 
     public void cleanup() {
+        stopPresencePolling();
+
         if (liveEventSubscription != null) {
             liveEventSubscription.close();
             liveEventSubscription = null;
         }
-        
+
         if (liveEventSubscriber != null) {
             liveEventSubscriber = null;
         }
-        
+
         tenantIdWS = null;
         urlIdWS = null;
         userIdWS = null;
@@ -1165,7 +1223,7 @@ public class FastCommentsSDK {
 
         try {
             // Create the search users request with the proper parameters
-            api.searchUsers(config.tenantId, config.urlId, searchTerm)
+            api.searchUsers(config.tenantId, config.urlId).usernameStartsWith(searchTerm)
                 .sso(config.getSSOToken())
                 .executeAsync(new ApiCallback<SearchUsers200Response>() {
                     @Override
@@ -1205,7 +1263,7 @@ public class FastCommentsSDK {
                             callback.onSuccess(mentions);
                         } catch (Exception e) {
                             callback.onFailure(new APIError()
-                                    .status(ImportedAPIStatusFAILED.FAILED)
+                                    .status(APIStatus.FAILED)
                                     .reason("Error parsing search results: " + e.getMessage()));
                         }
                     }
@@ -1332,10 +1390,10 @@ public class FastCommentsSDK {
      * @param newText   The new text for the comment
      * @param callback  Callback to receive the response
      */
-    public void editComment(String commentId, String newText, final FCCallback<PickFCommentApprovedOrCommentHTML> callback) {
+    public void editComment(String commentId, String newText, final FCCallback<SetCommentTextResult> callback) {
         if (commentId == null || commentId.isEmpty()) {
             callback.onFailure(new APIError()
-                    .status(ImportedAPIStatusFAILED.FAILED)
+                    .status(APIStatus.FAILED)
                     .reason("Comment ID is required")
                     .code("invalid_comment_id"));
             return;
@@ -1343,7 +1401,7 @@ public class FastCommentsSDK {
 
         if (newText == null || newText.trim().isEmpty()) {
             callback.onFailure(new APIError()
-                    .status(ImportedAPIStatusFAILED.FAILED)
+                    .status(APIStatus.FAILED)
                     .reason("Comment text is required")
                     .code("empty_comment"));
             return;
@@ -1380,7 +1438,7 @@ public class FastCommentsSDK {
                                     callback.onSuccess(response.getComment());
                                 } else {
                                     callback.onFailure(new APIError()
-                                            .status(ImportedAPIStatusFAILED.FAILED)
+                                            .status(APIStatus.FAILED)
                                             .reason("No comment returned")
                                             .code("edit_comment_error"));
                                 }
@@ -1411,7 +1469,7 @@ public class FastCommentsSDK {
     public void flagComment(String commentId, final FCCallback<APIEmptyResponse> callback) {
         if (commentId == null || commentId.isEmpty()) {
             callback.onFailure(new APIError()
-                    .status(ImportedAPIStatusFAILED.FAILED)
+                    .status(APIStatus.FAILED)
                     .reason("Comment ID is required")
                     .code("invalid_comment_id"));
             return;
@@ -1460,7 +1518,7 @@ public class FastCommentsSDK {
     public void blockUserFromComment(String commentId, final FCCallback<BlockSuccess> callback) {
         if (commentId == null || commentId.isEmpty()) {
             callback.onFailure(new APIError()
-                    .status(ImportedAPIStatusFAILED.FAILED)
+                    .status(APIStatus.FAILED)
                     .reason("Comment ID is required")
                     .code("invalid_comment_id"));
             return;
@@ -1512,7 +1570,7 @@ public class FastCommentsSDK {
      */
     public void voteComment(String commentId, boolean isUpvote, String commenterName, String commenterEmail, final FCCallback<VoteResponse> callback) {
         if (commentId == null || commentId.isEmpty()) {
-            callback.onFailure(new APIError().status(ImportedAPIStatusFAILED.FAILED).reason("Comment ID is required").code("invalid_comment_id"));
+            callback.onFailure(new APIError().status(APIStatus.FAILED).reason("Comment ID is required").code("invalid_comment_id"));
             return;
         }
 

@@ -171,6 +171,13 @@
 
     <!-- Custom toolbar button examples -->
     <string name="add_gif">Add GIF</string>
+    <string name="insert_image">Insert Image</string>
     <string name="add_emoji">Add Emoji</string>
     <string name="mention_user">Mention User</string>
+
+    <!-- Viewer count -->
+    <plurals name="viewer_count">
+        <item quantity="one">%d viewer</item>
+        <item quantity="other">%d viewers</item>
+    </plurals>
 </resources>

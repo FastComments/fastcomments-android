@@ -89,7 +89,7 @@
                 android:scaleType="centerCrop" />
 
             <!-- Input field -->
-            <EditText
+            <com.fastcomments.sdk.RichEditText
                 android:id="@+id/commentInput"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

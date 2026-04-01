@@ -735,9 +735,25 @@ public class CommentsTree {
 
     // Store known user presence status to avoid unnecessary API calls
     private Map<String, Boolean> userPresenceCache = new HashMap<>();
-    
+
     /**
-     * Update the online status for all comments by a specific user
+     * Reset all presence state — clears the cache and marks all comments as offline.
+     * Call on WebSocket reconnect so stale online indicators are cleared before re-fetching.
+     */
+    public void resetPresence() {
+        userPresenceCache.clear();
+        for (RenderableComment comment : allComments) {
+            if (comment.isOnline) {
+                comment.isOnline = false;
+                notifyItemChanged(comment);
+            }
+        }
+    }
+
+    /**
+     * Update the online status for all comments by a specific user.
+     * Also cross-syncs userId ↔ anonUserId so both IDs stay consistent
+     * (the pubsub system may only send an event for one of the two).
      *
      * @param userId   The user ID
      * @param isOnline Whether the user is online or offline
@@ -745,21 +761,45 @@ public class CommentsTree {
     public void updateUserPresence(String userId, boolean isOnline) {
         // Cache the presence status
         userPresenceCache.put(userId, isOnline);
-        
+
         // Track which comments were updated to minimize UI updates
         final List<RenderableComment> usersComments = commentsByUserId.get(userId);
         if (usersComments == null) {
             return;
         }
         List<RenderableComment> updatedComments = new ArrayList<>();
+        Set<String> crossSyncedIds = new HashSet<>();
 
-        // Update all comments by this user
+        // Update all comments by this user, and cross-sync the other ID
         for (RenderableComment comment : usersComments) {
-            // Check if status actually changed to avoid unnecessary updates
+            // Cross-sync: if event was for userId, also cache anonUserId (and vice versa)
+            String otherUserId = comment.getComment().getUserId();
+            String otherAnonUserId = comment.getComment().getAnonUserId();
+            if (otherUserId != null && !otherUserId.isEmpty() && !otherUserId.equals(userId)) {
+                userPresenceCache.put(otherUserId, isOnline);
+                crossSyncedIds.add(otherUserId);
+            }
+            if (otherAnonUserId != null && !otherAnonUserId.isEmpty() && !otherAnonUserId.equals(userId)) {
+                userPresenceCache.put(otherAnonUserId, isOnline);
+                crossSyncedIds.add(otherAnonUserId);
+            }
+
             if (comment.isOnline != isOnline) {
-                // Update status
                 comment.isOnline = isOnline;
                 updatedComments.add(comment);
+            }
+        }
+
+        // Also update comments indexed under the cross-synced IDs
+        for (String crossId : crossSyncedIds) {
+            final List<RenderableComment> crossComments = commentsByUserId.get(crossId);
+            if (crossComments != null) {
+                for (RenderableComment comment : crossComments) {
+                    if (comment.isOnline != isOnline) {
+                        comment.isOnline = isOnline;
+                        updatedComments.add(comment);
+                    }
+                }
             }
         }
 

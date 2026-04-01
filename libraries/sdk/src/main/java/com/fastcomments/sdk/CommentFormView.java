@@ -159,10 +159,12 @@ public class CommentFormView extends LinearLayout {
             }
         });
 
-        // Set up the submit button
+        // Set up the submit button — serialize spans to HTML
         submitButton.setOnClickListener(v -> {
-            String commentText = commentEditText.getText().toString().trim();
-            if (TextUtils.isEmpty(commentText)) {
+            String plainText = commentEditText.getText().toString().trim();
+            String commentText = TextUtils.isEmpty(plainText) ? "" :
+                    RichTextHelper.toHtml(commentEditText.getText()).trim();
+            if (TextUtils.isEmpty(plainText)) {
                 errorTextView.setText(R.string.empty_comment_error);
                 errorTextView.setVisibility(View.VISIBLE);
                 return;
@@ -449,24 +451,23 @@ public class CommentFormView extends LinearLayout {
         if (mention == null || mentionStartPosition < 0) {
             return;
         }
-        
+
         // Add the mention to the selected mentions list
         mention.setMentioned(true);
         selectedMentions.add(mention);
-        
-        // Replace the @query with @username
-        String text = commentEditText.getText().toString();
-        String beforeMention = text.substring(0, mentionStartPosition);
-        String afterMention = text.substring(mentionStartPosition + currentMentionText.length() + 1);
-        String newText = beforeMention + "@" + mention.getUsername() + " " + afterMention;
-        
-        // Update the EditText with new text
-        commentEditText.setText(newText);
-        
+
+        // Replace the @query with @username using Editable ops to preserve spans
+        android.text.Editable editable = commentEditText.getText();
+        int deleteEnd = mentionStartPosition + currentMentionText.length() + 1;
+        deleteEnd = Math.min(deleteEnd, editable.length());
+        editable.delete(mentionStartPosition, deleteEnd);
+        String insertText = "@" + mention.getUsername() + " ";
+        editable.insert(mentionStartPosition, insertText);
+
         // Move cursor after the inserted mention
-        int newPosition = mentionStartPosition + mention.getUsername().length() + 2; // +2 for @ and space
-        commentEditText.setSelection(newPosition);
-        
+        int newPosition = mentionStartPosition + insertText.length();
+        commentEditText.setSelection(Math.min(newPosition, editable.length()));
+
         // Reset the mention state
         cancelMention();
     }

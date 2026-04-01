@@ -8,9 +8,8 @@ import com.fastcomments.core.sso.FastCommentsSSO
 import com.fastcomments.core.sso.SimpleSSOUserData
 import com.fastcomments.sdk.FastCommentsSDK
 import com.fastcomments.sdk.FastCommentsView
-import com.fastcomments.sdk.examples.CodeFormattingToolbarButton
-import com.fastcomments.sdk.examples.EmojiPickerToolbarButton
 import com.fastcomments.sdk.examples.GifPickerToolbarButton
+import com.fastcomments.sdk.examples.ImagePickerToolbarButton
 import com.fastcomments.sdk.examples.MentionToolbarButton
 
 /**
@@ -80,20 +79,15 @@ class ToolbarShowcaseActivity : AppCompatActivity() {
         sdk.setDefaultFormattingButtonsEnabled(true)
 
         // Add custom toolbar buttons that will appear on all comment inputs
-        // These demonstrate how to extend the toolbar with custom functionality
 
-        // 1. Emoji Picker - Provides a grid of common emojis
-        sdk.addGlobalCustomToolbarButton(EmojiPickerToolbarButton())
+        // 1. Image Picker - Launches the system image picker
+        sdk.addGlobalCustomToolbarButton(ImagePickerToolbarButton())
 
-        // 2. GIF Picker - Demonstrates file/media selection (simulated for demo)
+        // 2. GIF Button - Inserts a random GIF (in production, open a GIF picker like GIPHY/Tenor)
         sdk.addGlobalCustomToolbarButton(GifPickerToolbarButton())
 
         // 3. Mention Button - Shows how to implement @mention functionality
         sdk.addGlobalCustomToolbarButton(MentionToolbarButton())
-
-        // 4. Code Formatter - Custom button that we created for this showcase
-        // Demonstrates wrapping text in code tags with both click and long-click handlers
-        sdk.addGlobalCustomToolbarButton(CodeFormattingToolbarButton())
 
         // Note: You can also remove buttons dynamically:
         // sdk.removeGlobalCustomToolbarButton("button_id")

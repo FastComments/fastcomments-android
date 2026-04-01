@@ -16,7 +16,8 @@ import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.core.VoteStyle;
 import com.fastcomments.model.APIEmptyResponse;
 import com.fastcomments.model.BlockSuccess;
-import com.fastcomments.model.PickFCommentApprovedOrCommentHTML;
+import com.fastcomments.model.FComment;
+import com.fastcomments.model.SetCommentTextResult;
 import com.fastcomments.model.PublicComment;
 import com.fastcomments.model.SortDirections;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -65,6 +66,7 @@ public class LiveChatView extends FrameLayout {
     private static final long DATE_UPDATE_INTERVAL = 60000; // Update every minute
     private boolean autoScrollToBottom = true;
     private LinearLayoutManager layoutManager;
+    private TextView subscriberCountView;
 
     /**
      * Interface for comment action callbacks
@@ -311,9 +313,33 @@ public class LiveChatView extends FrameLayout {
         // Initialize adapter
         adapter = new CommentsAdapter(getContext(), sdk);
         recyclerView.setAdapter(adapter);
-        
+
         // Enable live chat style in the comment tree
         sdk.commentsTree.setLiveChatStyle(true);
+
+        // Add subscriber count header above the recycler view
+        FrameLayout commentsContainer = findViewById(R.id.commentsContainer);
+        if (commentsContainer != null && subscriberCountView == null) {
+            subscriberCountView = new TextView(getContext());
+            float density = getResources().getDisplayMetrics().density;
+            int hPad = (int) (16 * density);
+            int vPad = (int) (8 * density);
+            subscriberCountView.setPadding(hPad, vPad, hPad, vPad);
+            subscriberCountView.setTextSize(12);
+            subscriberCountView.setVisibility(View.GONE);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+            params.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+            commentsContainer.addView(subscriberCountView, params);
+        }
+
+        // Listen for subscriber count updates
+        sdk.setPresenceUpdateListener(subscriberCount -> {
+            if (subscriberCountView != null) {
+                subscriberCountView.setVisibility(View.VISIBLE);
+                subscriberCountView.setText(getResources().getQuantityString(R.plurals.viewer_count, subscriberCount, subscriberCount));
+            }
+        });
         
         // Set up infinite scrolling (in reverse) for chat mode
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -721,7 +747,7 @@ public class LiveChatView extends FrameLayout {
                 CommentEditDialog dialog = new CommentEditDialog(getContext(), sdk);
                 dialog.setOnSaveCallback(newText -> {
                     // Call API to edit the comment
-                    sdk.editComment(commentId, newText, new FCCallback<PickFCommentApprovedOrCommentHTML>() {
+                    sdk.editComment(commentId, newText, new FCCallback<SetCommentTextResult>() {
                         @Override
                         public boolean onFailure(APIError error) {
                             // Show error message
@@ -745,7 +771,7 @@ public class LiveChatView extends FrameLayout {
                         }
 
                         @Override
-                        public boolean onSuccess(PickFCommentApprovedOrCommentHTML updatedComment) {
+                        public boolean onSuccess(SetCommentTextResult updatedComment) {
                             // Show success message
                             getHandler().post(() -> {
                                 android.widget.Toast.makeText(
@@ -1573,6 +1599,7 @@ public class LiveChatView extends FrameLayout {
         userClickListener = null;
         
         if (sdk != null) {
+            sdk.setPresenceUpdateListener(null);
             sdk.cleanup();
             sdk = null;
         }

@@ -491,11 +491,13 @@ public class FeedPostCreateView extends FrameLayout {
         // Reset error state
         hideError();
 
-        // Check that we have content
-        String content = postContentEditText.getText() != null ?
+        // Check that we have content — serialize spans to HTML
+        String plainContent = postContentEditText.getText() != null ?
                 postContentEditText.getText().toString().trim() : "";
+        String content = plainContent.isEmpty() ? "" :
+                RichTextHelper.toHtml(postContentEditText.getText()).trim();
 
-        boolean hasContent = !content.isEmpty() || !selectedMediaUris.isEmpty() || !remoteMediaItems.isEmpty() || attachedLink != null;
+        boolean hasContent = !plainContent.isEmpty() || !selectedMediaUris.isEmpty() || !remoteMediaItems.isEmpty() || attachedLink != null;
 
         if (!hasContent) {
             showError(getContext().getString(R.string.content_required));
@@ -865,6 +867,34 @@ public class FeedPostCreateView extends FrameLayout {
             int end = postContentEditText.getSelectionEnd();
             Editable editable = postContentEditText.getText();
             editable.replace(start, end, text);
+        }
+    }
+
+    /**
+     * Insert HTML content at the current cursor position.
+     * Converts HTML to Spanned so formatting renders visually (WYSIWYG).
+     *
+     * @param html The HTML content to insert
+     */
+    public void insertHtmlAtCursor(String html) {
+        if (postContentEditText != null && html != null && !html.isEmpty()) {
+            RichTextHelper.insertHtmlAtCursor(postContentEditText, html, null);
+        }
+    }
+
+    /**
+     * Wrap the currently selected text with formatting.
+     * Recognized HTML tags are converted to WYSIWYG spans; unrecognized tags
+     * fall back to literal string insertion for backward compatibility.
+     *
+     * @param startTag The opening tag
+     * @param endTag The closing tag
+     */
+    public void wrapSelection(String startTag, String endTag) {
+        if (postContentEditText == null) return;
+
+        if (!RichTextHelper.applyWrapFormat(postContentEditText, startTag, endTag)) {
+            RichTextHelper.wrapSelectionLiteral(postContentEditText, startTag, endTag);
         }
     }
 
