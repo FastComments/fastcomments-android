@@ -583,6 +583,10 @@ public class CommentsTree {
                 // Handle visibility based on showLiveRightAway and parent state
                 final int parentIndex = visibleNodes.indexOf(parent);
                 if (parentIndex >= 0) {
+                    // When displayNow is true (user just posted a reply), auto-expand replies
+                    if (displayNow && !parent.isRepliesShown) {
+                        parent.isRepliesShown = true;
+                    }
                     adapter.notifyItemChanged(parentIndex); // re-render reply count
 
                     if (parent.isRepliesShown && displayNow) {
