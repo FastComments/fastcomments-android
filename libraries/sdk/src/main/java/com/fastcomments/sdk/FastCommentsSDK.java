@@ -206,12 +206,10 @@ public class FastCommentsSDK {
                 commentsTree.build(response.getComments());
 
                 // Subscribe to live events if we have all required parameters
-                // or if we need to reconnect due to userIdWS change.
-                // Run on a new thread to avoid creating the WebSocket from within
-                // OkHttp's async callback thread, which can cause connection issues.
+                // or if we need to reconnect due to userIdWS change
                 if ((tenantIdWS != null && urlIdWS != null && userIdWS != null) &&
                         (liveEventSubscription == null || needsWebsocketReconnect)) {
-                    new Thread(FastCommentsSDK.this::subscribeToLiveEvents).start();
+                    subscribeToLiveEvents();
                 }
 
                 // Start presence polling if backend requests it
@@ -807,12 +805,13 @@ public class FastCommentsSDK {
      * Handle WebSocket connection status changes
      */
     private void handleConnectionStatusChange(boolean isConnected, Long lastEventTime) {
+        Log.d("FastCommentsSDK", "connectionStatusChange: connected=" + isConnected + " lastEventTime=" + lastEventTime);
         if (isConnected) {
             if (lastEventTime != null) {
-                // Reconnect — clear stale presence state before re-fetching
                 commentsTree.resetPresence();
             }
-            fetchUserPresenceStatuses();
+            // TEMPORARILY DISABLED for WS debugging
+            // fetchUserPresenceStatuses();
         }
     }
 
@@ -1221,6 +1220,7 @@ public class FastCommentsSDK {
     }
 
     public void cleanup() {
+        Log.w("FastCommentsSDK", "cleanup() called", new Throwable("cleanup stack trace"));
         stopPresencePolling();
 
         if (liveEventSubscription != null) {
