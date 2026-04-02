@@ -1629,7 +1629,21 @@ public class FastCommentsView extends FrameLayout {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        cleanup();
+        android.app.Activity activity = null;
+        android.content.Context ctx = getContext();
+        if (ctx instanceof android.app.Activity) {
+            activity = (android.app.Activity) ctx;
+        } else if (ctx instanceof android.content.ContextWrapper) {
+            android.content.Context base = ((android.content.ContextWrapper) ctx).getBaseContext();
+            if (base instanceof android.app.Activity) {
+                activity = (android.app.Activity) base;
+            }
+        }
+        boolean finishing = activity != null && activity.isFinishing();
+        android.util.Log.w("FastCommentsView", "onDetachedFromWindow: activity=" + activity + " isFinishing=" + finishing, new Throwable());
+        if (finishing) {
+            cleanup();
+        }
     }
 
     /**
