@@ -66,17 +66,30 @@ public class FastCommentsSDK {
     }
 
     public FastCommentsSDK(@NonNull CommentWidgetConfig config) {
+        this(config, false);
+    }
+
+    public FastCommentsSDK(@NonNull CommentWidgetConfig config, boolean testMode) {
         this.api = new PublicApi();
         this.mainHandler = new Handler(Looper.getMainLooper());
         this.broadcastIdsSent = new HashSet<>(0);
         this.config = config;
         this.api.getApiClient().setLenientOnJson(true);
+        // Force HTTP/1.1 on the API client to prevent H2 interference with WebSocket
+        this.api.getApiClient().setHttpClient(
+                this.api.getApiClient().getHttpClient().newBuilder()
+                        .protocols(java.util.Collections.singletonList(okhttp3.Protocol.HTTP_1_1))
+                        .build()
+        );
         this.api.getApiClient().setBasePath(getAPIBasePath(config));
         this.commentsTree = new CommentsTree();
         this.currentSkip = 0;
         this.currentPage = 0;
         this.hasMore = false;
-        this.liveEventSubscriber = new LiveEventSubscriber();
+        this.liveEventSubscriber = testMode
+                ? LiveEventSubscriber.createTesting()
+                : new LiveEventSubscriber();
+        Log.d("FastCommentsSDK", "Constructor: testMode=" + testMode);
 
         // Set up the presence status listener on the comments tree
         this.commentsTree.setPresenceStatusListener(this::fetchPresenceForUsers);
@@ -734,7 +747,8 @@ public class FastCommentsSDK {
                         } else {
                             mainHandler.post(() -> {
                                 // Remove the comment from the local tree
-                                commentsTree.removeComment(commentId);
+                                boolean removed = commentsTree.removeComment(commentId);
+                                Log.d("FastCommentsSDK", "deleteComment onSuccess: removed=" + removed + " commentId=" + commentId + " visibleSize=" + commentsTree.visibleSize());
                                 callback.onSuccess(new APIEmptyResponse());
                             });
                         }
@@ -1053,6 +1067,8 @@ public class FastCommentsSDK {
         comment.setVotesDown(pubSubComment.getVotesDown());
         comment.setAvatarSrc(pubSubComment.getAvatarSrc());
         comment.setVerified(pubSubComment.getVerified());
+        comment.setIsPinned(pubSubComment.getIsPinned());
+        comment.setIsLocked(pubSubComment.getIsLocked());
     }
 
     /**
@@ -1070,6 +1086,11 @@ public class FastCommentsSDK {
         PublicComment existingComment = commentsTree.getPublicComment(pubSubComment.getId());
         if (existingComment != null) {
             copyEventToComment(pubSubComment, existingComment);
+            // Notify adapter so the ViewHolder re-renders with updated data
+            RenderableComment renderable = commentsTree.commentsById.get(pubSubComment.getId());
+            if (renderable != null) {
+                commentsTree.notifyItemChanged(renderable);
+            }
         }
     }
 
@@ -1174,19 +1195,21 @@ public class FastCommentsSDK {
     }
 
     private void handlePresenceChange(LiveEvent eventData) {
-        // Process users who joined (came online)
         List<String> usersJoined = eventData.getUj();
-        if (usersJoined != null && !usersJoined.isEmpty()) {
-            for (String userId : usersJoined) {
-                commentsTree.updateUserPresence(userId, true);
-            }
-        }
-
-        // Process users who left (went offline)
         List<String> usersLeft = eventData.getUl();
+
+        // Process leaves BEFORE joins — when a user reconnects, the server may
+        // batch the leave and join into the same event. Processing ul first then
+        // uj ensures the net state is "online".
         if (usersLeft != null && !usersLeft.isEmpty()) {
             for (String userId : usersLeft) {
                 commentsTree.updateUserPresence(userId, false);
+            }
+        }
+
+        if (usersJoined != null && !usersJoined.isEmpty()) {
+            for (String userId : usersJoined) {
+                commentsTree.updateUserPresence(userId, true);
             }
         }
 
