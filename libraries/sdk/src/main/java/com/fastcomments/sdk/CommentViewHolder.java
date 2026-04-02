@@ -54,6 +54,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private final TextView upVoteCountTextView;
     private final TextView downVoteCountTextView;
     private final ImageView pinIcon;
+    private final ImageView lockIcon;
     private final ImageButton heartButton; // Heart style vote button
     private final View standardVoteContainer; // Container for standard up/down vote buttons
     private final View heartVoteContainer; // Container for heart vote button
@@ -88,6 +89,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         upVoteCountTextView = itemView.findViewById(R.id.upVoteCount);
         downVoteCountTextView = itemView.findViewById(R.id.downVoteCount);
         pinIcon = itemView.findViewById(R.id.pinIcon);
+        lockIcon = itemView.findViewById(R.id.lockIcon);
         heartButton = itemView.findViewById(R.id.heartButton);
         commentMenuButton = itemView.findViewById(R.id.commentMenuButton);
 
@@ -192,7 +194,11 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         // Handle pinned comment icon
         Boolean isPinned = comment.getComment().getIsPinned();
         pinIcon.setVisibility(isPinned != null && isPinned ? View.VISIBLE : View.GONE);
-        
+
+        // Handle locked comment icon
+        Boolean isLocked = comment.getComment().getIsLocked();
+        lockIcon.setVisibility(isLocked != null && isLocked ? View.VISIBLE : View.GONE);
+
         // Handle online status indicator
         onlineIndicator.setVisibility(comment.isOnline ? View.VISIBLE : View.GONE);
         

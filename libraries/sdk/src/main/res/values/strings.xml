@@ -74,6 +74,7 @@
     <string name="submit">Submit</string>
     <string name="unverified">Unverified</string>
     <string name="pinned_comment">Pinned Comment</string>
+    <string name="locked_comment">Locked Comment</string>
     <string name="online_indicator">User is Online</string>
     <string name="badge_icon">Badge Icon</string>
     <string name="badge_awarded">Badge Awarded!</string>
