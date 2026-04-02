@@ -810,8 +810,7 @@ public class FastCommentsSDK {
             if (lastEventTime != null) {
                 commentsTree.resetPresence();
             }
-            // TEMPORARILY DISABLED for WS debugging
-            // fetchUserPresenceStatuses();
+            fetchUserPresenceStatuses();
         }
     }
 

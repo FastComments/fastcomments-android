@@ -148,24 +148,73 @@ public class LiveEventUserA_UITests extends UITestBase {
         Log.d(TAG, "Phase 2 result: " + voteChanged[0]);
         assertTrue("Vote count should change after UserB votes", voteChanged[0]);
 
-        // --- Phase 3: Presence ---
+        // --- Phase 3: Presence (three-user test) ---
         Log.d(TAG, "=== Phase 3: Presence ===");
-        // Don't relaunch — keep the Phase 2 activity alive so WS stays connected.
-        // commentsByUserId is already populated from Phase 2's relaunch.
+
+        // Seed a comment from UserC who will NOT be connected via WebSocket.
+        // This lets us verify the correct indicators light up (UserB = online,
+        // UserC = offline) rather than just "any indicator is visible".
+        String ssoTokenC = makeSecureSSOToken("userC-live");
+        seedComment(urlId, "Offline user C comment", ssoTokenC);
+
+        // Relaunch so the RecyclerView includes UserC's comment and WS reconnects
+        launchActivity(urlId, ssoTokenA);
+        pollUntil(10000, () -> {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .check(matches(hasDescendant(withText(containsString("Offline user C comment")))));
+                return true;
+            } catch (Exception | AssertionError e) { return false; }
+        });
+
+        // Signal UserB to join (UserA's WS should be connected by now)
         sync.signalReady("phase3");
         sync.waitFor("userB", "phase3");
 
-        boolean indicatorVisible = false;
+        // Poll until UserB's comment shows the online indicator
+        final boolean[] userBOnline = {false};
         deadline = System.currentTimeMillis() + 15000;
         while (System.currentTimeMillis() < deadline) {
             try {
-                onView(withId(R.id.onlineIndicator)).check(matches(isDisplayed()));
-                indicatorVisible = true;
-                break;
-            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+                onView(withId(R.id.recyclerViewComments))
+                        .perform(androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem(
+                                hasDescendant(withText(containsString(commentText))),
+                                new androidx.test.espresso.ViewAction() {
+                                    @Override public org.hamcrest.Matcher<android.view.View> getConstraints() {
+                                        return org.hamcrest.Matchers.any(android.view.View.class);
+                                    }
+                                    @Override public String getDescription() { return "check online indicator on UserB comment"; }
+                                    @Override public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
+                                        android.view.View indicator = v.findViewById(R.id.onlineIndicator);
+                                        if (indicator != null && indicator.getVisibility() == android.view.View.VISIBLE) {
+                                            userBOnline[0] = true;
+                                        }
+                                    }
+                                }));
+                if (userBOnline[0]) break;
+            } catch (Exception | AssertionError e) { /* retry */ }
+            Thread.sleep(250);
         }
-        Log.d(TAG, "Phase 3 result: " + indicatorVisible);
-        assertTrue("Online indicator should appear when UserB joins", indicatorVisible);
+        Log.d(TAG, "Phase 3 UserB online: " + userBOnline[0]);
+        assertTrue("UserB's comment should show online indicator", userBOnline[0]);
+
+        // Verify UserC's comment does NOT show the online indicator
+        final boolean[] userCIndicatorOff = {false};
+        onView(withId(R.id.recyclerViewComments))
+                .perform(androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem(
+                        hasDescendant(withText(containsString("Offline user C comment"))),
+                        new androidx.test.espresso.ViewAction() {
+                            @Override public org.hamcrest.Matcher<android.view.View> getConstraints() {
+                                return org.hamcrest.Matchers.any(android.view.View.class);
+                            }
+                            @Override public String getDescription() { return "check online indicator on UserC comment"; }
+                            @Override public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
+                                android.view.View indicator = v.findViewById(R.id.onlineIndicator);
+                                userCIndicatorOff[0] = indicator == null || indicator.getVisibility() != android.view.View.VISIBLE;
+                            }
+                        }));
+        Log.d(TAG, "Phase 3 UserC offline: " + userCIndicatorOff[0]);
+        assertTrue("Offline UserC's comment should NOT show online indicator", userCIndicatorOff[0]);
 
         // --- Phase 4: Live delete ---
         Log.d(TAG, "=== Phase 4: Live delete ===");

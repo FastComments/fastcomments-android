@@ -260,18 +260,14 @@ def run_tests(serial, role, test_class, e2e_key):
 
 
 def stream_output(proc, prefix, failure_flag):
-    """Stream process output with a prefix, filtering for relevant lines.
+    """Stream process output with a prefix.
     Sets failure_flag[0] = True if test failures are detected.
     Note: INSTRUMENTATION_CODE: -1 means SUCCESS in Android instrumentation."""
     for line in iter(proc.stdout.readline, b""):
         text = line.decode("utf-8", errors="replace").rstrip()
         if "FAILURES!!!" in text:
             failure_flag[0] = True
-        if any(kw in text for kw in [
-            "INSTRUMENTATION_STATUS", "Test", "Error", "FAIL",
-            "OK", "Exception", "assert", "pass", "INSTRUMENTATION_CODE"
-        ]):
-            print(f"[{prefix}] {text}")
+        print(f"[{prefix}] {text}")
 
 
 SINGLE_EMU_TEST_CLASSES = [
