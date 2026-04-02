@@ -193,10 +193,12 @@ public class FastCommentsSDK {
                 commentsTree.build(response.getComments());
 
                 // Subscribe to live events if we have all required parameters
-                // or if we need to reconnect due to userIdWS change
+                // or if we need to reconnect due to userIdWS change.
+                // Run on a new thread to avoid creating the WebSocket from within
+                // OkHttp's async callback thread, which can cause connection issues.
                 if ((tenantIdWS != null && urlIdWS != null && userIdWS != null) &&
                         (liveEventSubscription == null || needsWebsocketReconnect)) {
-                    subscribeToLiveEvents();
+                    new Thread(FastCommentsSDK.this::subscribeToLiveEvents).start();
                 }
 
                 // Start presence polling if backend requests it
@@ -939,8 +941,10 @@ public class FastCommentsSDK {
      * Handle a live event from the FastComments WebSocket
      */
     private void handleLiveEvent(LiveEvent eventData) {
+        Log.d("FastCommentsSDK", "handleLiveEvent: type=" + eventData.getType() + " broadcastId=" + eventData.getBroadcastId());
         // Skip events from our own broadcasts
         if (eventData.getBroadcastId() != null && broadcastIdsSent.contains(eventData.getBroadcastId())) {
+            Log.d("FastCommentsSDK", "handleLiveEvent: SKIPPING own broadcast " + eventData.getBroadcastId());
             broadcastIdsSent.remove(eventData.getBroadcastId());
             return;
         }
@@ -949,6 +953,7 @@ public class FastCommentsSDK {
             LiveEventType eventType = eventData.getType();
 
             if (eventType == null) {
+                Log.w("FastCommentsSDK", "handleLiveEvent: eventType is null, skipping");
                 return;
             }
 
@@ -992,12 +997,15 @@ public class FastCommentsSDK {
      * Handle a new comment event
      */
     private void handleNewComment(LiveEvent eventData) {
+        Log.d("FastCommentsSDK", "handleNewComment called, comment=" + (eventData.getComment() != null));
         if (eventData.getComment() == null) {
+            Log.w("FastCommentsSDK", "handleNewComment: comment is null, skipping");
             return;
         }
 
         // Get the comment from the event
         PubSubComment pubSubComment = eventData.getComment();
+        Log.d("FastCommentsSDK", "handleNewComment: id=" + pubSubComment.getId() + " text=" + pubSubComment.getComment() + " html=" + pubSubComment.getCommentHTML());
 
         // Convert PubSubComment to PublicComment for the CommentsTree
         PublicComment newComment = new PublicComment();
@@ -1005,7 +1013,9 @@ public class FastCommentsSDK {
 
         // Determine if we should show comments immediately based on config
         final boolean showLiveRightAway = config.showLiveRightAway != null && config.showLiveRightAway;
+        Log.d("FastCommentsSDK", "handleNewComment: showLiveRightAway=" + showLiveRightAway + " displayNow=" + showLiveRightAway + " visibleBefore=" + commentsTree.visibleSize());
         addComment(newComment, showLiveRightAway);
+        Log.d("FastCommentsSDK", "handleNewComment: visibleAfter=" + commentsTree.visibleSize());
     }
 
     public void addComment(PublicComment publicComment, boolean displayNow) {

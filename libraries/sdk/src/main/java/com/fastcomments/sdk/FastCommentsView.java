@@ -222,6 +222,23 @@ public class FastCommentsView extends FrameLayout {
         adapter = new CommentsAdapter(getContext(), sdk);
         recyclerView.setAdapter(adapter);
 
+        // Toggle empty state when live events add/remove comments
+        adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                if (adapter.getItemCount() > 0) {
+                    setIsEmpty(false);
+                }
+            }
+
+            @Override
+            public void onItemRangeRemoved(int positionStart, int itemCount) {
+                if (adapter.getItemCount() == 0) {
+                    setIsEmpty(true);
+                }
+            }
+        });
+
         // Set up infinite scrolling if enabled in config
         boolean isInfiniteScrollingEnabled = sdk.getConfig().enableInfiniteScrolling != null &&
                 sdk.getConfig().enableInfiniteScrolling;

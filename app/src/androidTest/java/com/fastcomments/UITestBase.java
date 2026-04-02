@@ -1,0 +1,292 @@
+package com.fastcomments;
+
+import android.content.Intent;
+import android.os.Bundle;
+
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.fastcomments.core.sso.FastCommentsSSO;
+import com.fastcomments.core.sso.SecureSSOUserData;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import okhttp3.Cookie;
+import okhttp3.CookieJar;
+import okhttp3.FormBody;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
+/**
+ * Base class for dual-emulator UI tests.
+ * Handles test tenant creation/teardown, SSO token generation,
+ * activity launching, comment seeding, and sync client initialization.
+ *
+ * Port of iOS UITestBase.swift.
+ */
+public class UITestBase {
+
+    private static final String HOST = "https://fastcomments.com";
+    private static final MediaType JSON_TYPE = MediaType.get("application/json; charset=utf-8");
+
+    protected String testTenantId;
+    protected String testTenantEmail;
+    protected String testTenantApiKey;
+    protected SyncClient sync;
+    protected ActivityScenario<TestActivity> scenario;
+
+    private String e2eApiKey;
+    private OkHttpClient httpClient;
+
+    // ---- Setup / Teardown ----
+
+    @Before
+    public void setUp() throws Exception {
+        Bundle args = InstrumentationRegistry.getArguments();
+        String role = args.getString("FC_ROLE", "userA");
+        String syncUrl = args.getString("FC_SYNC_URL", "http://10.0.2.2:9999");
+        e2eApiKey = args.getString("E2E_API_KEY", "");
+
+        sync = new SyncClient(syncUrl, role);
+
+        // Cookie jar for tenant signup session
+        Map<String, List<Cookie>> cookieStore = new HashMap<>();
+        httpClient = new OkHttpClient.Builder()
+                .cookieJar(new CookieJar() {
+                    @Override
+                    public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
+                        cookieStore.put(url.host(), cookies);
+                    }
+
+                    @Override
+                    public List<Cookie> loadForRequest(HttpUrl url) {
+                        List<Cookie> cookies = cookieStore.get(url.host());
+                        return cookies != null ? cookies : new ArrayList<>();
+                    }
+                })
+                .followRedirects(true)
+                .build();
+    }
+
+    /** Called by UserA's setUp to create a fresh test tenant. */
+    protected void createTestTenant() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        testTenantEmail = "android-uitest-" + suffix + "@fctest.com";
+
+        // 1. Sign up tenant
+        RequestBody signupBody = new FormBody.Builder()
+                .add("username", "android-uitest-" + suffix)
+                .add("email", testTenantEmail)
+                .add("companyName", "Android UITest " + suffix)
+                .add("domains", "uitest-" + suffix + ".example.com")
+                .add("packageId", "adv")
+                .add("noTracking", "true")
+                .build();
+
+        Request signupRequest = new Request.Builder()
+                .url(HOST + "/auth/tenant-signup")
+                .post(signupBody)
+                .build();
+
+        try (Response response = httpClient.newCall(signupRequest).execute()) {
+            if (!response.isSuccessful() && response.code() != 302) {
+                fail("Tenant signup failed with status: " + response.code());
+            }
+        }
+
+        // 2. Get tenant ID via e2e test API
+        Request tenantRequest = new Request.Builder()
+                .url(HOST + "/test-e2e/api/tenant/by-email/" + testTenantEmail
+                        + "?API_KEY=" + e2eApiKey)
+                .get()
+                .build();
+
+        try (Response response = httpClient.newCall(tenantRequest).execute()) {
+            String body = response.body().string();
+            JSONObject json = new JSONObject(body);
+            JSONObject tenant = json.getJSONObject("tenant");
+            testTenantId = tenant.getString("_id");
+        }
+        assertNotNull("Should have tenant ID", testTenantId);
+
+        // 3. Scrape API key from api-secret page using signup session cookies
+        Request apiSecretRequest = new Request.Builder()
+                .url(HOST + "/auth/my-account/api-secret")
+                .get()
+                .build();
+
+        try (Response response = httpClient.newCall(apiSecretRequest).execute()) {
+            String html = response.body().string();
+            Pattern pattern = Pattern.compile("value=\"([A-Z0-9]+)\"");
+            Matcher matcher = pattern.matcher(html);
+            if (matcher.find()) {
+                testTenantApiKey = matcher.group(1);
+            }
+        }
+        assertNotNull("Should have API key", testTenantApiKey);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (scenario != null) {
+            scenario.close();
+        }
+
+        if (testTenantEmail != null && e2eApiKey != null && !e2eApiKey.isEmpty()) {
+            try {
+                Request deleteRequest = new Request.Builder()
+                        .url(HOST + "/test-e2e/api/tenant/by-email/" + testTenantEmail
+                                + "?API_KEY=" + e2eApiKey)
+                        .delete()
+                        .build();
+                try (Response ignored = httpClient.newCall(deleteRequest).execute()) {
+                    // Best effort
+                }
+            } catch (Exception ignored) {}
+        }
+    }
+
+    // ---- SSO ----
+
+    protected String makeSecureSSOToken(String userId) {
+        return makeSecureSSOToken(userId, false);
+    }
+
+    protected String makeSecureSSOToken(String userId, boolean isAdmin) {
+        try {
+            SecureSSOUserData userData = new SecureSSOUserData(
+                    userId,
+                    "tester-" + userId.substring(0, Math.min(8, userId.length())) + "@fctest.com",
+                    "Tester " + userId.substring(0, Math.min(6, userId.length())),
+                    ""
+            );
+            if (isAdmin) {
+                userData.isAdmin = true;
+            }
+            FastCommentsSSO sso = FastCommentsSSO.createSecure(testTenantApiKey, userData);
+            return sso.prepareToSend();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create SSO token", e);
+        }
+    }
+
+    // ---- Activity Launch ----
+
+    protected void launchActivity(String urlId, String ssoToken) {
+        if (scenario != null) {
+            scenario.close();
+        }
+        Intent intent = new Intent(
+                InstrumentationRegistry.getInstrumentation().getTargetContext(),
+                TestActivity.class
+        );
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra("tenantId", testTenantId);
+        intent.putExtra("urlId", urlId);
+        intent.putExtra("sso", ssoToken);
+        scenario = ActivityScenario.launch(intent);
+    }
+
+    // ---- Comment Operations ----
+
+    protected void seedComment(String urlId, String text, String ssoToken) {
+        try {
+            String broadcastId = UUID.randomUUID().toString();
+            String url = HOST + "/comments/" + testTenantId + "/"
+                    + "?broadcastId=" + broadcastId
+                    + "&urlId=" + urlId
+                    + "&sso=" + ssoToken;
+
+            JSONObject body = new JSONObject();
+            body.put("comment", text);
+            body.put("commenterName", "Tester");
+            body.put("commenterEmail", "tester@fctest.com");
+            body.put("url", urlId);
+            body.put("urlId", urlId);
+
+            Request request = new Request.Builder()
+                    .url(url)
+                    .post(RequestBody.create(body.toString(), JSON_TYPE))
+                    .build();
+
+            try (Response response = httpClient.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    fail("seedComment failed: " + response.code());
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("seedComment failed", e);
+        }
+    }
+
+    /** Fetch the latest comment ID for a urlId via admin API. Retries up to 3 times. */
+    protected String fetchLatestCommentId(String urlId) {
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                Request request = new Request.Builder()
+                        .url(HOST + "/api/v1/comments?tenantId=" + testTenantId
+                                + "&urlId=" + urlId + "&limit=1")
+                        .addHeader("x-api-key", testTenantApiKey)
+                        .get()
+                        .build();
+
+                try (Response response = httpClient.newCall(request).execute()) {
+                    String body = response.body() != null ? response.body().string() : "";
+                    JSONObject json = new JSONObject(body);
+                    JSONArray comments = json.getJSONArray("comments");
+                    if (comments.length() > 0) {
+                        JSONObject first = comments.getJSONObject(0);
+                        String id = first.optString("_id", first.optString("id", null));
+                        if (id != null) return id;
+                    }
+                }
+            } catch (Exception e) {
+                if (attempt == 3) {
+                    fail("fetchLatestCommentId failed after 3 attempts: " + e.getMessage());
+                }
+            }
+
+            if (attempt < 3) {
+                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+            }
+        }
+        return null;
+    }
+
+    // ---- Polling ----
+
+    /** Poll a condition every 50ms until true or timeout. */
+    protected void pollUntil(long timeoutMs, PollCondition condition) {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (!condition.check()) {
+            if (System.currentTimeMillis() > deadline) {
+                return;
+            }
+            try { Thread.sleep(50); } catch (InterruptedException ignored) {}
+        }
+    }
+
+    @FunctionalInterface
+    protected interface PollCondition {
+        boolean check();
+    }
+}
