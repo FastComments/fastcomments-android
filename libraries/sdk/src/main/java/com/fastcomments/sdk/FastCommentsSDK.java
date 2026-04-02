@@ -1560,6 +1560,282 @@ public class FastCommentsSDK {
     }
 
     /**
+     * Unflag a comment
+     *
+     * @param commentId The ID of the comment to unflag
+     * @param callback  Callback to receive the response
+     */
+    public void unflagComment(String commentId, final FCCallback<APIEmptyResponse> callback) {
+        if (commentId == null || commentId.isEmpty()) {
+            callback.onFailure(new APIError()
+                    .status(APIStatus.FAILED)
+                    .reason("Comment ID is required")
+                    .code("invalid_comment_id"));
+            return;
+        }
+
+        try {
+            api.flagCommentPublic(config.tenantId, commentId, false)
+                    .sso(config.getSSOToken())
+                    .executeAsync(new ApiCallback<FlagCommentPublic200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                        }
+
+                        @Override
+                        public void onSuccess(FlagCommentPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                            } else {
+                                callback.onSuccess(result.getAPIEmptyResponse());
+                            }
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {}
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {}
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+
+    /**
+     * Pin a comment (admin only)
+     *
+     * @param commentId The ID of the comment to pin
+     * @param callback  Callback to receive the response
+     */
+    public void pinComment(String commentId, final FCCallback<ChangeCommentPinStatusResponse> callback) {
+        if (commentId == null || commentId.isEmpty()) {
+            callback.onFailure(new APIError()
+                    .status(APIStatus.FAILED)
+                    .reason("Comment ID is required")
+                    .code("invalid_comment_id"));
+            return;
+        }
+
+        String broadcastId = UUID.randomUUID().toString();
+        broadcastIdsSent.add(broadcastId);
+
+        try {
+            api.pinComment(config.tenantId, commentId, broadcastId)
+                    .sso(config.getSSOToken())
+                    .executeAsync(new ApiCallback<PinComment200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                        }
+
+                        @Override
+                        public void onSuccess(PinComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                            } else {
+                                callback.onSuccess(result.getChangeCommentPinStatusResponse());
+                            }
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {}
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {}
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+
+    /**
+     * Unpin a comment (admin only)
+     *
+     * @param commentId The ID of the comment to unpin
+     * @param callback  Callback to receive the response
+     */
+    public void unpinComment(String commentId, final FCCallback<ChangeCommentPinStatusResponse> callback) {
+        if (commentId == null || commentId.isEmpty()) {
+            callback.onFailure(new APIError()
+                    .status(APIStatus.FAILED)
+                    .reason("Comment ID is required")
+                    .code("invalid_comment_id"));
+            return;
+        }
+
+        String broadcastId = UUID.randomUUID().toString();
+        broadcastIdsSent.add(broadcastId);
+
+        try {
+            api.unPinComment(config.tenantId, commentId, broadcastId)
+                    .sso(config.getSSOToken())
+                    .executeAsync(new ApiCallback<PinComment200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                        }
+
+                        @Override
+                        public void onSuccess(PinComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                            } else {
+                                callback.onSuccess(result.getChangeCommentPinStatusResponse());
+                            }
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {}
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {}
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+
+    /**
+     * Lock a comment (admin only)
+     *
+     * @param commentId The ID of the comment to lock
+     * @param callback  Callback to receive the response
+     */
+    public void lockComment(String commentId, final FCCallback<APIEmptyResponse> callback) {
+        if (commentId == null || commentId.isEmpty()) {
+            callback.onFailure(new APIError()
+                    .status(APIStatus.FAILED)
+                    .reason("Comment ID is required")
+                    .code("invalid_comment_id"));
+            return;
+        }
+
+        String broadcastId = UUID.randomUUID().toString();
+        broadcastIdsSent.add(broadcastId);
+
+        try {
+            api.lockComment(config.tenantId, commentId, broadcastId)
+                    .sso(config.getSSOToken())
+                    .executeAsync(new ApiCallback<LockComment200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                        }
+
+                        @Override
+                        public void onSuccess(LockComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                            } else {
+                                callback.onSuccess(result.getAPIEmptyResponse());
+                            }
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {}
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {}
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+
+    /**
+     * Unlock a comment (admin only)
+     *
+     * @param commentId The ID of the comment to unlock
+     * @param callback  Callback to receive the response
+     */
+    public void unlockComment(String commentId, final FCCallback<APIEmptyResponse> callback) {
+        if (commentId == null || commentId.isEmpty()) {
+            callback.onFailure(new APIError()
+                    .status(APIStatus.FAILED)
+                    .reason("Comment ID is required")
+                    .code("invalid_comment_id"));
+            return;
+        }
+
+        String broadcastId = UUID.randomUUID().toString();
+        broadcastIdsSent.add(broadcastId);
+
+        try {
+            api.unLockComment(config.tenantId, commentId, broadcastId)
+                    .sso(config.getSSOToken())
+                    .executeAsync(new ApiCallback<LockComment200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                        }
+
+                        @Override
+                        public void onSuccess(LockComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                            } else {
+                                callback.onSuccess(result.getAPIEmptyResponse());
+                            }
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {}
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {}
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+
+    /**
+     * Unblock a user based on their comment
+     *
+     * @param commentId The ID of the comment to unblock the user from
+     * @param callback  Callback to receive the response
+     */
+    public void unblockUserFromComment(String commentId, final FCCallback<UnblockSuccess> callback) {
+        if (commentId == null || commentId.isEmpty()) {
+            callback.onFailure(new APIError()
+                    .status(APIStatus.FAILED)
+                    .reason("Comment ID is required")
+                    .code("invalid_comment_id"));
+            return;
+        }
+
+        try {
+            api.unBlockCommentPublic(config.tenantId, commentId, new PublicBlockFromCommentParams())
+                    .sso(config.getSSOToken())
+                    .executeAsync(new ApiCallback<UnBlockCommentPublic200Response>() {
+                        @Override
+                        public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            callback.onFailure(CallbackWrapper.createErrorFromException(e));
+                        }
+
+                        @Override
+                        public void onSuccess(UnBlockCommentPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            if (result.getActualInstance() instanceof APIError) {
+                                callback.onFailure((APIError) result.getActualInstance());
+                            } else {
+                                callback.onSuccess(result.getUnblockSuccess());
+                            }
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {}
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {}
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+
+    /**
      * Vote on a comment (upvote or downvote) with anonymous user credentials
      *
      * @param commentId      The ID of the comment to vote on

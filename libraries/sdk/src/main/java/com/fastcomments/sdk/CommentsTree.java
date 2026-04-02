@@ -434,9 +434,8 @@ public class CommentsTree {
         if (commentsForUser == null) {
             commentsForUser = new ArrayList<>(1);
             commentsByUserId.put(userId, commentsForUser);
-        } else {
-            commentsForUser.add(renderableComment);
         }
+        commentsForUser.add(renderableComment);
     }
 
     /**
