@@ -73,6 +73,7 @@ dependencies {
 
     // Dual-emulator live event tests
     androidTestImplementation("com.squareup.okhttp3:okhttp:4.12.0")
+    androidTestImplementation(libs.fastcommentsPubsub)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)

@@ -6,8 +6,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.model.SortDirections;
-import com.fastcomments.core.sso.FastCommentsSSO;
-import com.fastcomments.core.sso.SecureSSOUserData;
 import com.fastcomments.sdk.FastCommentsSDK;
 import com.fastcomments.sdk.FastCommentsView;
 
