@@ -2,19 +2,28 @@ package com.fastcomments;
 
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import com.fastcomments.core.CommentWidgetConfig;
+import com.fastcomments.pubsub.LiveEventSubscriber;
+import com.fastcomments.pubsub.SubscribeToChangesResult;
+
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import java.util.Collections;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import okhttp3.*;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 import static org.junit.Assert.*;
 
 /**
- * Mimics the exact SDK flow: load comments via API, then open WS from within
- * the callback, using real WS params from the response.
+ * Uses the actual LiveEventSubscriber.createTesting() and subscribeToChanges()
+ * to reproduce the SDK's exact WS creation path.
  */
 @RunWith(AndroidJUnit4.class)
 public class WebSocketSdkFlowTest extends UITestBase {
@@ -29,12 +38,12 @@ public class WebSocketSdkFlowTest extends UITestBase {
     }
 
     @Test
-    public void testWsSurvivesAfterApiCall() throws Exception {
+    public void testSubscribeToChangesDirectly() throws Exception {
         String urlId = "ws-flow-" + System.currentTimeMillis();
         String sso = makeSecureSSOToken("flow-user");
         String encodedSso = java.net.URLEncoder.encode(sso, "UTF-8");
 
-        // Step 1: Make the same API call the SDK makes to get WS params
+        // Get WS params from API
         OkHttpClient apiClient = new OkHttpClient.Builder().build();
         Request apiReq = new Request.Builder()
                 .url("https://fastcomments.com/comments/" + testTenantId
@@ -49,73 +58,56 @@ public class WebSocketSdkFlowTest extends UITestBase {
             tenantIdWS = json.optString("tenantIdWS", "");
             urlIdWS = json.optString("urlIdWS", "");
             userIdWS = json.optString("userIdWS", "");
-            Log.d(TAG, "API response: tenantIdWS=" + tenantIdWS + " urlIdWS=" + urlIdWS + " userIdWS=" + userIdWS);
         }
-
-        assertTrue("Should have WS params", !tenantIdWS.isEmpty() && !urlIdWS.isEmpty() && !userIdWS.isEmpty());
-
-        // Step 2: Open WS using the same client config as LiveEventSubscriber
-        String wsUrl = "wss://ws.fastcomments.com/sub?urlId=" + urlIdWS
-                + "&userIdWS=" + userIdWS + "&tenantIdWS=" + tenantIdWS;
-        Log.d(TAG, "WS URL: " + wsUrl);
-
-        OkHttpClient wsClient = new OkHttpClient.Builder()
-                .readTimeout(0, TimeUnit.SECONDS)
-                .pingInterval(5, TimeUnit.SECONDS)
-                .protocols(Collections.singletonList(Protocol.HTTP_1_1))
-                .connectionPool(new ConnectionPool(5, 5, TimeUnit.MINUTES))
-                .dispatcher(new Dispatcher())
-                .build();
-
-        long[] diedAt = {0};
-        long start = System.currentTimeMillis();
-        CountDownLatch latch = new CountDownLatch(1);
-
-        wsClient.newWebSocket(new Request.Builder().url(wsUrl).build(), new WebSocketListener() {
-            public void onOpen(WebSocket ws, Response r) {
-                Log.d(TAG, "WS OPEN: " + r.code() + " " + r.protocol());
-            }
-            public void onMessage(WebSocket ws, String t) {
-                double elapsed = (System.currentTimeMillis() - start) / 1000.0;
-                Log.d(TAG, String.format("[%.1fs] MSG: %s", elapsed, t.substring(0, Math.min(80, t.length()))));
-            }
-            public void onFailure(WebSocket ws, Throwable t, Response r) {
-                diedAt[0] = System.currentTimeMillis() - start;
-                Log.e(TAG, "WS DIED after " + diedAt[0] + "ms: " + t.getClass().getSimpleName() + ": " + t.getMessage());
-                latch.countDown();
-            }
-        });
-
-        // Step 3: Make more API calls concurrently (like the SDK does for presence polling)
-        Thread apiThread = new Thread(() -> {
-            for (int i = 0; i < 8; i++) {
-                try {
-                    Request req = new Request.Builder()
-                            .url("https://fastcomments.com/comments/" + testTenantId
-                                    + "/?urlId=" + urlId + "&sso=" + encodedSso
-                                    + "&direction=NF&count=5")
-                            .build();
-                    try (Response resp = apiClient.newCall(req).execute()) {
-                        Log.d(TAG, "API call " + (i+1) + ": " + resp.code());
-                    }
-                    Thread.sleep(3000);
-                } catch (Exception e) {
-                    Log.d(TAG, "API error: " + e.getMessage());
-                }
-            }
-        });
-        apiThread.start();
-
-        boolean died = latch.await(30, TimeUnit.SECONDS);
-        apiThread.interrupt();
-        wsClient.dispatcher().executorService().shutdown();
         apiClient.dispatcher().executorService().shutdown();
 
+        Log.d(TAG, "WS params: tenantIdWS=" + tenantIdWS + " urlIdWS=" + urlIdWS + " userIdWS=" + userIdWS);
+
+        // Use the actual LiveEventSubscriber.createTesting() — same as SDK testMode
+        LiveEventSubscriber subscriber = LiveEventSubscriber.createTesting();
+
+        CommentWidgetConfig config = new CommentWidgetConfig(testTenantId, urlId);
+
+        CountDownLatch failLatch = new CountDownLatch(1);
+        long start = System.currentTimeMillis();
+        final long[] diedAt = {0};
+
+        subscriber.setOnConnectionStatusChange((connected, lastEventTime) -> {
+            double elapsed = (System.currentTimeMillis() - start) / 1000.0;
+            Log.d(TAG, String.format("[%.1fs] Connection status: connected=%b", elapsed, connected));
+            if (!connected) {
+                diedAt[0] = System.currentTimeMillis() - start;
+                failLatch.countDown();
+            }
+        });
+
+        SubscribeToChangesResult result = subscriber.subscribeToChanges(
+                config,
+                tenantIdWS,
+                urlId,
+                urlIdWS,
+                userIdWS,
+                null, // no visibility check
+                event -> {
+                    double elapsed = (System.currentTimeMillis() - start) / 1000.0;
+                    Log.d(TAG, String.format("[%.1fs] Event: type=%s", elapsed, event.getType()));
+                }
+        );
+
+        assertNotNull("subscribeToChanges should return a result", result);
+        Log.d(TAG, "subscribeToChanges returned, waiting 30s...");
+
+        boolean died = failLatch.await(30, TimeUnit.SECONDS);
+
+        if (result != null) {
+            result.close();
+        }
+
         if (died) {
-            Log.d(TAG, "RESULT: WS died after " + diedAt[0] + "ms");
-            fail("WS died after " + diedAt[0] + "ms — same bug as SDK");
+            Log.d(TAG, "RESULT: WS died after " + diedAt[0] + "ms using LiveEventSubscriber.subscribeToChanges");
+            fail("WS died after " + diedAt[0] + "ms");
         } else {
-            Log.d(TAG, "RESULT: WS survived 30s with real tenant + concurrent API calls");
+            Log.d(TAG, "RESULT: WS survived 30s using LiveEventSubscriber.subscribeToChanges!");
         }
     }
 }
