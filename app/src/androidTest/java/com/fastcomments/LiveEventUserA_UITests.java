@@ -7,6 +7,8 @@ import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.util.Log;
@@ -22,7 +24,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 /**
  * Observer role — runs on Emulator A.
- * Phase 1: Waits for UserB to post a comment and verifies it appears via live WebSocket.
+ * Tests 6 phases of live event behavior via WebSocket.
  */
 @RunWith(AndroidJUnit4.class)
 public class LiveEventUserA_UITests extends UITestBase {
@@ -43,6 +45,7 @@ public class LiveEventUserA_UITests extends UITestBase {
         urlId = "live-" + System.currentTimeMillis();
         ssoTokenA = makeSecureSSOToken("userA-live");
         String ssoTokenB = makeSecureSSOToken("userB-live");
+        String ssoTokenBAdmin = makeSecureSSOToken("userB-live", true);
 
         // Post setup data for UserB
         JSONObject setupData = new JSONObject();
@@ -50,17 +53,17 @@ public class LiveEventUserA_UITests extends UITestBase {
         setupData.put("apiKey", testTenantApiKey);
         setupData.put("urlId", urlId);
         setupData.put("ssoTokenB", ssoTokenB);
+        setupData.put("ssoTokenBAdmin", ssoTokenBAdmin);
         sync.postData("setup", setupData);
         sync.signalReady("setup");
     }
 
     @Test
-    public void testLiveComment_UserA() throws Exception {
+    public void testLiveEvents_UserA() throws Exception {
         // Launch and wait for the widget to load
         launchActivity(urlId, ssoTokenA);
         Log.d(TAG, "Activity launched, waiting for RecyclerView...");
 
-        // Wait for RecyclerView to appear
         pollUntil(15000, () -> {
             try {
                 onView(withId(R.id.recyclerViewComments)).check(matches(isDisplayed()));
@@ -69,18 +72,16 @@ public class LiveEventUserA_UITests extends UITestBase {
                 return false;
             }
         });
-        Log.d(TAG, "RecyclerView visible, signaling ready for phase1");
 
-        // Signal ready for phase 1 and wait for UserB to post the comment
+        // --- Phase 1: Live comment ---
+        Log.d(TAG, "=== Phase 1: Live comment ===");
         sync.signalReady("phase1");
         sync.waitFor("userB", "phase1");
 
-        // Get the comment text UserB posted
         JSONObject phase1Data = sync.getData("phase1");
         String commentText = phase1Data.getString("text");
         Log.d(TAG, "Looking for live comment: " + commentText);
 
-        // Wait for the comment to appear via live WebSocket — no relaunch fallback
         boolean found = false;
         long deadline = System.currentTimeMillis() + 15000;
         while (System.currentTimeMillis() < deadline) {
@@ -89,14 +90,221 @@ public class LiveEventUserA_UITests extends UITestBase {
                         .check(matches(hasDescendant(withText(containsString(commentText)))));
                 found = true;
                 break;
-            } catch (Exception | AssertionError e) {
-                // not yet
-            }
+            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+        }
+        Log.d(TAG, "Phase 1 result: " + found);
+        assertTrue("Live comment should appear via WebSocket", found);
+
+        // --- Phase 2: Live vote ---
+        Log.d(TAG, "=== Phase 2: Live vote ===");
+        String voteCommentId = seedComment(urlId, "Vote target from A", ssoTokenA);
+        if (voteCommentId == null) {
+            voteCommentId = fetchLatestCommentId(urlId);
+        }
+        assertNotNull("Should have vote target comment ID", voteCommentId);
+
+        JSONObject phase2Setup = new JSONObject();
+        phase2Setup.put("commentId", voteCommentId);
+        sync.postData("phase2_setup", phase2Setup);
+
+        // Relaunch FIRST so WS is connected before UserB votes
+        launchActivity(urlId, ssoTokenA);
+        pollUntil(10000, () -> {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .check(matches(hasDescendant(withText(containsString("Vote target from A")))));
+                return true;
+            } catch (Exception | AssertionError e) { return false; }
+        });
+
+        // NOW signal UserB to vote (WS should be connected by now)
+        sync.signalReady("phase2");
+        sync.waitFor("userB", "phase2");
+
+        // Poll for vote count to change on the "Vote target" comment
+        final boolean[] voteChanged = {false};
+        deadline = System.currentTimeMillis() + 15000;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .perform(androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem(
+                                hasDescendant(withText(containsString("Vote target from A"))),
+                                new androidx.test.espresso.ViewAction() {
+                                    @Override public org.hamcrest.Matcher<android.view.View> getConstraints() {
+                                        return org.hamcrest.Matchers.any(android.view.View.class);
+                                    }
+                                    @Override public String getDescription() { return "check vote count"; }
+                                    @Override public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
+                                        android.widget.TextView voteCount = v.findViewById(R.id.upVoteCount);
+                                        if (voteCount != null && !"0".equals(voteCount.getText().toString())) {
+                                            voteChanged[0] = true;
+                                        }
+                                    }
+                                }));
+                if (voteChanged[0]) break;
+            } catch (Exception | AssertionError e) { /* retry */ }
             Thread.sleep(250);
         }
+        Log.d(TAG, "Phase 2 result: " + voteChanged[0]);
+        assertTrue("Vote count should change after UserB votes", voteChanged[0]);
 
-        Log.d(TAG, "Comment found via live: " + found);
-        assertTrue("Live comment should appear via WebSocket without reload", found);
+        // --- Phase 3: Presence ---
+        Log.d(TAG, "=== Phase 3: Presence ===");
+        // Don't relaunch — keep the Phase 2 activity alive so WS stays connected.
+        // commentsByUserId is already populated from Phase 2's relaunch.
+        sync.signalReady("phase3");
+        sync.waitFor("userB", "phase3");
+
+        boolean indicatorVisible = false;
+        deadline = System.currentTimeMillis() + 15000;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                onView(withId(R.id.onlineIndicator)).check(matches(isDisplayed()));
+                indicatorVisible = true;
+                break;
+            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+        }
+        Log.d(TAG, "Phase 3 result: " + indicatorVisible);
+        assertTrue("Online indicator should appear when UserB joins", indicatorVisible);
+
+        // --- Phase 4: Live delete ---
+        Log.d(TAG, "=== Phase 4: Live delete ===");
+        sync.signalReady("phase4_ready");
+        sync.waitFor("userB", "phase4_posted");
+
+        JSONObject phase4Data = sync.getData("phase4_posted");
+        String deleteText = phase4Data.getString("text");
+
+        // Relaunch to see the comment
+        launchActivity(urlId, ssoTokenA);
+        boolean deleteVisible = false;
+        deadline = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .check(matches(hasDescendant(withText(containsString(deleteText)))));
+                deleteVisible = true;
+                break;
+            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+        }
+        assertTrue("Comment to delete should be visible", deleteVisible);
+
+        sync.signalReady("phase4_seen");
+        sync.waitFor("userB", "phase4_deleted");
+
+        // Poll for live delete event — no relaunch fallback, must arrive via WebSocket
+        boolean disappeared = false;
+        deadline = System.currentTimeMillis() + 15000;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .check(matches(hasDescendant(withText(containsString(deleteText)))));
+                Thread.sleep(250);
+            } catch (Exception | AssertionError e) {
+                disappeared = true;
+                break;
+            }
+        }
+        Log.d(TAG, "Phase 4 result: " + disappeared);
+        assertTrue("Deleted comment should disappear via live WebSocket event", disappeared);
+
+        // --- Phase 5: Live pin ---
+        Log.d(TAG, "=== Phase 5: Live pin ===");
+        String pinCommentId = seedComment(urlId, "Pin target from A", ssoTokenA);
+        if (pinCommentId == null) {
+            pinCommentId = fetchLatestCommentId(urlId);
+        }
+        Log.d(TAG, "Phase 5: pin target ID=" + pinCommentId);
+        assertNotNull("Should have pin target comment ID", pinCommentId);
+
+        launchActivity(urlId, ssoTokenA);
+        pollUntil(10000, () -> {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .check(matches(hasDescendant(withText(containsString("Pin target from A")))));
+                return true;
+            } catch (Exception | AssertionError e) { return false; }
+        });
+
+        JSONObject phase5Setup = new JSONObject();
+        phase5Setup.put("commentId", pinCommentId);
+        sync.postData("phase5_setup", phase5Setup);
+        sync.signalReady("phase5");
+        sync.waitFor("userB", "phase5");
+
+        // Check pin icon within the "Pin target" item specifically
+        final boolean[] pinVisible = {false};
+        deadline = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .perform(androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem(
+                                hasDescendant(withText(containsString("Pin target from A"))),
+                                new androidx.test.espresso.ViewAction() {
+                                    @Override public org.hamcrest.Matcher<android.view.View> getConstraints() { return org.hamcrest.Matchers.any(android.view.View.class); }
+                                    @Override public String getDescription() { return "check pin icon"; }
+                                    @Override public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
+                                        android.view.View icon = v.findViewById(R.id.pinIcon);
+                                        if (icon != null && icon.getVisibility() == android.view.View.VISIBLE) {
+                                            pinVisible[0] = true;
+                                        }
+                                    }
+                                }));
+                if (pinVisible[0]) break;
+            } catch (Exception | AssertionError e) { /* retry */ }
+            Thread.sleep(250);
+        }
+        Log.d(TAG, "Phase 5 result: " + pinVisible[0]);
+        assertTrue("Pin icon should appear via live WebSocket event", pinVisible[0]);
+
+        // --- Phase 6: Live lock ---
+        Log.d(TAG, "=== Phase 6: Live lock ===");
+        String lockCommentId = seedComment(urlId, "Lock target from A", ssoTokenA);
+        if (lockCommentId == null) {
+            lockCommentId = fetchLatestCommentId(urlId);
+        }
+        Log.d(TAG, "Phase 6: lock target ID=" + lockCommentId);
+        assertNotNull("Should have lock target comment ID", lockCommentId);
+
+        launchActivity(urlId, ssoTokenA);
+        pollUntil(10000, () -> {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .check(matches(hasDescendant(withText(containsString("Lock target from A")))));
+                return true;
+            } catch (Exception | AssertionError e) { return false; }
+        });
+
+        JSONObject phase6Setup = new JSONObject();
+        phase6Setup.put("commentId", lockCommentId);
+        sync.postData("phase6_setup", phase6Setup);
+        sync.signalReady("phase6");
+        sync.waitFor("userB", "phase6");
+
+        // Check lock icon within the "Lock target" item specifically
+        final boolean[] lockVisible = {false};
+        deadline = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .perform(androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem(
+                                hasDescendant(withText(containsString("Lock target from A"))),
+                                new androidx.test.espresso.ViewAction() {
+                                    @Override public org.hamcrest.Matcher<android.view.View> getConstraints() { return org.hamcrest.Matchers.any(android.view.View.class); }
+                                    @Override public String getDescription() { return "check lock icon"; }
+                                    @Override public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
+                                        android.view.View icon = v.findViewById(R.id.lockIcon);
+                                        if (icon != null && icon.getVisibility() == android.view.View.VISIBLE) {
+                                            lockVisible[0] = true;
+                                        }
+                                    }
+                                }));
+                if (lockVisible[0]) break;
+            } catch (Exception | AssertionError e) { /* retry */ }
+            Thread.sleep(250);
+        }
+        Log.d(TAG, "Phase 6 result: " + lockVisible[0]);
+        assertTrue("Lock icon should appear via live WebSocket event", lockVisible[0]);
 
         sync.signalReady("done");
     }
