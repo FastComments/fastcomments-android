@@ -14,7 +14,6 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +36,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 /**
- * Base class for dual-emulator UI tests.
+ * Base class for UI tests.
  * Handles test tenant creation/teardown, SSO token generation,
  * activity launching, comment seeding, and sync client initialization.
  *
@@ -62,11 +61,14 @@ public class UITestBase {
     @Before
     public void setUp() throws Exception {
         Bundle args = InstrumentationRegistry.getArguments();
-        String role = args.getString("FC_ROLE", "userA");
         String syncUrl = args.getString("FC_SYNC_URL", "http://10.0.2.2:9999");
         e2eApiKey = args.getString("E2E_API_KEY", "");
 
-        sync = new SyncClient(syncUrl, role);
+        // Only create SyncClient if a role is explicitly set (dual-emulator tests)
+        String role = args.getString("FC_ROLE");
+        if (role != null) {
+            sync = new SyncClient(syncUrl, role);
+        }
 
         // Cookie jar for tenant signup session
         Map<String, List<Cookie>> cookieStore = new HashMap<>();
@@ -208,13 +210,23 @@ public class UITestBase {
 
     // ---- Comment Operations ----
 
-    protected void seedComment(String urlId, String text, String ssoToken) {
+    /**
+     * Seed a comment via the REST API. Returns the comment ID from the response.
+     */
+    protected String seedComment(String urlId, String text, String ssoToken) {
+        return seedComment(urlId, text, ssoToken, null);
+    }
+
+    /**
+     * Seed a comment via the REST API with optional parentId. Returns the comment ID.
+     */
+    protected String seedComment(String urlId, String text, String ssoToken, String parentId) {
         try {
             String broadcastId = UUID.randomUUID().toString();
             String url = HOST + "/comments/" + testTenantId + "/"
                     + "?broadcastId=" + broadcastId
                     + "&urlId=" + urlId
-                    + "&sso=" + ssoToken;
+                    + "&sso=" + java.net.URLEncoder.encode(ssoToken, "UTF-8");
 
             JSONObject body = new JSONObject();
             body.put("comment", text);
@@ -222,6 +234,9 @@ public class UITestBase {
             body.put("commenterEmail", "tester@fctest.com");
             body.put("url", urlId);
             body.put("urlId", urlId);
+            if (parentId != null) {
+                body.put("parentId", parentId);
+            }
 
             Request request = new Request.Builder()
                     .url(url)
@@ -231,7 +246,16 @@ public class UITestBase {
             try (Response response = httpClient.newCall(request).execute()) {
                 if (!response.isSuccessful()) {
                     fail("seedComment failed: " + response.code());
+                    return null;
                 }
+                String responseBody = response.body() != null ? response.body().string() : "";
+                JSONObject json = new JSONObject(responseBody);
+                // Try to extract comment ID from response
+                if (json.has("comment")) {
+                    JSONObject comment = json.getJSONObject("comment");
+                    return comment.optString("_id", comment.optString("id", null));
+                }
+                return null;
             }
         } catch (Exception e) {
             throw new RuntimeException("seedComment failed", e);
@@ -270,6 +294,77 @@ public class UITestBase {
             }
         }
         return null;
+    }
+
+    // ---- Admin Operations ----
+
+    /** Update a comment via the admin API. Uses PATCH with x-api-key header. */
+    protected boolean adminUpdateComment(String commentId, JSONObject params) {
+        try {
+            Request request = new Request.Builder()
+                    .url(HOST + "/api/v1/comments/" + commentId + "?tenantId=" + testTenantId)
+                    .addHeader("x-api-key", testTenantApiKey)
+                    .addHeader("Content-Type", "application/json")
+                    .patch(RequestBody.create(params.toString(), JSON_TYPE))
+                    .build();
+
+            try (Response response = httpClient.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    String body = response.body() != null ? response.body().string() : "";
+                    fail("adminUpdateComment failed: status=" + response.code() + " body=" + body.substring(0, Math.min(200, body.length())));
+                    return false;
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            fail("adminUpdateComment failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** Pin a comment via the public API (requires admin SSO token). */
+    protected void pinComment(String commentId, String adminSsoToken) {
+        try {
+            String broadcastId = UUID.randomUUID().toString();
+            String encodedSso = java.net.URLEncoder.encode(adminSsoToken, "UTF-8");
+            Request request = new Request.Builder()
+                    .url(HOST + "/comments/" + testTenantId + "/" + commentId + "/pin"
+                            + "?broadcastId=" + broadcastId + "&sso=" + encodedSso)
+                    .post(RequestBody.create("", null))
+                    .build();
+
+            try (Response response = httpClient.newCall(request).execute()) {
+                String body = response.body() != null ? response.body().string() : "";
+                android.util.Log.d("UITestBase", "pinComment response: " + response.code() + " body=" + body.substring(0, Math.min(200, body.length())));
+                if (!response.isSuccessful()) {
+                    fail("pinComment failed: status=" + response.code() + " body=" + body.substring(0, Math.min(200, body.length())));
+                }
+            }
+        } catch (Exception e) {
+            fail("pinComment failed: " + e.getMessage());
+        }
+    }
+
+    /** Lock a comment via the public API (requires admin SSO token). */
+    protected void lockComment(String commentId, String adminSsoToken) {
+        try {
+            String broadcastId = UUID.randomUUID().toString();
+            String encodedSso = java.net.URLEncoder.encode(adminSsoToken, "UTF-8");
+            Request request = new Request.Builder()
+                    .url(HOST + "/comments/" + testTenantId + "/" + commentId + "/lock"
+                            + "?broadcastId=" + broadcastId + "&sso=" + encodedSso)
+                    .post(RequestBody.create("", null))
+                    .build();
+
+            try (Response response = httpClient.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    String body = response.body() != null ? response.body().string() : "";
+                    fail("lockComment failed: status=" + response.code() + " body=" + body.substring(0, Math.min(200, body.length())));
+                }
+            }
+        } catch (Exception e) {
+            fail("lockComment failed: " + e.getMessage());
+        }
     }
 
     // ---- Polling ----

@@ -69,6 +69,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.6.1")
 
     // Dual-emulator live event tests
     androidTestImplementation("com.squareup.okhttp3:okhttp:4.12.0")

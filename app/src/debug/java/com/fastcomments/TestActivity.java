@@ -5,6 +5,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.fastcomments.core.CommentWidgetConfig;
+import com.fastcomments.model.SortDirections;
 import com.fastcomments.core.sso.FastCommentsSSO;
 import com.fastcomments.core.sso.SecureSSOUserData;
 import com.fastcomments.sdk.FastCommentsSDK;
@@ -31,8 +32,9 @@ public class TestActivity extends AppCompatActivity {
         CommentWidgetConfig config = new CommentWidgetConfig(tenantId, urlId);
         config.sso = ssoToken;
         config.showLiveRightAway = true;
+        config.defaultSortDirection = SortDirections.NF;
 
-        FastCommentsSDK sdk = new FastCommentsSDK(config);
+        FastCommentsSDK sdk = new FastCommentsSDK(config, true);
 
         commentsView = findViewById(R.id.commentsView);
         commentsView.setSDK(sdk);
