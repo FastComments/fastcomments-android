@@ -274,11 +274,75 @@ def stream_output(proc, prefix, failure_flag):
             print(f"[{prefix}] {text}")
 
 
+SINGLE_EMU_TEST_CLASSES = [
+    "CommentCRUDUITests",
+    "VoteUITests",
+    "ModerationUITests",
+    "PaginationUITests",
+    "ThreadingUITests",
+]
+
+
+def run_single_emu_tests(e2e_key, test_classes=None):
+    """Run single-emulator tests on one emulator (no sync server needed)."""
+    emulators = get_emulators()
+    if not emulators:
+        print("ERROR: No running emulators found")
+        sys.exit(1)
+
+    serial = emulators[0]
+    print(f"[main] Running single-emulator tests on {serial}")
+
+    build_apks()
+    install_apks(serial)
+
+    classes = test_classes or SINGLE_EMU_TEST_CLASSES
+    class_arg = ",".join(f"com.fastcomments.{c}" for c in classes)
+
+    shell_cmd = " ".join([
+        "am", "instrument", "-w", "-r",
+        "-e", "class", shlex.quote(class_arg),
+        "-e", "E2E_API_KEY", shlex.quote(e2e_key),
+        "com.fastcomments.test/androidx.test.runner.AndroidJUnitRunner",
+    ])
+
+    cmd = ["adb", "-s", serial, "shell", shell_cmd]
+    print(f"[test] Running: {classes}")
+
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    fail_flag = [False]
+    thread = threading.Thread(target=stream_output, args=(proc, "Test", fail_flag), daemon=True)
+    thread.start()
+
+    rc = proc.wait()
+    thread.join(timeout=5)
+
+    passed = not fail_flag[0] and rc == 0
+    print(f"\n{'='*60}")
+    print(f"Exit code: {rc}, failed={fail_flag[0]}")
+    if passed:
+        print("ALL SINGLE-EMULATOR TESTS PASSED")
+    else:
+        print("SOME TESTS FAILED")
+    print(f"{'='*60}")
+
+    sys.exit(0 if passed else 1)
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Run dual-emulator live event tests")
+    parser = argparse.ArgumentParser(description="Run FastComments Android tests")
     parser.add_argument("--e2e-key", default="T0ph B3st", help="E2E API key")
+    parser.add_argument("--single", nargs="*", metavar="CLASS",
+                        help="Run single-emulator tests (optionally specify test class names)")
     args = parser.parse_args()
 
+    # Single-emulator mode
+    if args.single is not None:
+        classes = args.single if args.single else None
+        run_single_emu_tests(args.e2e_key, classes)
+        return
+
+    # Dual-emulator mode
     # Start emulators if needed (with visible windows)
     emulators = start_emulators()
 
