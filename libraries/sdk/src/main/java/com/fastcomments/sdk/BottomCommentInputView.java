@@ -463,7 +463,7 @@ public class BottomCommentInputView extends FrameLayout {
             int[] location = new int[2];
             commentInput.getLocationOnScreen(location);
             int inputWidth = commentInput.getWidth();
-            int popupWidth = (int)(inputWidth * 0.8f); // 80% of input width
+            int popupWidth = (int)(inputWidth * 0.9f); // 90% of input width
             mentionPopup.setWidth(popupWidth);
             
             // Position popup above the entire bottom input view
