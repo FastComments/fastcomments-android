@@ -65,6 +65,7 @@ public class UITestBase {
 
     private String e2eApiKey;
     private OkHttpClient httpClient;
+    private int delaySeconds;
 
     // ---- Setup / Teardown ----
 
@@ -73,6 +74,7 @@ public class UITestBase {
         Bundle args = InstrumentationRegistry.getArguments();
         String syncUrl = args.getString("FC_SYNC_URL", "http://10.0.2.2:9999");
         e2eApiKey = args.getString("E2E_API_KEY", "");
+        delaySeconds = Integer.parseInt(args.getString("FC_DELAY", "0"));
 
         // Only create SyncClient if a role is explicitly set (dual-emulator tests)
         String role = args.getString("FC_ROLE");
@@ -474,7 +476,14 @@ public class UITestBase {
         }
     }
 
-    // ---- Polling ----
+    // ---- Delay / Polling ----
+
+    /** Pause for the configured delay (from --delay flag). No-op when delay is 0. */
+    protected void delay() throws InterruptedException {
+        if (delaySeconds > 0) {
+            Thread.sleep(delaySeconds * 1000L);
+        }
+    }
 
     /** Poll a condition every 50ms until true or timeout. */
     protected void pollUntil(long timeoutMs, PollCondition condition) {

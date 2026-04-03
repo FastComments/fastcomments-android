@@ -245,17 +245,21 @@ def install_apks(serial):
     print(f"[install] APKs installed on {serial}")
 
 
-def run_tests(serial, role, test_class, e2e_key):
+def run_tests(serial, role, test_class, e2e_key, delay=0):
     """Run instrumented tests on a specific emulator."""
     # Build the shell command as a single string because adb shell joins
     # list args with spaces, breaking values that contain spaces.
-    shell_cmd = " ".join([
-        "am", "instrument",
-        "-w", "-r",
+    extras = [
         "-e", "class", f"com.fastcomments.{test_class}",
         "-e", "FC_ROLE", shlex.quote(role),
         "-e", "FC_SYNC_URL", shlex.quote("http://10.0.2.2:9999"),
         "-e", "E2E_API_KEY", shlex.quote(e2e_key),
+    ]
+    if delay > 0:
+        extras += ["-e", "FC_DELAY", str(delay)]
+    shell_cmd = " ".join([
+        "am", "instrument", "-w", "-r",
+        *extras,
         "com.fastcomments.test/androidx.test.runner.AndroidJUnitRunner",
     ])
 
@@ -340,10 +344,10 @@ DUAL_SUITES = {
 }
 
 
-def run_dual_suite(emu_a, emu_b, suite_name, class_a, class_b, e2e_key, sync):
+def run_dual_suite(emu_a, emu_b, suite_name, class_a, class_b, e2e_key, sync, delay=0):
     """Run a single dual-emulator test suite. Returns True if passed."""
     print(f"\n{'='*60}")
-    print(f"SUITE: {suite_name}")
+    print(f"SUITE: {suite_name}" + (f" [delay={delay}s]" if delay else ""))
     print(f"{'='*60}")
 
     # Reset sync state between suites
@@ -352,8 +356,8 @@ def run_dual_suite(emu_a, emu_b, suite_name, class_a, class_b, e2e_key, sync):
         sync.data.clear()
         sync.waiters.clear()
 
-    proc_a = run_tests(emu_a, "userA", class_a, e2e_key)
-    proc_b = run_tests(emu_b, "userB", class_b, e2e_key)
+    proc_a = run_tests(emu_a, "userA", class_a, e2e_key, delay)
+    proc_b = run_tests(emu_b, "userB", class_b, e2e_key, delay)
 
     fail_a = [False]
     fail_b = [False]
@@ -383,6 +387,8 @@ def main():
     parser.add_argument("--suite", default="live-events",
                         choices=list(DUAL_SUITES.keys()) + ["all"],
                         help="Which dual-emulator test suite to run (default: live-events)")
+    parser.add_argument("--delay", type=int, default=0, metavar="SECONDS",
+                        help="Add N-second delays between test steps so you can watch on the emulators")
     args = parser.parse_args()
 
     # Single-emulator mode
@@ -423,7 +429,7 @@ def main():
         for suite_name in suites_to_run:
             class_a, class_b = DUAL_SUITES[suite_name]
             results[suite_name] = run_dual_suite(
-                emu_a, emu_b, suite_name, class_a, class_b, args.e2e_key, sync
+                emu_a, emu_b, suite_name, class_a, class_b, args.e2e_key, sync, args.delay
             )
 
         all_passed = all(results.values())
