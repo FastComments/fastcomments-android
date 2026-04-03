@@ -58,12 +58,6 @@ public class LiveChatUserA_UITests extends UITestBase {
 
     @Test
     public void testLiveChat_UserA() throws Exception {
-        // Seed a comment so the chat has content when it loads
-        seedComment(urlId, "seed", ssoTokenA);
-
-        // Launch live chat and give the SDK time to load before Espresso checks.
-        // LiveChatView's indeterminate ProgressBar can stall Espresso's idle sync,
-        // so we wait for the API call to complete before touching Espresso.
         launchLiveChatActivity(urlId, ssoTokenA);
         Log.d(TAG, "Activity launched, waiting for chat to load...");
         Thread.sleep(5000);

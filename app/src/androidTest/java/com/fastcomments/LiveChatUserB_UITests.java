@@ -64,9 +64,6 @@ public class LiveChatUserB_UITests extends UITestBase {
         Log.d(TAG, "=== Phase 1: Send message ===");
         sync.waitFor("userA", "phase1");
 
-        // Seed a comment so the chat has content when it loads
-        seedComment(urlId, "seed", ssoTokenB);
-
         launchLiveChatActivity(urlId, ssoTokenB);
         Thread.sleep(5000);
 
