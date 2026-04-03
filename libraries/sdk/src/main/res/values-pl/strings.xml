@@ -82,6 +82,7 @@
     <string name="delete_comment">Usuń komentarz</string>
     <string name="flag_comment">Zgłoś komentarz</string>
     <string name="block_user">Zablokuj użytkownika</string>
+    <string name="unblock_user">Odblokuj użytkownika</string>
     <string name="menu_button">Przycisk menu</string>
     <string name="edit_your_comment">Edytuj swój komentarz</string>
     <string name="save_changes">Zapisz zmiany</string>
@@ -97,6 +98,13 @@
     <string name="block_user_title">Zablokuj użytkownika</string>
     <string name="block_user_confirm">Czy na pewno chcesz zablokować użytkownika %1$s i ukryć jego komentarze?</string>
     <string name="block">Zablokuj</string>
+    <string name="unblock">Odblokuj</string>
+    <string name="unblock_user_title">Odblokuj użytkownika</string>
+    <string name="unblock_user_confirm">Czy na pewno chcesz odblokować użytkownika %1$s?</string>
+    <string name="user_unblocked_successfully">Użytkownik został pomyślnie odblokowany</string>
+    <string name="error_unblocking_user">Błąd podczas odblokowywania użytkownika. Spróbuj ponownie.</string>
+    <string name="you_blocked_this_user">Zablokowałeś tego użytkownika.</string>
+    <string name="blocked_user_placeholder">Zablokowany użytkownik</string>
     <string name="delete_comment_title">Usuń komentarz</string>
     <string name="delete_comment_confirm">Czy na pewno chcesz usunąć ten komentarz?</string>
     <string name="delete">Usuń</string>

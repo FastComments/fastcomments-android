@@ -82,6 +82,7 @@
     <string name="delete_comment">Удалить комментарий</string>
     <string name="flag_comment">Пожаловаться на комментарий</string>
     <string name="block_user">Заблокировать пользователя</string>
+    <string name="unblock_user">Разблокировать пользователя</string>
     <string name="menu_button">Кнопка меню</string>
     <string name="edit_your_comment">Редактировать ваш комментарий</string>
     <string name="save_changes">Сохранить изменения</string>
@@ -97,6 +98,13 @@
     <string name="block_user_title">Заблокировать пользователя</string>
     <string name="block_user_confirm">Вы уверены, что хотите заблокировать %1$s и скрыть его комментарии?</string>
     <string name="block">Заблокировать</string>
+    <string name="unblock">Разблокировать</string>
+    <string name="unblock_user_title">Разблокировать пользователя</string>
+    <string name="unblock_user_confirm">Вы уверены, что хотите разблокировать %1$s?</string>
+    <string name="user_unblocked_successfully">Пользователь успешно разблокирован</string>
+    <string name="error_unblocking_user">Ошибка разблокировки пользователя. Пожалуйста, попробуйте снова.</string>
+    <string name="you_blocked_this_user">Вы заблокировали этого пользователя.</string>
+    <string name="blocked_user_placeholder">Заблокированный пользователь</string>
     <string name="delete_comment_title">Удалить комментарий</string>
     <string name="delete_comment_confirm">Вы уверены, что хотите удалить этот комментарий?</string>
     <string name="delete">Удалить</string>

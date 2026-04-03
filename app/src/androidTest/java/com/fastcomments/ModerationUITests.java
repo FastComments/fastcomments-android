@@ -11,12 +11,12 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.fastcomments.sdk.R;
 
 import org.json.JSONObject;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -175,13 +175,125 @@ public class ModerationUITests extends UITestBase {
                 .check(matches(hasDescendant(withText(containsString("Flag this comment")))));
     }
 
-    @Ignore("Known issue — block UI state not reliable, same as iOS")
     @Test
-    public void testBlockShowsBlockedText() {
+    public void testBlockShowsBlockedText() throws Exception {
+        urlId = "mod-block-" + System.currentTimeMillis();
+
+        // Seed comment as userA
+        String ssoTokenA = makeSecureSSOToken("block-userA");
+        seedComment(urlId, "Block this comment", ssoTokenA);
+
+        // Launch as userB (different user can block)
+        String ssoTokenB = makeSecureSSOToken("block-userB");
+        launchActivity(urlId, ssoTokenB);
+
+        // Wait for comment to appear
+        pollUntil(10000, () -> {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .check(matches(hasDescendant(withText(containsString("Block this comment")))));
+                return true;
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
+        });
+
+        // Tap menu and block
+        onView(withId(R.id.commentMenuButton)).perform(click());
+        onView(withText(R.string.block_user)).perform(click());
+
+        // Confirm the block dialog
+        onView(withText(R.string.block)).perform(click());
+
+        // Verify comment text is replaced with blocked placeholder
+        pollUntil(10000, () -> {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .check(matches(hasDescendant(withText(containsString(
+                                InstrumentationRegistry.getInstrumentation().getTargetContext()
+                                        .getString(R.string.you_blocked_this_user))))));
+                return true;
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
+        });
+
+        // Verify the blocked user placeholder name is shown
+        onView(withId(R.id.recyclerViewComments))
+                .check(matches(hasDescendant(withText(containsString(
+                        InstrumentationRegistry.getInstrumentation().getTargetContext()
+                                .getString(R.string.blocked_user_placeholder))))));
+
+        // Verify the original comment text is no longer visible
+        onView(withId(R.id.recyclerViewComments))
+                .check(matches(org.hamcrest.Matchers.not(
+                        hasDescendant(withText(containsString("Block this comment"))))));
     }
 
-    @Ignore("Known issue — unblock UI re-render not reliable, same as iOS")
     @Test
-    public void testUnblockRestoresComment() {
+    public void testUnblockRestoresComment() throws Exception {
+        urlId = "mod-unblock-" + System.currentTimeMillis();
+
+        // Seed comment as userA
+        String ssoTokenA = makeSecureSSOToken("unblock-userA");
+        seedComment(urlId, "Unblock this comment", ssoTokenA);
+
+        // Launch as userB
+        String ssoTokenB = makeSecureSSOToken("unblock-userB");
+        launchActivity(urlId, ssoTokenB);
+
+        // Wait for comment to appear
+        pollUntil(10000, () -> {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .check(matches(hasDescendant(withText(containsString("Unblock this comment")))));
+                return true;
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
+        });
+
+        // Block the user first
+        onView(withId(R.id.commentMenuButton)).perform(click());
+        onView(withText(R.string.block_user)).perform(click());
+        onView(withText(R.string.block)).perform(click());
+
+        // Wait for blocked state
+        pollUntil(10000, () -> {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .check(matches(hasDescendant(withText(containsString(
+                                InstrumentationRegistry.getInstrumentation().getTargetContext()
+                                        .getString(R.string.you_blocked_this_user))))));
+                return true;
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
+        });
+
+        // Now unblock: tap menu and select unblock
+        onView(withId(R.id.commentMenuButton)).perform(click());
+        onView(withText(R.string.unblock_user)).perform(click());
+
+        // Confirm the unblock dialog
+        onView(withText(R.string.unblock)).perform(click());
+
+        // Verify the original comment text is restored
+        pollUntil(10000, () -> {
+            try {
+                onView(withId(R.id.recyclerViewComments))
+                        .check(matches(hasDescendant(withText(containsString("Unblock this comment")))));
+                return true;
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
+        });
+
+        // Verify blocked placeholder text is gone
+        onView(withId(R.id.recyclerViewComments))
+                .check(matches(org.hamcrest.Matchers.not(
+                        hasDescendant(withText(containsString(
+                                InstrumentationRegistry.getInstrumentation().getTargetContext()
+                                        .getString(R.string.you_blocked_this_user)))))));
     }
 }

@@ -82,6 +82,7 @@
     <string name="delete_comment">Yorumu Sil</string>
     <string name="flag_comment">Yorumu Bildir</string>
     <string name="block_user">Kullanıcıyı Engelle</string>
+    <string name="unblock_user">Kullanıcının engelini kaldır</string>
     <string name="menu_button">Menü Düğmesi</string>
     <string name="edit_your_comment">Yorumunuzu Düzenleyin</string>
     <string name="save_changes">Değişiklikleri Kaydet</string>
@@ -97,6 +98,13 @@
     <string name="block_user_title">Kullanıcıyı Engelle</string>
     <string name="block_user_confirm">%1$s kullanıcısını engellemek ve yorumlarını gizlemek istediğinizden emin misiniz?</string>
     <string name="block">Engelle</string>
+    <string name="unblock">Engeli kaldır</string>
+    <string name="unblock_user_title">Kullanıcının engelini kaldır</string>
+    <string name="unblock_user_confirm">%1$s kullanıcısının engelini kaldırmak istediğinizden emin misiniz?</string>
+    <string name="user_unblocked_successfully">Kullanıcının engeli başarıyla kaldırıldı</string>
+    <string name="error_unblocking_user">Kullanıcının engeli kaldırılırken hata oluştu. Lütfen tekrar deneyin.</string>
+    <string name="you_blocked_this_user">Bu kullanıcıyı engellediniz.</string>
+    <string name="blocked_user_placeholder">Engellenen Kullanıcı</string>
     <string name="delete_comment_title">Yorumu Sil</string>
     <string name="delete_comment_confirm">Bu yorumu silmek istediğinizden emin misiniz?</string>
     <string name="delete">Sil</string>

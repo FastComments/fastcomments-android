@@ -278,6 +278,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         void onDelete(String commentId);
         void onFlag(String commentId);
         void onBlock(String commentId, String userName);
+        void onUnblock(String commentId, String userName);
     }
     
     /**

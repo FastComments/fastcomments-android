@@ -161,34 +161,51 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     }
     
     public void setComment(final RenderableComment comment, boolean disableUnverifiedLabel, final CommentsAdapter.OnToggleRepliesListener listener) {
-        //noinspection ConstantValue
-        if (comment.getComment().getCommenterName() != null) {
-            nameTextView.setText(comment.getComment().getCommenterName());
-        } else {
-            nameTextView.setText(R.string.anonymous);
-        }
+        Boolean isBlocked = comment.getComment().getIsBlocked();
+        boolean blocked = isBlocked != null && isBlocked;
 
-        if (comment.getComment().getAvatarSrc() != null) {
-            AvatarFetcher.fetchTransformInto(context, comment.getComment().getAvatarSrc(), avatarImageView);
-        } else {
+        // For blocked comments, show placeholder name and default avatar
+        if (blocked) {
+            nameTextView.setText(R.string.blocked_user_placeholder);
             AvatarFetcher.fetchTransformInto(context, R.drawable.default_avatar, avatarImageView);
+        } else {
+            //noinspection ConstantValue
+            if (comment.getComment().getCommenterName() != null) {
+                nameTextView.setText(comment.getComment().getCommenterName());
+            } else {
+                nameTextView.setText(R.string.anonymous);
+            }
+
+            if (comment.getComment().getAvatarSrc() != null) {
+                AvatarFetcher.fetchTransformInto(context, comment.getComment().getAvatarSrc(), avatarImageView);
+            } else {
+                AvatarFetcher.fetchTransformInto(context, R.drawable.default_avatar, avatarImageView);
+            }
         }
 
-        // Handle display label if present
-        String displayLabel = comment.getComment().getDisplayLabel();
-        if (displayLabel != null && !displayLabel.isEmpty()) {
-            displayLabelTextView.setText(displayLabel);
-            displayLabelTextView.setVisibility(View.VISIBLE);
-        } else {
+        // Handle display label if present (hide for blocked comments)
+        if (blocked) {
             displayLabelTextView.setVisibility(View.GONE);
+        } else {
+            String displayLabel = comment.getComment().getDisplayLabel();
+            if (displayLabel != null && !displayLabel.isEmpty()) {
+                displayLabelTextView.setText(displayLabel);
+                displayLabelTextView.setVisibility(View.VISIBLE);
+            } else {
+                displayLabelTextView.setVisibility(View.GONE);
+            }
         }
 
-        // Handle unverified label
-        Boolean isVerified = comment.getComment().getVerified();
-        if (!disableUnverifiedLabel && (isVerified == null || !isVerified)) {
-            unverifiedLabel.setVisibility(View.VISIBLE);
-        } else {
+        // Handle unverified label (hide for blocked comments)
+        if (blocked) {
             unverifiedLabel.setVisibility(View.GONE);
+        } else {
+            Boolean isVerified = comment.getComment().getVerified();
+            if (!disableUnverifiedLabel && (isVerified == null || !isVerified)) {
+                unverifiedLabel.setVisibility(View.VISIBLE);
+            } else {
+                unverifiedLabel.setVisibility(View.GONE);
+            }
         }
 
         // Handle pinned comment icon (not present in compact layout)
@@ -203,13 +220,17 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             lockIcon.setVisibility(isLocked != null && isLocked ? View.VISIBLE : View.GONE);
         }
 
-        // Handle online status indicator (not present in compact layout)
+        // Handle online status indicator (not present in compact layout; hide for blocked)
         if (onlineIndicator != null) {
-            onlineIndicator.setVisibility(comment.isOnline ? View.VISIBLE : View.GONE);
+            onlineIndicator.setVisibility(!blocked && comment.isOnline ? View.VISIBLE : View.GONE);
         }
-        
-        // Handle badges if present
-        updateBadges(comment.getComment().getBadges());
+
+        // Handle badges if present (hide for blocked comments)
+        if (blocked) {
+            updateBadges(null);
+        } else {
+            updateBadges(comment.getComment().getBadges());
+        }
 
         // Store current comment reference first, so updateDateDisplay has the correct reference
         this.currentComment = comment;
@@ -228,14 +249,21 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         textViewLayout.height = ViewGroup.LayoutParams.WRAP_CONTENT;
         contentTextView.setLayoutParams(textViewLayout);
 
-        // Make links clickable
-        contentTextView.setClickable(true);
-        contentTextView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
-        contentTextView.setLinksClickable(true);
+        // For blocked comments, show placeholder text instead of content
+        if (blocked) {
+            contentTextView.setClickable(false);
+            contentTextView.setMovementMethod(null);
+            contentTextView.setText(R.string.you_blocked_this_user);
+        } else {
+            // Make links clickable
+            contentTextView.setClickable(true);
+            contentTextView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
+            contentTextView.setLinksClickable(true);
 
-        // Display the comment content with clickable links
-        String htmlContent = comment.getComment().getCommentHTML();
-        contentTextView.setText(HtmlLinkHandler.parseHtml(context, htmlContent, contentTextView));
+            // Display the comment content with clickable links
+            String htmlContent = comment.getComment().getCommentHTML();
+            contentTextView.setText(HtmlLinkHandler.parseHtml(context, htmlContent, contentTextView));
+        }
         
         // No need for special handling for live chat - we're using a dedicated layout
 
@@ -293,9 +321,9 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
 
         // Check if voting is disabled first
         boolean disableVoting = Boolean.TRUE.equals(sdk.getConfig().disableVoting);
-        
-        if (disableVoting) {
-            // Hide all voting UI elements if voting is disabled
+
+        if (disableVoting || blocked) {
+            // Hide all voting UI elements if voting is disabled or comment is blocked
             standardVoteContainer.setVisibility(View.GONE);
             heartVoteContainer.setVisibility(View.GONE);
         } else {
@@ -304,6 +332,9 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             standardVoteContainer.setVisibility(useHeartStyle ? View.GONE : View.VISIBLE);
             heartVoteContainer.setVisibility(useHeartStyle ? View.VISIBLE : View.GONE);
         }
+
+        // Hide reply button for blocked comments
+        replyButton.setVisibility(blocked ? View.GONE : View.VISIBLE);
 
         // Show the toggle replies button only if there are replies
         final Integer childCount = comment.getComment().getChildCount();
@@ -550,11 +581,19 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         // Show/hide edit and delete options based on ownership
         menu.findItem(R.id.menu_edit_comment).setVisible(isCurrentUserComment);
         menu.findItem(R.id.menu_delete_comment).setVisible(isCurrentUserComment);
-        
+
+        // Toggle block/unblock visibility based on isBlocked state
+        Boolean isBlocked = currentComment != null ? currentComment.getComment().getIsBlocked() : null;
+        boolean blocked = isBlocked != null && isBlocked;
+        menu.findItem(R.id.menu_block_user).setVisible(!blocked && !isCurrentUserComment);
+        menu.findItem(R.id.menu_unblock_user).setVisible(blocked && !isCurrentUserComment);
+        // Hide flag for blocked comments
+        menu.findItem(R.id.menu_flag_comment).setVisible(!blocked);
+
         // Set item click listener
         popupMenu.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
-            
+
             if (itemId == R.id.menu_edit_comment) {
                 // Handle edit comment
                 if (currentComment != null && commentMenuListener != null) {
@@ -585,8 +624,16 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
                     commentMenuListener.onBlock(commentId, userName);
                     return true;
                 }
+            } else if (itemId == R.id.menu_unblock_user) {
+                // Handle unblock user
+                if (currentComment != null && commentMenuListener != null) {
+                    String commentId = currentComment.getComment().getId();
+                    String userName = currentComment.getComment().getCommenterName();
+                    commentMenuListener.onUnblock(commentId, userName);
+                    return true;
+                }
             }
-            
+
             return false;
         });
         

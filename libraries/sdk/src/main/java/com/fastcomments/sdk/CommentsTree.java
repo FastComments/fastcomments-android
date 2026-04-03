@@ -1022,6 +1022,25 @@ public class CommentsTree {
     }
     
     /**
+     * Updates the isBlocked status of comments based on the commentStatuses map
+     * returned from the block/unblock API response, and notifies the adapter.
+     *
+     * @param commentStatuses Map of comment ID to blocked status
+     */
+    public void updateBlockedStatuses(Map<String, Boolean> commentStatuses) {
+        if (commentStatuses == null || adapter == null) {
+            return;
+        }
+        for (Map.Entry<String, Boolean> entry : commentStatuses.entrySet()) {
+            RenderableComment renderableComment = commentsById.get(entry.getKey());
+            if (renderableComment != null) {
+                renderableComment.getComment().setIsBlocked(entry.getValue());
+                notifyItemChanged(renderableComment);
+            }
+        }
+    }
+
+    /**
      * Clears all data from the comments tree.
      * Use this when switching fragments to avoid memory leaks.
      */

@@ -82,6 +82,7 @@
     <string name="delete_comment">Ta bort kommentar</string>
     <string name="flag_comment">Rapportera kommentar</string>
     <string name="block_user">Blockera användare</string>
+    <string name="unblock_user">Avblockera användare</string>
     <string name="menu_button">Menyknapp</string>
     <string name="edit_your_comment">Redigera din kommentar</string>
     <string name="save_changes">Spara ändringar</string>
@@ -97,6 +98,13 @@
     <string name="block_user_title">Blockera användare</string>
     <string name="block_user_confirm">Är du säker på att du vill blockera %1$s och dölja deras kommentarer?</string>
     <string name="block">Blockera</string>
+    <string name="unblock">Avblockera</string>
+    <string name="unblock_user_title">Avblockera användare</string>
+    <string name="unblock_user_confirm">Är du säker på att du vill avblockera %1$s?</string>
+    <string name="user_unblocked_successfully">Användare avblockerad</string>
+    <string name="error_unblocking_user">Fel vid avblockering av användare. Försök igen.</string>
+    <string name="you_blocked_this_user">Du har blockerat den här användaren.</string>
+    <string name="blocked_user_placeholder">Blockerad användare</string>
     <string name="delete_comment_title">Ta bort kommentar</string>
     <string name="delete_comment_confirm">Är du säker på att du vill ta bort denna kommentar?</string>
     <string name="delete">Ta bort</string>

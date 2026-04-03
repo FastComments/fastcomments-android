@@ -82,6 +82,7 @@
     <string name="delete_comment">コメントを削除</string>
     <string name="flag_comment">コメントを報告</string>
     <string name="block_user">ユーザーをブロック</string>
+    <string name="unblock_user">ユーザーのブロックを解除する</string>
     <string name="menu_button">メニューボタン</string>
     <string name="edit_your_comment">コメントを編集</string>
     <string name="save_changes">変更を保存</string>
@@ -97,6 +98,13 @@
     <string name="block_user_title">ユーザーをブロック</string>
     <string name="block_user_confirm">本当に %1$s をブロックしてそのコメントを非表示にしますか？</string>
     <string name="block">ブロック</string>
+    <string name="unblock">ブロック解除</string>
+    <string name="unblock_user_title">ユーザーのブロックを解除する</string>
+    <string name="unblock_user_confirm">本当に %1$s のブロックを解除しますか？</string>
+    <string name="user_unblocked_successfully">ユーザーのブロックが正常に解除されました</string>
+    <string name="error_unblocking_user">ユーザーのブロック解除中にエラーが発生しました。もう一度お試しください。</string>
+    <string name="you_blocked_this_user">このユーザーをブロックしました。</string>
+    <string name="blocked_user_placeholder">ブロックされたユーザー</string>
     <string name="delete_comment_title">コメントを削除</string>
     <string name="delete_comment_confirm">本当にこのコメントを削除しますか？</string>
     <string name="delete">削除</string>

@@ -12,4 +12,7 @@
     <item
         android:id="@+id/menu_block_user"
         android:title="@string/block_user" />
+    <item
+        android:id="@+id/menu_unblock_user"
+        android:title="@string/unblock_user" />
 </menu>

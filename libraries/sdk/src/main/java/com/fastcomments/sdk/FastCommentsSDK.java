@@ -1559,7 +1559,7 @@ public class FastCommentsSDK {
      * @param commentId The ID of the comment to block the user from
      * @param callback  Callback to receive the response
      */
-    public void blockUserFromComment(String commentId, final FCCallback<BlockSuccess> callback) {
+    public void blockUserFromComment(String commentId, List<String> commentIdsToCheck, final FCCallback<BlockSuccess> callback) {
         if (commentId == null || commentId.isEmpty()) {
             callback.onFailure(new APIError()
                     .status(APIStatus.FAILED)
@@ -1569,8 +1569,9 @@ public class FastCommentsSDK {
         }
 
         try {
-            // Make the API call
-            api.blockFromCommentPublic(config.tenantId, commentId, new PublicBlockFromCommentParams())
+            PublicBlockFromCommentParams params = new PublicBlockFromCommentParams()
+                    .commentIds(commentIdsToCheck != null ? commentIdsToCheck : new ArrayList<>());
+            api.blockFromCommentPublic(config.tenantId, commentId, params)
                     .sso(config.getSSOToken())
                     .executeAsync(new ApiCallback<BlockFromCommentPublic200Response>() {
                         @Override
@@ -1841,7 +1842,7 @@ public class FastCommentsSDK {
      * @param commentId The ID of the comment to unblock the user from
      * @param callback  Callback to receive the response
      */
-    public void unblockUserFromComment(String commentId, final FCCallback<UnblockSuccess> callback) {
+    public void unblockUserFromComment(String commentId, List<String> commentIdsToCheck, final FCCallback<UnblockSuccess> callback) {
         if (commentId == null || commentId.isEmpty()) {
             callback.onFailure(new APIError()
                     .status(APIStatus.FAILED)
@@ -1851,7 +1852,9 @@ public class FastCommentsSDK {
         }
 
         try {
-            api.unBlockCommentPublic(config.tenantId, commentId, new PublicBlockFromCommentParams())
+            PublicBlockFromCommentParams params = new PublicBlockFromCommentParams()
+                    .commentIds(commentIdsToCheck != null ? commentIdsToCheck : new ArrayList<>());
+            api.unBlockCommentPublic(config.tenantId, commentId, params)
                     .sso(config.getSSOToken())
                     .executeAsync(new ApiCallback<UnBlockCommentPublic200Response>() {
                         @Override

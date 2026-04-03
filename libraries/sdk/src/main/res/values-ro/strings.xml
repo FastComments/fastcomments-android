@@ -82,6 +82,7 @@
     <string name="delete_comment">Șterge comentariu</string>
     <string name="flag_comment">Raportează comentariu</string>
     <string name="block_user">Blochează utilizator</string>
+    <string name="unblock_user">Deblochează utilizator</string>
     <string name="menu_button">Buton meniu</string>
     <string name="edit_your_comment">Editează comentariul tău</string>
     <string name="save_changes">Salvează modificările</string>
@@ -97,6 +98,13 @@
     <string name="block_user_title">Blochează utilizator</string>
     <string name="block_user_confirm">Ești sigur că vrei să blochezi pe %1$s și să ascunzi comentariile acestuia?</string>
     <string name="block">Blochează</string>
+    <string name="unblock">Deblochează</string>
+    <string name="unblock_user_title">Deblochează utilizator</string>
+    <string name="unblock_user_confirm">Ești sigur că vrei să deblochezi pe %1$s?</string>
+    <string name="user_unblocked_successfully">Utilizator deblocat cu succes</string>
+    <string name="error_unblocking_user">Eroare la deblocarea utilizatorului. Te rugăm să încerci din nou.</string>
+    <string name="you_blocked_this_user">Ai blocat acest utilizator.</string>
+    <string name="blocked_user_placeholder">Utilizator blocat</string>
     <string name="delete_comment_title">Șterge comentariu</string>
     <string name="delete_comment_confirm">Ești sigur că vrei să ștergi acest comentariu?</string>
     <string name="delete">Șterge</string>

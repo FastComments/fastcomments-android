@@ -541,7 +541,7 @@ public class IntegrationTestBase {
         AtomicReference<APIError> errorRef = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
 
-        sdk.blockUserFromComment(commentId, new FCCallback<BlockSuccess>() {
+        sdk.blockUserFromComment(commentId, new java.util.ArrayList<>(sdk.commentsTree.commentsById.keySet()), new FCCallback<BlockSuccess>() {
             @Override
             public boolean onFailure(APIError error) {
                 errorRef.set(error);
@@ -747,7 +747,7 @@ public class IntegrationTestBase {
         AtomicReference<APIError> errorRef = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
 
-        sdk.unblockUserFromComment(commentId, new FCCallback<UnblockSuccess>() {
+        sdk.unblockUserFromComment(commentId, new java.util.ArrayList<>(sdk.commentsTree.commentsById.keySet()), new FCCallback<UnblockSuccess>() {
             @Override
             public boolean onFailure(APIError error) {
                 errorRef.set(error);

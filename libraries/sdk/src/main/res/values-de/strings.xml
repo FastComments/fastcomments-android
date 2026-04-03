@@ -82,6 +82,7 @@
     <string name="delete_comment">Kommentar löschen</string>
     <string name="flag_comment">Kommentar melden</string>
     <string name="block_user">Benutzer blockieren</string>
+    <string name="unblock_user">Blockierung aufheben</string>
     <string name="menu_button">Menü-Button</string>
     <string name="edit_your_comment">Bearbeite deinen Kommentar</string>
     <string name="save_changes">Änderungen speichern</string>
@@ -97,6 +98,13 @@
     <string name="block_user_title">Benutzer blockieren</string>
     <string name="block_user_confirm">Bist du sicher, dass du %1$s blockieren und deren Kommentare ausblenden möchtest?</string>
     <string name="block">Blockieren</string>
+    <string name="unblock">Blockierung aufheben</string>
+    <string name="unblock_user_title">Blockierung aufheben</string>
+    <string name="unblock_user_confirm">Bist du sicher, dass du die Blockierung von %1$s aufheben möchtest?</string>
+    <string name="user_unblocked_successfully">Blockierung erfolgreich aufgehoben</string>
+    <string name="error_unblocking_user">Fehler beim Aufheben der Blockierung. Bitte versuche es erneut.</string>
+    <string name="you_blocked_this_user">Du hast diesen Benutzer blockiert.</string>
+    <string name="blocked_user_placeholder">Blockierter Benutzer</string>
     <string name="delete_comment_title">Kommentar löschen</string>
     <string name="delete_comment_confirm">Bist du sicher, dass du diesen Kommentar löschen möchtest?</string>
     <string name="delete">Löschen</string>

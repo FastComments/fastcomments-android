@@ -17,6 +17,7 @@ import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.core.VoteStyle;
 import com.fastcomments.model.APIEmptyResponse;
 import com.fastcomments.model.BlockSuccess;
+import com.fastcomments.model.UnblockSuccess;
 import com.fastcomments.model.FComment;
 import com.fastcomments.model.SetCommentTextResult;
 import com.fastcomments.model.PublicComment;
@@ -39,6 +40,7 @@ import com.fastcomments.model.VoteResponse;
 import com.fastcomments.model.VoteDeleteResponse;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -942,8 +944,9 @@ public class LiveChatView extends FrameLayout {
                 builder.setTitle(R.string.block_user_title)
                         .setMessage(getContext().getString(R.string.block_user_confirm, userName))
                         .setPositiveButton(R.string.block, (dialog, which) -> {
-                            // Call API to block the user
-                            sdk.blockUserFromComment(commentId, new FCCallback<BlockSuccess>() {
+                            // Snapshot comment IDs on the main thread before the async call
+                            List<String> commentIds = new ArrayList<>(sdk.commentsTree.commentsById.keySet());
+                            sdk.blockUserFromComment(commentId, commentIds, new FCCallback<BlockSuccess>() {
                                 @Override
                                 public boolean onFailure(APIError error) {
                                     // Show error message
@@ -968,7 +971,6 @@ public class LiveChatView extends FrameLayout {
 
                                 @Override
                                 public boolean onSuccess(BlockSuccess success) {
-                                    // Show success message
                                     getHandler().post(() -> {
                                         android.widget.Toast.makeText(
                                                 getContext(),
@@ -976,8 +978,61 @@ public class LiveChatView extends FrameLayout {
                                                 android.widget.Toast.LENGTH_SHORT
                                         ).show();
 
-                                        // Refresh to remove blocked user's comments
-                                        refresh();
+                                        // Update blocked statuses in-place from the API response
+                                        sdk.commentsTree.updateBlockedStatuses(success.getCommentStatuses());
+                                    });
+                                    return CONSUME;
+                                }
+                            });
+                        })
+                        .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                            dialog.dismiss();
+                        })
+                        .show();
+            }
+
+            @Override
+            public void onUnblock(String commentId, String userName) {
+                // Confirm before unblocking
+                android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+                builder.setTitle(R.string.unblock_user_title)
+                        .setMessage(getContext().getString(R.string.unblock_user_confirm, userName != null ? userName : getContext().getString(R.string.blocked_user_placeholder)))
+                        .setPositiveButton(R.string.unblock, (dialog, which) -> {
+                            // Snapshot comment IDs on the main thread before the async call
+                            List<String> commentIds = new ArrayList<>(sdk.commentsTree.commentsById.keySet());
+                            sdk.unblockUserFromComment(commentId, commentIds, new FCCallback<UnblockSuccess>() {
+                                @Override
+                                public boolean onFailure(APIError error) {
+                                    getHandler().post(() -> {
+                                        String errorMessage;
+                                        if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                                            errorMessage = error.getTranslatedError();
+                                        } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                                            errorMessage = error.getReason();
+                                        } else {
+                                            errorMessage = getContext().getString(R.string.error_unblocking_user);
+                                        }
+
+                                        android.widget.Toast.makeText(
+                                                getContext(),
+                                                errorMessage,
+                                                android.widget.Toast.LENGTH_SHORT
+                                        ).show();
+                                    });
+                                    return CONSUME;
+                                }
+
+                                @Override
+                                public boolean onSuccess(UnblockSuccess success) {
+                                    getHandler().post(() -> {
+                                        android.widget.Toast.makeText(
+                                                getContext(),
+                                                R.string.user_unblocked_successfully,
+                                                android.widget.Toast.LENGTH_SHORT
+                                        ).show();
+
+                                        // Update blocked statuses in-place from the API response
+                                        sdk.commentsTree.updateBlockedStatuses(success.getCommentStatuses());
                                     });
                                     return CONSUME;
                                 }
