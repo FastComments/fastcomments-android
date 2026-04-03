@@ -24,7 +24,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 /**
  * Observer role for feed — runs on Emulator A.
- * Phase 1: UserB creates a post via SDK, UserA relaunches and verifies it appears.
+ * Phase 1: UserB creates a post via SDK, UserA sees the live banner via WebSocket and taps it.
  * Phase 2: UserA creates a post via SDK, UserB confirms receipt.
  */
 @RunWith(AndroidJUnit4.class)

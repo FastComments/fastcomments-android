@@ -26,7 +26,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 /**
  * Actor role for feed — runs on Emulator B.
  * Phase 1: UserB creates a post via SDK, UserA verifies receipt.
- * Phase 2: UserA creates a post, UserB relaunches and verifies it appears.
+ * Phase 2: UserA creates a post, UserB sees the live banner via WebSocket and taps it.
  */
 @RunWith(AndroidJUnit4.class)
 public class FeedUserB_UITests extends UITestBase {
