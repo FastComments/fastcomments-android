@@ -8,6 +8,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.RelativeLayout;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -66,7 +67,10 @@ public class LiveChatView extends FrameLayout {
     private static final long DATE_UPDATE_INTERVAL = 60000; // Update every minute
     private boolean autoScrollToBottom = true;
     private LinearLayoutManager layoutManager;
-    private TextView subscriberCountView;
+    private View liveChatHeader;
+    private View connectionDot;
+    private TextView connectionStatusText;
+    private TextView userCountText;
 
     /**
      * Interface for comment action callbacks
@@ -318,28 +322,55 @@ public class LiveChatView extends FrameLayout {
         // Enable live chat style in the comment tree
         sdk.commentsTree.setLiveChatStyle(true);
 
-        // Add subscriber count header above the recycler view
-        FrameLayout commentsContainer = findViewById(R.id.commentsContainer);
-        if (commentsContainer != null && subscriberCountView == null) {
-            subscriberCountView = new TextView(getContext());
-            float density = getResources().getDisplayMetrics().density;
-            int hPad = (int) (16 * density);
-            int vPad = (int) (8 * density);
-            subscriberCountView.setPadding(hPad, vPad, hPad, vPad);
-            subscriberCountView.setTextSize(12);
-            subscriberCountView.setVisibility(View.GONE);
-            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
-            params.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
-            commentsContainer.addView(subscriberCountView, params);
+        // Add live chat header bar above the comments container
+        if (liveChatHeader == null) {
+            View commentsContainer = findViewById(R.id.commentsContainer);
+            if (commentsContainer != null && commentsContainer.getParent() instanceof RelativeLayout) {
+                liveChatHeader = LayoutInflater.from(getContext()).inflate(R.layout.live_chat_header, null);
+                connectionDot = liveChatHeader.findViewById(R.id.connectionDot);
+                connectionStatusText = liveChatHeader.findViewById(R.id.connectionStatusText);
+                userCountText = liveChatHeader.findViewById(R.id.userCountText);
+
+                RelativeLayout parent = (RelativeLayout) commentsContainer.getParent();
+                RelativeLayout.LayoutParams headerParams = new RelativeLayout.LayoutParams(
+                        RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                headerParams.addRule(RelativeLayout.BELOW, R.id.demoBanner);
+                parent.addView(liveChatHeader, headerParams);
+
+                // Reposition commentsContainer below the header
+                RelativeLayout.LayoutParams containerParams =
+                        (RelativeLayout.LayoutParams) commentsContainer.getLayoutParams();
+                containerParams.addRule(RelativeLayout.BELOW, liveChatHeader.getId());
+                commentsContainer.setLayoutParams(containerParams);
+
+                // Apply theme colors
+                applyHeaderTheme();
+            }
         }
 
         // Listen for subscriber count updates
         sdk.setPresenceUpdateListener(subscriberCount -> {
-            if (subscriberCountView != null) {
-                subscriberCountView.setVisibility(View.VISIBLE);
-                subscriberCountView.setText(getResources().getQuantityString(R.plurals.viewer_count, subscriberCount, subscriberCount));
+            if (userCountText != null) {
+                userCountText.setVisibility(View.VISIBLE);
+                userCountText.setText(getResources().getQuantityString(
+                        R.plurals.live_chat_users_online, subscriberCount, subscriberCount));
             }
+        });
+
+        // Listen for connection status changes
+        sdk.setConnectionStatusListener(isConnected -> {
+            if (connectionDot == null) return;
+            FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
+            int dotColor = isConnected
+                    ? ThemeColorResolver.getLiveChatConnectedDotColor(getContext(), theme)
+                    : ThemeColorResolver.getLiveChatDisconnectedDotColor(getContext(), theme);
+            android.graphics.drawable.GradientDrawable dot = new android.graphics.drawable.GradientDrawable();
+            dot.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            dot.setColor(dotColor);
+            connectionDot.setBackground(dot);
+            connectionStatusText.setText(isConnected
+                    ? R.string.live_chat_live
+                    : R.string.live_chat_connecting);
         });
         
         // Set up infinite scrolling (in reverse) for chat mode
@@ -1161,6 +1192,24 @@ public class LiveChatView extends FrameLayout {
         paginationControls.setVisibility(View.GONE);
     }
 
+    private void applyHeaderTheme() {
+        if (liveChatHeader == null || sdk == null) return;
+        FastCommentsTheme theme = sdk.getTheme();
+        liveChatHeader.setBackgroundColor(
+                ThemeColorResolver.getLiveChatHeaderBackgroundColor(getContext(), theme));
+        connectionStatusText.setTextColor(
+                ThemeColorResolver.getLiveChatHeaderTextColor(getContext(), theme));
+        userCountText.setTextColor(
+                ThemeColorResolver.getLiveChatUserCountTextColor(getContext(), theme));
+
+        // Apply disconnected dot color as initial state
+        int dotColor = ThemeColorResolver.getLiveChatDisconnectedDotColor(getContext(), theme);
+        android.graphics.drawable.GradientDrawable dot = new android.graphics.drawable.GradientDrawable();
+        dot.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        dot.setColor(dotColor);
+        connectionDot.setBackground(dot);
+    }
+
     /**
      * Load more comments (older messages)
      */
@@ -1579,6 +1628,7 @@ public class LiveChatView extends FrameLayout {
         
         if (sdk != null) {
             sdk.setPresenceUpdateListener(null);
+            sdk.setConnectionStatusListener(null);
             sdk.cleanup();
             sdk = null;
         }

@@ -68,6 +68,11 @@ public class LiveChatUserA_UITests extends UITestBase {
         Log.d(TAG, "Activity launched, waiting for chat to load...");
         Thread.sleep(5000);
 
+        // Verify header shows connected state: red dot + "Live"
+        onView(withId(R.id.connectionStatusText)).check(matches(withText(R.string.live_chat_live)));
+        onView(withId(R.id.liveChatHeader)).check(matches(isDisplayed()));
+        Log.d(TAG, "Header shows Live status");
+
         // --- Phase 1: UserB sends, UserA receives ---
         Log.d(TAG, "=== Phase 1: Receive message from UserB ===");
         sync.signalReady("phase1");
@@ -89,6 +94,19 @@ public class LiveChatUserA_UITests extends UITestBase {
         }
         Log.d(TAG, "Phase 1 result: " + found);
         assertTrue("UserB's message should appear in UserA's chat", found);
+
+        // Verify user count is displayed now that both users are connected
+        boolean userCountVisible = false;
+        deadline = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                onView(withId(R.id.userCountText)).check(matches(isDisplayed()));
+                userCountVisible = true;
+                break;
+            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+        }
+        Log.d(TAG, "User count visible: " + userCountVisible);
+        assertTrue("User count should be visible in header", userCountVisible);
 
         // --- Phase 2: UserA sends, UserB receives ---
         Log.d(TAG, "=== Phase 2: Send message to UserB ===");

@@ -99,4 +99,29 @@ public class ThemeColorResolver {
     public static int getDialogHeaderTextColor(@NonNull Context context, @Nullable FastCommentsTheme theme) {
         return getColor(context, theme, FastCommentsTheme::getDialogHeaderTextColor, R.color.fastcomments_dialog_header_text_color);
     }
+
+    @ColorInt
+    public static int getLiveChatHeaderBackgroundColor(@NonNull Context context, @Nullable FastCommentsTheme theme) {
+        return getColor(context, theme, FastCommentsTheme::getLiveChatHeaderBackgroundColor, R.color.fastcomments_live_chat_header_background);
+    }
+
+    @ColorInt
+    public static int getLiveChatHeaderTextColor(@NonNull Context context, @Nullable FastCommentsTheme theme) {
+        return getColor(context, theme, FastCommentsTheme::getLiveChatHeaderTextColor, R.color.fastcomments_live_chat_header_text);
+    }
+
+    @ColorInt
+    public static int getLiveChatConnectedDotColor(@NonNull Context context, @Nullable FastCommentsTheme theme) {
+        return getColor(context, theme, FastCommentsTheme::getLiveChatConnectedDotColor, R.color.fastcomments_live_chat_connected_dot);
+    }
+
+    @ColorInt
+    public static int getLiveChatDisconnectedDotColor(@NonNull Context context, @Nullable FastCommentsTheme theme) {
+        return getColor(context, theme, FastCommentsTheme::getLiveChatDisconnectedDotColor, R.color.fastcomments_live_chat_disconnected_dot);
+    }
+
+    @ColorInt
+    public static int getLiveChatUserCountTextColor(@NonNull Context context, @Nullable FastCommentsTheme theme) {
+        return getColor(context, theme, FastCommentsTheme::getLiveChatUserCountTextColor, R.color.fastcomments_live_chat_user_count_text);
+    }
 }

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/liveChatHeader"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="10dp">
+
+    <!-- Connection status: red/grey dot + "Live" / "Connecting..." -->
+    <View
+        android:id="@+id/connectionDot"
+        android:layout_width="8dp"
+        android:layout_height="8dp" />
+
+    <TextView
+        android:id="@+id/connectionStatusText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:text="@string/live_chat_connecting"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <!-- User count: "2 Users Online" -->
+    <TextView
+        android:id="@+id/userCountText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+</LinearLayout>

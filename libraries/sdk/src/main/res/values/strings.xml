@@ -176,9 +176,11 @@
     <string name="add_emoji">Add Emoji</string>
     <string name="mention_user">Mention User</string>
 
-    <!-- Viewer count -->
-    <plurals name="viewer_count">
-        <item quantity="one">%d viewer</item>
-        <item quantity="other">%d viewers</item>
+    <!-- Live chat header -->
+    <string name="live_chat_live">Live</string>
+    <string name="live_chat_connecting">Connecting\u2026</string>
+    <plurals name="live_chat_users_online">
+        <item quantity="one">%d User Online</item>
+        <item quantity="other">%d Users Online</item>
     </plurals>
 </resources>

@@ -60,9 +60,14 @@ public class FastCommentsSDK {
     private Integer presencePollState;
     private Runnable presencePollingRunnable;
     private PresenceUpdateListener presenceUpdateListener;
+    private ConnectionStatusListener connectionStatusListener;
 
     public interface PresenceUpdateListener {
         void onSubscriberCountChanged(int subscriberCount);
+    }
+
+    public interface ConnectionStatusListener {
+        void onConnectionStatusChanged(boolean isConnected);
     }
 
     public FastCommentsSDK(@NonNull CommentWidgetConfig config) {
@@ -806,6 +811,9 @@ public class FastCommentsSDK {
      */
     private void handleConnectionStatusChange(boolean isConnected, Long lastEventTime) {
         Log.d("FastCommentsSDK", "connectionStatusChange: connected=" + isConnected + " lastEventTime=" + lastEventTime);
+        if (connectionStatusListener != null) {
+            mainHandler.post(() -> connectionStatusListener.onConnectionStatusChanged(isConnected));
+        }
         if (isConnected) {
             if (lastEventTime != null) {
                 commentsTree.resetPresence();
@@ -1190,6 +1198,10 @@ public class FastCommentsSDK {
      */
     public void setPresenceUpdateListener(PresenceUpdateListener listener) {
         this.presenceUpdateListener = listener;
+    }
+
+    public void setConnectionStatusListener(ConnectionStatusListener listener) {
+        this.connectionStatusListener = listener;
     }
 
     private void handlePresenceChange(LiveEvent eventData) {

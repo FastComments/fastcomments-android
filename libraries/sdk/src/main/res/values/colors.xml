@@ -25,4 +25,11 @@
     <!-- Dialog header colors -->
     <color name="fastcomments_dialog_header_background">#333333</color>
     <color name="fastcomments_dialog_header_text_color">@color/white</color>
+
+    <!-- Live chat header colors -->
+    <color name="fastcomments_live_chat_header_background">#F8F8F8</color>
+    <color name="fastcomments_live_chat_header_text">#FF000000</color>
+    <color name="fastcomments_live_chat_connected_dot">#FF0000</color>
+    <color name="fastcomments_live_chat_disconnected_dot">#BBBBBB</color>
+    <color name="fastcomments_live_chat_user_count_text">#888888</color>
 </resources>

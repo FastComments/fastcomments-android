@@ -35,6 +35,13 @@ public class FastCommentsTheme {
     
     // Other UI colors
     @Nullable private Integer onlineIndicatorColor;
+
+    // Live chat header colors
+    @Nullable private Integer liveChatHeaderBackgroundColor;
+    @Nullable private Integer liveChatHeaderTextColor;
+    @Nullable private Integer liveChatConnectedDotColor;
+    @Nullable private Integer liveChatDisconnectedDotColor;
+    @Nullable private Integer liveChatUserCountTextColor;
     
     /**
      * Builder pattern for easy theme construction
@@ -116,6 +123,31 @@ public class FastCommentsTheme {
             theme.onlineIndicatorColor = color;
             return this;
         }
+
+        public Builder setLiveChatHeaderBackgroundColor(@ColorInt int color) {
+            theme.liveChatHeaderBackgroundColor = color;
+            return this;
+        }
+
+        public Builder setLiveChatHeaderTextColor(@ColorInt int color) {
+            theme.liveChatHeaderTextColor = color;
+            return this;
+        }
+
+        public Builder setLiveChatConnectedDotColor(@ColorInt int color) {
+            theme.liveChatConnectedDotColor = color;
+            return this;
+        }
+
+        public Builder setLiveChatDisconnectedDotColor(@ColorInt int color) {
+            theme.liveChatDisconnectedDotColor = color;
+            return this;
+        }
+
+        public Builder setLiveChatUserCountTextColor(@ColorInt int color) {
+            theme.liveChatUserCountTextColor = color;
+            return this;
+        }
         
         /**
          * Convenience method to set all primary-derived colors at once
@@ -150,4 +182,9 @@ public class FastCommentsTheme {
     @Nullable public Integer getDialogHeaderBackgroundColor() { return dialogHeaderBackgroundColor; }
     @Nullable public Integer getDialogHeaderTextColor() { return dialogHeaderTextColor; }
     @Nullable public Integer getOnlineIndicatorColor() { return onlineIndicatorColor; }
+    @Nullable public Integer getLiveChatHeaderBackgroundColor() { return liveChatHeaderBackgroundColor; }
+    @Nullable public Integer getLiveChatHeaderTextColor() { return liveChatHeaderTextColor; }
+    @Nullable public Integer getLiveChatConnectedDotColor() { return liveChatConnectedDotColor; }
+    @Nullable public Integer getLiveChatDisconnectedDotColor() { return liveChatDisconnectedDotColor; }
+    @Nullable public Integer getLiveChatUserCountTextColor() { return liveChatUserCountTextColor; }
 }
