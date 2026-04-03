@@ -21,10 +21,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Single-emulator tests for moderation features (pin, lock, flag).
+ * Single-emulator tests for comment actions: pin/lock icon rendering,
+ * flag, block, and unblock.
  */
 @RunWith(AndroidJUnit4.class)
-public class ModerationUITests extends UITestBase {
+public class CommentActionsUITests extends UITestBase {
 
     private String urlId;
     private String ssoToken;
@@ -33,7 +34,7 @@ public class ModerationUITests extends UITestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        createTestTenant("android-moderation@fctest.com");
+        createTestTenant("android-comment-actions@fctest.com");
         ssoToken = makeSecureSSOToken("mod-user");
     }
 

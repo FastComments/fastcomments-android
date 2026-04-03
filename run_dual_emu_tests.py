@@ -284,7 +284,7 @@ def stream_output(proc, prefix, failure_flag):
 SINGLE_EMU_TEST_CLASSES = [
     "CommentCRUDUITests",
     "VoteUITests",
-    "ModerationUITests",
+    "CommentActionsUITests",
     "PaginationUITests",
     "ThreadingUITests",
     "LiveChatPaginationUITests",
