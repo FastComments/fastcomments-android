@@ -76,7 +76,16 @@ public class FastCommentsFeedSDK {
     public String blockingErrorMessage = null;
     public Set<String> broadcastIdsSent;
     public int newPostsCount = 0;
+    private NewPostsAvailableListener newPostsAvailableListener;
     private Map<String, Map<String, Boolean>> myReacts = new HashMap<>(); // Map of postId to reaction types
+
+    public interface NewPostsAvailableListener {
+        void onNewPostsAvailable(int count);
+    }
+
+    public void setNewPostsAvailableListener(NewPostsAvailableListener listener) {
+        this.newPostsAvailableListener = listener;
+    }
 
     private com.fastcomments.pubsub.SubscribeToChangesResult liveEventSubscription;
     private final com.fastcomments.pubsub.LiveEventSubscriber liveEventSubscriber;
@@ -1133,8 +1142,10 @@ public class FastCommentsFeedSDK {
             return;
         }
 
-        // Increment new posts count
         newPostsCount++;
+        if (newPostsAvailableListener != null) {
+            newPostsAvailableListener.onNewPostsAvailable(newPostsCount);
+        }
     }
 
     /**
@@ -1297,7 +1308,6 @@ public class FastCommentsFeedSDK {
      */
     public void loadNewPosts(FCCallback<PublicFeedPostsResponse> callback) {
         if (newPostsCount <= 0) {
-            // No new posts to load
             callback.onSuccess(null);
             return;
         }
@@ -1312,7 +1322,6 @@ public class FastCommentsFeedSDK {
         loadFeedPosts(new FCCallback<PublicFeedPostsResponse>() {
             @Override
             public boolean onFailure(APIError error) {
-                // Restore original last post ID
                 lastPostId = originalLastPostId;
                 callback.onFailure(error);
                 return CONSUME;
@@ -1320,7 +1329,6 @@ public class FastCommentsFeedSDK {
 
             @Override
             public boolean onSuccess(PublicFeedPostsResponse response) {
-                // The new posts are now loaded in feedPosts
                 callback.onSuccess(response);
                 return CONSUME;
             }

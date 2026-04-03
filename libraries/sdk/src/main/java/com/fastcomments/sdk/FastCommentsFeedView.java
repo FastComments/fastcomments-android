@@ -65,6 +65,7 @@ public class FastCommentsFeedView extends FrameLayout {
     private ProgressBar loadMoreProgressBar;
     private TextView emptyStateView;
     private TextView errorStateView;
+    private TextView newPostsBanner;
     
     private FeedPostsAdapter adapter;
     private FastCommentsFeedSDK sdk;
@@ -138,6 +139,7 @@ public class FastCommentsFeedView extends FrameLayout {
         loadMoreProgressBar = findViewById(R.id.loadMoreProgressBar);
         emptyStateView = findViewById(R.id.emptyStateView);
         errorStateView = findViewById(R.id.errorStateView);
+        newPostsBanner = findViewById(R.id.newPostsBanner);
         
         // Initialize demo banner
         setupDemoBanner();
@@ -299,28 +301,56 @@ public class FastCommentsFeedView extends FrameLayout {
         // Clean up existing SDK if any
         if (this.sdk != null) {
             this.sdk.setOnPostDeletedListener(null);
+            this.sdk.setNewPostsAvailableListener(null);
         }
-        
+
         this.sdk = sdk;
         if (adapter == null) {
             initAdapter(getContext());
         }
-        
-        // Register for post deletion events from live WebSocket
+
         if (sdk != null) {
+            // Show "Show X New Posts" banner when new posts arrive via WebSocket
+            sdk.setNewPostsAvailableListener(count -> {
+                if (newPostsBanner != null) {
+                    newPostsBanner.setText(getResources().getQuantityString(
+                            R.plurals.show_new_posts, count, count));
+                    newPostsBanner.setVisibility(View.VISIBLE);
+                }
+            });
+
+            newPostsBanner.setOnClickListener(v -> {
+                newPostsBanner.setVisibility(View.GONE);
+                sdk.loadNewPosts(new FCCallback<PublicFeedPostsResponse>() {
+                    @Override
+                    public boolean onFailure(APIError error) {
+                        return CONSUME;
+                    }
+
+                    @Override
+                    public boolean onSuccess(PublicFeedPostsResponse response) {
+                        handler.post(() -> {
+                            if (sdk != null && adapter != null) {
+                                List<FeedPost> posts = sdk.getFeedPosts();
+                                adapter.updatePosts(posts, true);
+                                showEmptyState(posts.isEmpty());
+                            }
+                        });
+                        return CONSUME;
+                    }
+                });
+            });
+
+            // Register for post deletion events from live WebSocket
             sdk.setOnPostDeletedListener(postId -> {
                 if (handler != null && adapter != null) {
                     handler.post(() -> {
-                        // Update adapter with the current list from SDK
-                        // This ensures the adapter's list is in sync with the SDK after a post is deleted
                         if (sdk != null && adapter != null) {
                             List<FeedPost> posts = sdk.getFeedPosts();
                             if (posts != null) {
                                 adapter.updatePosts(posts);
                             }
                         }
-                        
-                        // Log for debugging
                         Log.d("FastCommentsFeedView", "Received post deletion event for post ID: " + postId);
                     });
                 }

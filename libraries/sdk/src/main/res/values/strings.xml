@@ -176,6 +176,12 @@
     <string name="add_emoji">Add Emoji</string>
     <string name="mention_user">Mention User</string>
 
+    <!-- Feed -->
+    <plurals name="show_new_posts">
+        <item quantity="one">Show %d New Post</item>
+        <item quantity="other">Show %d New Posts</item>
+    </plurals>
+
     <!-- Live chat header -->
     <string name="live_chat_live">Live</string>
     <string name="live_chat_connecting">Connecting\u2026</string>
