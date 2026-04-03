@@ -319,6 +319,19 @@ public class LiveChatView extends FrameLayout {
         adapter = new CommentsAdapter(getContext(), sdk);
         recyclerView.setAdapter(adapter);
 
+        // When items are added (live message or own post), clear the empty state
+        adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                if (adapter.getItemCount() > 0) {
+                    setIsEmpty(false);
+                    if (autoScrollToBottom) {
+                        scrollToBottom();
+                    }
+                }
+            }
+        });
+
         // Enable live chat style in the comment tree
         sdk.commentsTree.setLiveChatStyle(true);
 
