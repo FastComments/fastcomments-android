@@ -59,13 +59,16 @@ public class LiveChatUserA_UITests extends UITestBase {
     @Test
     public void testLiveChat_UserA() throws Exception {
         launchLiveChatActivity(urlId, ssoTokenA);
-        Log.d(TAG, "Activity launched, waiting for chat to load...");
-        Thread.sleep(5000);
+        Log.d(TAG, "Activity launched, waiting for connection...");
 
-        // Verify header shows connected state: red dot + "Live"
-        onView(withId(R.id.connectionStatusText)).check(matches(withText(R.string.live_chat_live)));
-        onView(withId(R.id.liveChatHeader)).check(matches(isDisplayed()));
-        Log.d(TAG, "Header shows Live status");
+        // Wait for the header to show "Live" (means WS connected and SDK loaded)
+        pollUntil(15000, () -> {
+            try {
+                onView(withId(R.id.connectionStatusText)).check(matches(withText(R.string.live_chat_live)));
+                return true;
+            } catch (Exception | AssertionError e) { return false; }
+        });
+        Log.d(TAG, "Connected");
 
         // --- Phase 1: UserB sends, UserA receives ---
         Log.d(TAG, "=== Phase 1: Receive message from UserB ===");

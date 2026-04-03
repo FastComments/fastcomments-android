@@ -65,7 +65,12 @@ public class LiveChatUserB_UITests extends UITestBase {
         sync.waitFor("userA", "phase1");
 
         launchLiveChatActivity(urlId, ssoTokenB);
-        Thread.sleep(5000);
+        pollUntil(15000, () -> {
+            try {
+                onView(withId(R.id.connectionStatusText)).check(matches(withText(R.string.live_chat_live)));
+                return true;
+            } catch (Exception | AssertionError e) { return false; }
+        });
 
         String messageText = "Chat from B " + System.currentTimeMillis();
         onView(withId(R.id.commentInput))
