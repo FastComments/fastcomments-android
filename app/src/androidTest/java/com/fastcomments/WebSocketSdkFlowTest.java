@@ -34,7 +34,7 @@ public class WebSocketSdkFlowTest extends UITestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        createTestTenant();
+        createTestTenant("android-ws-flow@fctest.com");
     }
 
     @Test

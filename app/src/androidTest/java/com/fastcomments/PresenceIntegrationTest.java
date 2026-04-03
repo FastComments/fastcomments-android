@@ -42,7 +42,7 @@ public class PresenceIntegrationTest extends UITestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        createTestTenant();
+        createTestTenant("android-presence@fctest.com");
     }
 
     @Test

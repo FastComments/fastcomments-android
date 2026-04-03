@@ -40,7 +40,7 @@ public class LiveEventUserA_UITests extends UITestBase {
         super.setUp();
 
         // UserA creates the test tenant
-        createTestTenant();
+        createTestTenant("android-live-events@fctest.com");
 
         urlId = "live-" + System.currentTimeMillis();
         ssoTokenA = makeSecureSSOToken("userA-live");

@@ -39,7 +39,7 @@ public class CommentCRUDUITests extends UITestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        createTestTenant();
+        createTestTenant("android-comment-crud@fctest.com");
         ssoToken = makeSecureSSOToken("crud-user");
     }
 

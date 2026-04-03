@@ -33,7 +33,7 @@ public class VoteUITests extends UITestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        createTestTenant();
+        createTestTenant("android-vote@fctest.com");
         ssoToken = makeSecureSSOToken("vote-user");
     }
 

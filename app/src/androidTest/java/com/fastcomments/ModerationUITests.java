@@ -33,7 +33,7 @@ public class ModerationUITests extends UITestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        createTestTenant();
+        createTestTenant("android-moderation@fctest.com");
         ssoToken = makeSecureSSOToken("mod-user");
     }
 

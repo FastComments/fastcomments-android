@@ -30,7 +30,7 @@ public class WebSocketFromCallbackTest extends UITestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        createTestTenant();
+        createTestTenant("android-ws-callback@fctest.com");
     }
 
     @Test

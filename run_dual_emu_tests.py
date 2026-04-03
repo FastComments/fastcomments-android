@@ -216,6 +216,13 @@ def build_apks():
     print("[build] APKs built successfully")
 
 
+def disable_animations(serial):
+    """Disable animations on an emulator so Espresso doesn't block on ProgressBar spinners."""
+    for setting in ["window_animation_scale", "transition_animation_scale", "animator_duration_scale"]:
+        subprocess.run(["adb", "-s", serial, "shell", "settings", "put", "global", setting, "0"],
+                       capture_output=True, timeout=10)
+
+
 def install_apks(serial):
     """Install app and test APKs on an emulator."""
     app_apk = "app/build/outputs/apk/debug/app-debug.apk"
@@ -276,6 +283,7 @@ SINGLE_EMU_TEST_CLASSES = [
     "ModerationUITests",
     "PaginationUITests",
     "ThreadingUITests",
+    "LiveChatPaginationUITests",
 ]
 
 
@@ -325,11 +333,56 @@ def run_single_emu_tests(e2e_key, test_classes=None):
     sys.exit(0 if passed else 1)
 
 
+DUAL_SUITES = {
+    "live-events": ("LiveEventUserA_UITests", "LiveEventUserB_UITests"),
+    "live-chat":   ("LiveChatUserA_UITests",  "LiveChatUserB_UITests"),
+    "feed":        ("FeedUserA_UITests",       "FeedUserB_UITests"),
+}
+
+
+def run_dual_suite(emu_a, emu_b, suite_name, class_a, class_b, e2e_key, sync):
+    """Run a single dual-emulator test suite. Returns True if passed."""
+    print(f"\n{'='*60}")
+    print(f"SUITE: {suite_name}")
+    print(f"{'='*60}")
+
+    # Reset sync state between suites
+    with sync.lock:
+        sync.ready.clear()
+        sync.data.clear()
+        sync.waiters.clear()
+
+    proc_a = run_tests(emu_a, "userA", class_a, e2e_key)
+    proc_b = run_tests(emu_b, "userB", class_b, e2e_key)
+
+    fail_a = [False]
+    fail_b = [False]
+    thread_a = threading.Thread(target=stream_output, args=(proc_a, "UserA", fail_a), daemon=True)
+    thread_b = threading.Thread(target=stream_output, args=(proc_b, "UserB", fail_b), daemon=True)
+    thread_a.start()
+    thread_b.start()
+
+    rc_a = proc_a.wait()
+    rc_b = proc_b.wait()
+    thread_a.join(timeout=5)
+    thread_b.join(timeout=5)
+
+    passed = not fail_a[0] and not fail_b[0] and rc_a == 0 and rc_b == 0
+
+    print(f"\n[{suite_name}] User A: exit={rc_a} failed={fail_a[0]}")
+    print(f"[{suite_name}] User B: exit={rc_b} failed={fail_b[0]}")
+    print(f"[{suite_name}] {'PASSED' if passed else 'FAILED'}")
+    return passed
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run FastComments Android tests")
     parser.add_argument("--e2e-key", default="T0ph B3st", help="E2E API key")
     parser.add_argument("--single", nargs="*", metavar="CLASS",
                         help="Run single-emulator tests (optionally specify test class names)")
+    parser.add_argument("--suite", default="live-events",
+                        choices=list(DUAL_SUITES.keys()) + ["all"],
+                        help="Which dual-emulator test suite to run (default: live-events)")
     args = parser.parse_args()
 
     # Single-emulator mode
@@ -339,62 +392,49 @@ def main():
         return
 
     # Dual-emulator mode
-    # Start emulators if needed (with visible windows)
     emulators = start_emulators()
 
     emu_a, emu_b = emulators[0], emulators[1]
     print(f"[main] Emulator A: {emu_a}")
     print(f"[main] Emulator B: {emu_b}")
 
-    # Build
     build_apks()
 
-    # Install on both emulators in parallel
+    # Disable animations and install APKs on both emulators in parallel
     install_threads = []
     for serial in [emu_a, emu_b]:
+        disable_animations(serial)
         t = threading.Thread(target=install_apks, args=(serial,))
         t.start()
         install_threads.append(t)
     for t in install_threads:
         t.join()
 
-    # Start sync server
     sync = SyncServer(SYNC_PORT)
     sync.start()
 
     try:
-        # Run UserA and UserB tests in parallel
-        proc_a = run_tests(emu_a, "userA", "LiveEventUserA_UITests", args.e2e_key)
-        proc_b = run_tests(emu_b, "userB", "LiveEventUserB_UITests", args.e2e_key)
+        if args.suite == "all":
+            suites_to_run = list(DUAL_SUITES.keys())
+        else:
+            suites_to_run = [args.suite]
 
-        # Stream output from both, tracking failures
-        fail_a = [False]
-        fail_b = [False]
-        thread_a = threading.Thread(target=stream_output, args=(proc_a, "UserA", fail_a), daemon=True)
-        thread_b = threading.Thread(target=stream_output, args=(proc_b, "UserB", fail_b), daemon=True)
-        thread_a.start()
-        thread_b.start()
+        results = {}
+        for suite_name in suites_to_run:
+            class_a, class_b = DUAL_SUITES[suite_name]
+            results[suite_name] = run_dual_suite(
+                emu_a, emu_b, suite_name, class_a, class_b, args.e2e_key, sync
+            )
 
-        # Wait for both to finish
-        rc_a = proc_a.wait()
-        rc_b = proc_b.wait()
-
-        thread_a.join(timeout=5)
-        thread_b.join(timeout=5)
-
-        # am instrument often returns 0 even on failure — check output too
-        passed = not fail_a[0] and not fail_b[0] and rc_a == 0 and rc_b == 0
+        all_passed = all(results.values())
 
         print(f"\n{'='*60}")
-        print(f"User A: exit={rc_a} failed={fail_a[0]}")
-        print(f"User B: exit={rc_b} failed={fail_b[0]}")
-        if passed:
-            print("ALL DUAL-EMULATOR TESTS PASSED")
-        else:
-            print("SOME TESTS FAILED")
+        for name, passed in results.items():
+            print(f"  {name}: {'PASSED' if passed else 'FAILED'}")
         print(f"{'='*60}")
+        print("ALL SUITES PASSED" if all_passed else "SOME SUITES FAILED")
 
-        sys.exit(0 if passed else 1)
+        sys.exit(0 if all_passed else 1)
 
     finally:
         sync.stop()

@@ -37,7 +37,7 @@ public class ThreadingUITests extends UITestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        createTestTenant();
+        createTestTenant("android-threading@fctest.com");
         ssoToken = makeSecureSSOToken("threading-user");
     }
 

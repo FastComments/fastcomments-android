@@ -8,6 +8,10 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.fastcomments.core.sso.FastCommentsSSO;
 import com.fastcomments.core.sso.SecureSSOUserData;
+import com.fastcomments.model.APIError;
+import com.fastcomments.model.CreateFeedPostParams;
+import com.fastcomments.model.FeedPost;
+import com.fastcomments.sdk.FCCallback;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -18,6 +22,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,6 +40,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -52,6 +60,8 @@ public class UITestBase {
     protected String testTenantApiKey;
     protected SyncClient sync;
     protected ActivityScenario<TestActivity> scenario;
+    protected ActivityScenario<TestLiveChatActivity> liveChatScenario;
+    protected ActivityScenario<TestFeedActivity> feedScenario;
 
     private String e2eApiKey;
     private OkHttpClient httpClient;
@@ -89,17 +99,20 @@ public class UITestBase {
                 .build();
     }
 
-    /** Called by UserA's setUp to create a fresh test tenant. */
-    protected void createTestTenant() throws Exception {
-        String suffix = UUID.randomUUID().toString().substring(0, 8);
-        testTenantEmail = "android-uitest-" + suffix + "@fctest.com";
+    /** Called by UserA's setUp to create a fresh test tenant with a fixed email. */
+    protected void createTestTenant(String email) throws Exception {
+        testTenantEmail = email;
+
+        // Delete any leftover tenant from a previous run
+        deleteTenantByEmail(email);
 
         // 1. Sign up tenant
+        String name = email.split("@")[0];
         RequestBody signupBody = new FormBody.Builder()
-                .add("username", "android-uitest-" + suffix)
-                .add("email", testTenantEmail)
-                .add("companyName", "Android UITest " + suffix)
-                .add("domains", "uitest-" + suffix + ".example.com")
+                .add("username", name)
+                .add("email", email)
+                .add("companyName", name)
+                .add("domains", name + ".example.com")
                 .add("packageId", "adv")
                 .add("noTracking", "true")
                 .build();
@@ -152,6 +165,12 @@ public class UITestBase {
         if (scenario != null) {
             scenario.close();
         }
+        if (liveChatScenario != null) {
+            liveChatScenario.close();
+        }
+        if (feedScenario != null) {
+            feedScenario.close();
+        }
 
         if (testTenantEmail != null && e2eApiKey != null && !e2eApiKey.isEmpty()) {
             try {
@@ -165,6 +184,20 @@ public class UITestBase {
                 }
             } catch (Exception ignored) {}
         }
+    }
+
+    /** Best-effort delete of a test tenant by email via the e2e API. */
+    private void deleteTenantByEmail(String email) {
+        if (e2eApiKey == null || e2eApiKey.isEmpty()) return;
+        try {
+            Request request = new Request.Builder()
+                    .url(HOST + "/test-e2e/api/tenant/by-email/" + email + "?API_KEY=" + e2eApiKey)
+                    .delete()
+                    .build();
+            try (Response ignored = httpClient.newCall(request).execute()) {
+                // Best effort — tenant may not exist yet
+            }
+        } catch (Exception ignored) {}
     }
 
     // ---- SSO ----
@@ -206,6 +239,80 @@ public class UITestBase {
         intent.putExtra("urlId", urlId);
         intent.putExtra("sso", ssoToken);
         scenario = ActivityScenario.launch(intent);
+    }
+
+    protected void launchLiveChatActivity(String urlId, String ssoToken) {
+        if (liveChatScenario != null) {
+            liveChatScenario.close();
+        }
+        Intent intent = new Intent(
+                InstrumentationRegistry.getInstrumentation().getTargetContext(),
+                TestLiveChatActivity.class
+        );
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra("tenantId", testTenantId);
+        intent.putExtra("urlId", urlId);
+        intent.putExtra("sso", ssoToken);
+        liveChatScenario = ActivityScenario.launch(intent);
+    }
+
+    protected void launchFeedActivity(String urlId, String ssoToken) {
+        if (feedScenario != null) {
+            feedScenario.close();
+        }
+        Intent intent = new Intent(
+                InstrumentationRegistry.getInstrumentation().getTargetContext(),
+                TestFeedActivity.class
+        );
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra("tenantId", testTenantId);
+        intent.putExtra("urlId", urlId);
+        intent.putExtra("sso", ssoToken);
+        feedScenario = ActivityScenario.launch(intent);
+    }
+
+    // ---- Feed Operations ----
+
+    /**
+     * Create a feed post via the typed SDK. Blocks until complete.
+     * Must be called after launchFeedActivity().
+     */
+    protected FeedPost createFeedPostViaSDK(String title, String contentHTML) {
+        AtomicReference<FeedPost> resultRef = new AtomicReference<>();
+        AtomicReference<APIError> errorRef = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        feedScenario.onActivity(activity -> {
+            CreateFeedPostParams params = new CreateFeedPostParams();
+            params.setTitle(title);
+            params.setContentHTML(contentHTML);
+
+            activity.feedSDK.createPost(params, new FCCallback<FeedPost>() {
+                @Override
+                public boolean onFailure(APIError error) {
+                    errorRef.set(error);
+                    latch.countDown();
+                    return FCCallback.CONSUME;
+                }
+
+                @Override
+                public boolean onSuccess(FeedPost feedPost) {
+                    resultRef.set(feedPost);
+                    latch.countDown();
+                    return FCCallback.CONSUME;
+                }
+            });
+        });
+
+        try {
+            assertTrue("createFeedPostViaSDK timed out", latch.await(15, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            throw new RuntimeException("createFeedPostViaSDK interrupted", e);
+        }
+        if (errorRef.get() != null) {
+            fail("createFeedPostViaSDK failed: " + errorRef.get().getReason());
+        }
+        return resultRef.get();
     }
 
     // ---- Comment Operations ----
