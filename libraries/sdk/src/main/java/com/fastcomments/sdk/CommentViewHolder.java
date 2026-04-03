@@ -191,16 +191,22 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             unverifiedLabel.setVisibility(View.GONE);
         }
 
-        // Handle pinned comment icon
-        Boolean isPinned = comment.getComment().getIsPinned();
-        pinIcon.setVisibility(isPinned != null && isPinned ? View.VISIBLE : View.GONE);
+        // Handle pinned comment icon (not present in compact layout)
+        if (pinIcon != null) {
+            Boolean isPinned = comment.getComment().getIsPinned();
+            pinIcon.setVisibility(isPinned != null && isPinned ? View.VISIBLE : View.GONE);
+        }
 
-        // Handle locked comment icon
-        Boolean isLocked = comment.getComment().getIsLocked();
-        lockIcon.setVisibility(isLocked != null && isLocked ? View.VISIBLE : View.GONE);
+        // Handle locked comment icon (not present in compact layout)
+        if (lockIcon != null) {
+            Boolean isLocked = comment.getComment().getIsLocked();
+            lockIcon.setVisibility(isLocked != null && isLocked ? View.VISIBLE : View.GONE);
+        }
 
-        // Handle online status indicator
-        onlineIndicator.setVisibility(comment.isOnline ? View.VISIBLE : View.GONE);
+        // Handle online status indicator (not present in compact layout)
+        if (onlineIndicator != null) {
+            onlineIndicator.setVisibility(comment.isOnline ? View.VISIBLE : View.GONE);
+        }
         
         // Handle badges if present
         updateBadges(comment.getComment().getBadges());

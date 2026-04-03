@@ -301,6 +301,7 @@ public class LiveChatView extends FrameLayout {
         
         this.sdk = sdk;
         if (sdk != null) {
+            setupLiveChatConfig(sdk.getConfig());
             initializeWithSDK();
             setupDemoBanner();
         }
@@ -1156,30 +1157,8 @@ public class LiveChatView extends FrameLayout {
      * Update the pagination controls based on current state
      */
     private void updatePaginationControls() {
-        // For chat view, we want pagination to load older messages,
-        // so we keep the controls visible if there are more to load
-        if (sdk.hasMore) {
-            paginationControls.setVisibility(View.VISIBLE);
-
-            // Update "Next" button text for loading older messages
-            int countToShow = sdk.getCountRemainingToShow();
-            if (countToShow > 0) {
-                btnNextComments.setText(getContext().getString(R.string.load_older_messages, countToShow));
-                btnNextComments.setVisibility(View.VISIBLE);
-            } else {
-                btnNextComments.setVisibility(View.GONE);
-            }
-
-            // Show/hide "Load All" button based on total comment count
-            if (sdk.shouldShowLoadAll()) {
-                btnLoadAll.setVisibility(View.VISIBLE);
-                btnLoadAll.setText(getContext().getString(R.string.load_all_messages, sdk.commentCountOnServer));
-            } else {
-                btnLoadAll.setVisibility(View.GONE);
-            }
-        } else {
-            paginationControls.setVisibility(View.GONE);
-        }
+        // Live chat uses infinite scroll — never show pagination buttons
+        paginationControls.setVisibility(View.GONE);
     }
 
     /**
