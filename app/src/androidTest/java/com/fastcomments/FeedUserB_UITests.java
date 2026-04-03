@@ -1,18 +1,18 @@
 package com.fastcomments;
 
 import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
+import static androidx.test.espresso.action.ViewActions.typeText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.util.Log;
-
-import com.fastcomments.model.FeedPost;
 import com.fastcomments.sdk.R;
 
 import org.json.JSONObject;
@@ -79,15 +79,17 @@ public class FeedUserB_UITests extends UITestBase {
         });
 
         String postText = "Feed post from B " + System.currentTimeMillis();
-        FeedPost created = createFeedPostViaSDK("Test Post", postText);
-        assertNotNull("Feed post should be created", created);
-        Log.d(TAG, "Created post: " + created.getId());
+        onView(withId(R.id.postContentEditText))
+                .perform(click(), typeText(postText), closeSoftKeyboard());
+        onView(withId(R.id.submitPostButton)).perform(click());
+        Log.d(TAG, "Submitted post via UI");
 
         JSONObject phase1Data = new JSONObject();
         phase1Data.put("text", postText);
         sync.postData("phase1", phase1Data);
         sync.signalReady("phase1");
         Log.d(TAG, "Phase 1 complete");
+        delay();
 
         // --- Phase 2: UserB sees UserA's post ---
         Log.d(TAG, "=== Phase 2: See UserA's post ===");
@@ -95,13 +97,29 @@ public class FeedUserB_UITests extends UITestBase {
 
         JSONObject phase2Data = sync.getData("phase2");
         String userAPostText = phase2Data.getString("text");
-        Log.d(TAG, "Looking for post containing: " + userAPostText);
+        Log.d(TAG, "Looking for new posts banner...");
 
-        // Relaunch to load fresh data including UserA's post
-        launchFeedActivity(urlId, ssoTokenB);
-
-        boolean found = false;
+        // Wait for the "Show X New Posts" banner to appear via live WebSocket event
+        boolean bannerVisible = false;
         long deadline = System.currentTimeMillis() + 15000;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                onView(withId(R.id.newPostsBanner)).check(matches(isDisplayed()));
+                bannerVisible = true;
+                break;
+            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+        }
+        Log.d(TAG, "Banner visible: " + bannerVisible);
+        assertTrue("New posts banner should appear when UserA posts", bannerVisible);
+
+        // Tap the banner to load the new post
+        delay();
+        onView(withId(R.id.newPostsBanner)).perform(click());
+        Log.d(TAG, "Tapped new posts banner");
+
+        // Verify UserA's post appears in the feed
+        boolean found = false;
+        deadline = System.currentTimeMillis() + 15000;
         while (System.currentTimeMillis() < deadline) {
             try {
                 onView(withId(R.id.recyclerViewFeed))
@@ -112,6 +130,7 @@ public class FeedUserB_UITests extends UITestBase {
         }
         Log.d(TAG, "Phase 2 result: " + found);
         assertTrue("UserA's post should appear in UserB's feed", found);
+        delay();
 
         sync.signalReady("phase2_confirmed");
     }
