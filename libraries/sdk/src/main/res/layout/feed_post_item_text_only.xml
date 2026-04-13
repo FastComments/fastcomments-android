@@ -59,7 +59,15 @@
                     android:textColor="@android:color/darker_gray"
                     tools:text="2 hours ago" />
             </LinearLayout>
-            
+
+            <include
+                layout="@layout/feed_post_follow_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp" />
+
             <!-- Menu Button -->
             <ImageButton
                 android:id="@+id/postMenuButton"

@@ -125,6 +125,8 @@
     <string name="link_icon">Link icon</string>
     <string name="comment">Comment</string>
     <string name="share">Share</string>
+    <string name="follow">Follow</string>
+    <string name="following">Following</string>
     <string name="minutes_ago">%1$d mins ago</string>
     <string name="hours_ago">%1$d hrs ago</string>
     <string name="days_ago">%1$d days ago</string>

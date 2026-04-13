@@ -93,6 +93,7 @@ public class FastCommentsFeedSDK {
     private String urlIdWS;
     private String userIdWS;
     private TagSupplier tagSupplier;
+    private FollowStateProvider followStateProvider;
     private final List<FeedCustomToolbarButton> globalFeedToolbarButtons = new ArrayList<>(0);
 
     /**
@@ -146,7 +147,30 @@ public class FastCommentsFeedSDK {
     public TagSupplier getTagSupplier() {
         return tagSupplier;
     }
-    
+
+    /**
+     * Register a {@link FollowStateProvider} that supplies follow / unfollow
+     * state for users surfaced in the feed and is notified when the viewer
+     * toggles the follow button.
+     *
+     * <p>When the provider is {@code null} (the default), no follow button is
+     * rendered in feed post items.</p>
+     *
+     * @param provider the provider implementation, or {@code null} to hide
+     *                 the follow button
+     */
+    public void setFollowStateProvider(FollowStateProvider provider) {
+        this.followStateProvider = provider;
+    }
+
+    /**
+     * Get the currently registered {@link FollowStateProvider}, or
+     * {@code null} if none has been set.
+     */
+    public FollowStateProvider getFollowStateProvider() {
+        return followStateProvider;
+    }
+
     /**
      * Set a custom theme for the SDK
      *

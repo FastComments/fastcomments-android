@@ -2,6 +2,10 @@ package com.fastcomments.sdk;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Html;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -18,6 +22,10 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.ColorUtils;
+import androidx.core.view.AccessibilityDelegateCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -37,12 +45,30 @@ import java.util.Locale;
 
 public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.FeedPostViewHolder> {
 
+    // Shared across adapter instances — Handler holds no per-instance state.
+    // Used to marshal follow-state callbacks from arbitrary threads back to
+    // the UI thread (see #bindFollowButton).
+    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
+
     private final Context context;
     private final List<FeedPost> feedPosts;
     private final OnFeedPostInteractionListener listener;
     private final FastCommentsFeedSDK sdk;
     private final boolean useAbsoluteDates;
     private OnScrollToTopRequestedListener onScrollToTopRequestedListener;
+
+    // Cached follow-button resources, keyed by the resolved theme action
+    // colour. Re-resolving the colour itself per bind is cheap (matches the
+    // pattern in #applyThemeToButton, which task posts use), but allocating
+    // a fresh ColorStateList and re-running luminance maths per row would
+    // not be — so we cache those and recompute only when the colour changes.
+    // The colour-keyed cache also means a runtime theme swap (consumer calls
+    // sdk.setTheme(...) and notifies the adapter) automatically picks up the
+    // new colour without any explicit invalidation hook.
+    private boolean followResourcesResolved = false;
+    private int followActionColor;
+    private ColorStateList followActionColorTint;
+    private int followFilledTextColor;
 
     public interface OnFeedPostInteractionListener {
         void onCommentClick(FeedPost post);
@@ -377,6 +403,30 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         STATS_UPDATE
     }
 
+    /**
+     * Resolve the theme-derived colors used by the follow button. Picks
+     * black or white text for the filled "Follow" CTA based on the action
+     * color's luminance, so any reasonable theme color produces a legible
+     * label.
+     *
+     * <p>The cache is keyed on the resolved colour value, so a runtime theme
+     * swap (consumer calls {@code sdk.setTheme(newTheme)}) automatically
+     * picks up the new colour on the next bind without an explicit
+     * invalidation hook.</p>
+     */
+    private void ensureFollowButtonResources() {
+        FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
+        int actionColor = ThemeColorResolver.getActionButtonColor(context, theme);
+        if (followResourcesResolved && followActionColor == actionColor) {
+            return;
+        }
+        followActionColor = actionColor;
+        followActionColorTint = ColorStateList.valueOf(actionColor);
+        double luminance = ColorUtils.calculateLuminance(actionColor);
+        followFilledTextColor = luminance > 0.5d ? Color.BLACK : Color.WHITE;
+        followResourcesResolved = true;
+    }
+
 
     class FeedPostViewHolder extends RecyclerView.ViewHolder {
         private final FeedPostType postType;
@@ -391,6 +441,12 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         private final Button likeButton;
         private final Button shareButton;
         private final ImageButton postMenuButton;
+        private final TextView followButton;
+
+        // Incremented on every bind() so that follow-state callbacks coming
+        // back asynchronously after the holder has been recycled can be
+        // recognised as stale and silently dropped (see #bindFollowButton).
+        private int followGeneration = 0;
 
         // Single image layout elements
         private FrameLayout mediaContainer;
@@ -423,6 +479,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             likeButton = itemView.findViewById(R.id.likeButton);
             shareButton = itemView.findViewById(R.id.shareButton);
             postMenuButton = itemView.findViewById(R.id.postMenuButton);
+            followButton = itemView.findViewById(R.id.followButton);
 
             // Type-specific elements
             switch (postType) {
@@ -459,7 +516,20 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     listener.onPostClick(feedPosts.get(position));
                 }
             });
-            
+
+            // Make TalkBack announce the followButton as a Button (it's a
+            // styled TextView for visual flexibility, not a real Button).
+            if (followButton != null) {
+                ViewCompat.setAccessibilityDelegate(followButton, new AccessibilityDelegateCompat() {
+                    @Override
+                    public void onInitializeAccessibilityNodeInfo(@NonNull View host,
+                                                                  @NonNull AccessibilityNodeInfoCompat info) {
+                        super.onInitializeAccessibilityNodeInfo(host, info);
+                        info.setClassName(Button.class.getName());
+                    }
+                });
+            }
+
             // Apply theme colors
             applyTheme();
         }
@@ -492,10 +562,130 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
          */
         private void applyThemeToButton(Button button) {
             FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
-            
+
             // Apply action button color to the button text
             int actionButtonColor = ThemeColorResolver.getActionButtonColor(context, theme);
             button.setTextColor(actionButtonColor);
+        }
+
+        /**
+         * Bind the follow / unfollow button for {@code post}.
+         *
+         * <p>The button is only shown when a {@link FollowStateProvider} has
+         * been registered with the SDK, the viewer is authenticated, the
+         * post has a known author id, and the author is not the current
+         * viewer (you can't follow yourself).</p>
+         *
+         * <p>Each call increments {@link #followGeneration}; the click
+         * listener captures the current generation into a local final and
+         * uses it to ignore stale provider callbacks that arrive after the
+         * holder has been recycled and rebound to a different post — without
+         * the guard, the SDK would paint the previous user's state onto the
+         * new row.</p>
+         */
+        private void bindFollowButton(FeedPost post) {
+            if (followButton == null) {
+                return;
+            }
+
+            final FollowStateProvider provider = sdk != null ? sdk.getFollowStateProvider() : null;
+            final String postUserId = post.getFromUserId();
+            final String currentUserId = sdk != null && sdk.getCurrentUser() != null
+                    ? sdk.getCurrentUser().getId()
+                    : null;
+
+            // Hide the button when there's no provider, no authenticated
+            // viewer, no author id, or the viewer is the author of the post.
+            if (provider == null
+                    || currentUserId == null
+                    || postUserId == null
+                    || postUserId.isEmpty()
+                    || currentUserId.equals(postUserId)) {
+                followButton.setVisibility(View.GONE);
+                followButton.setOnClickListener(null);
+                return;
+            }
+
+            // Reset enabled in case a previous row left it disabled (e.g. a
+            // provider that never invoked its callback before the holder was
+            // recycled).
+            followButton.setEnabled(true);
+
+            final UserInfo userInfo = UserInfo.fromFeedPost(post);
+            final boolean initiallyFollowing = provider.isFollowing(userInfo);
+            applyFollowButtonState(initiallyFollowing);
+            followButton.setVisibility(View.VISIBLE);
+
+            // Capture the bind generation so we can ignore stale callbacks
+            // (see method-level javadoc).
+            final int boundGeneration = ++followGeneration;
+
+            followButton.setOnClickListener(v -> {
+                // Re-read the current state from the provider so the toggle
+                // is based on truth, not the value at bind time.
+                final boolean currentlyFollowing = provider.isFollowing(userInfo);
+                final boolean desired = !currentlyFollowing;
+
+                // Optimistic UI update + temporary disable to swallow rapid
+                // double-taps and to indicate work in progress.
+                applyFollowButtonState(desired);
+                followButton.setEnabled(false);
+
+                provider.onFollowStateChangeRequested(userInfo, desired, nowFollowing -> {
+                    // The SDK marshals to the UI thread regardless of which
+                    // thread the provider invokes the callback on (see
+                    // FollowStateProvider.FollowStateCallback javadoc). We
+                    // post to the main Looper rather than View#post so the
+                    // marshaling works even when the row's view is detached.
+                    MAIN_HANDLER.post(() -> {
+                        // Drop stale callbacks for a recycled / rebound row.
+                        if (followGeneration != boundGeneration) {
+                            return;
+                        }
+                        applyFollowButtonState(nowFollowing);
+                        followButton.setEnabled(true);
+                    });
+                });
+            });
+        }
+
+        /**
+         * Apply the visual state (label, colors, background) for the follow
+         * button.
+         *
+         * <p>Uses {@link View#setBackgroundResource} +
+         * {@link View#setBackgroundTintList} with the cached theme tint.
+         * This avoids the per-call {@code new GradientDrawable()} that an
+         * earlier revision used; the {@link ColorStateList} is allocated
+         * once per theme colour and reused across all rows. Note that
+         * {@code setBackgroundResource} still returns a fresh
+         * {@code Drawable} wrapper each call, and the subsequent
+         * {@code setBackgroundTintList} triggers a {@code mutate()} clone of
+         * the underlying {@code ConstantState} — so the call isn't literally
+         * allocation-free, just much cheaper than the original.</p>
+         */
+        private void applyFollowButtonState(boolean isFollowing) {
+            if (followButton == null) {
+                return;
+            }
+            ensureFollowButtonResources();
+
+            followButton.setBackgroundResource(isFollowing
+                    ? R.drawable.feed_follow_button_bg_outlined
+                    : R.drawable.feed_follow_button_bg_filled);
+            // Explicit SRC_IN belt-and-braces: AOSP defaults to SRC_IN, but a
+            // few forks have been observed defaulting to SRC_OVER, which
+            // would no-op the white-fill -> action-colour tint.
+            followButton.setBackgroundTintMode(PorterDuff.Mode.SRC_IN);
+            followButton.setBackgroundTintList(followActionColorTint);
+
+            if (isFollowing) {
+                followButton.setTextColor(followActionColor);
+                followButton.setText(R.string.following);
+            } else {
+                followButton.setTextColor(followFilledTextColor);
+                followButton.setText(R.string.follow);
+            }
         }
 
         void bind(FeedPost post, int position) {
@@ -600,6 +790,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     postMenuButton.setVisibility(View.GONE);
                 }
             }
+
+            // Follow / unfollow button setup
+            bindFollowButton(post);
 
             // Handle type-specific bindings
             switch (postType) {

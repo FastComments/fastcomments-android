@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  "Following" (outlined) state of the feed follow button. Transparent fill +
+  white stroke; the stroke is recolored at runtime via
+  View#setBackgroundTintList using the current theme action color.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="14dp" />
+    <solid android:color="@android:color/transparent" />
+    <stroke
+        android:width="1dp"
+        android:color="@android:color/white" />
+</shape>
