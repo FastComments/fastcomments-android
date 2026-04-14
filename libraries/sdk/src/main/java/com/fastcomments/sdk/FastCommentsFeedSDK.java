@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 import android.net.Uri;
@@ -94,6 +95,8 @@ public class FastCommentsFeedSDK {
     private String userIdWS;
     private TagSupplier tagSupplier;
     private FollowStateProvider followStateProvider;
+    private final CopyOnWriteArrayList<FollowStateInvalidationListener> followStateInvalidationListeners =
+            new CopyOnWriteArrayList<>();
     private final List<FeedCustomToolbarButton> globalFeedToolbarButtons = new ArrayList<>(0);
 
     /**
@@ -169,6 +172,105 @@ public class FastCommentsFeedSDK {
      */
     public FollowStateProvider getFollowStateProvider() {
         return followStateProvider;
+    }
+
+    /**
+     * Listener notified when follow-state for a user (or, in the coarse
+     * variant, <em>some</em> user) may have changed and currently-rendered
+     * UI should re-query the registered {@link FollowStateProvider}.
+     *
+     * <p>Mirrors the iOS {@code followStateRevision} publisher on
+     * {@code FastCommentsFeedSDK}. The Android variant goes one step further:
+     * the signal carries the affected user id when known, so listeners can
+     * skip rows whose author didn't change — iOS has a TODO to do the same
+     * on its side.</p>
+     *
+     * <p><strong>Re-entrance:</strong> the feed adapter's listener calls
+     * {@link androidx.recyclerview.widget.RecyclerView.Adapter#notifyItemRangeChanged}
+     * which in turn re-binds the follow pill, which queries the provider.
+     * Any future listener (or provider implementation) that calls
+     * {@link #invalidateFollowState()} synchronously from inside that chain
+     * will re-enter infinitely. Don't do that.</p>
+     */
+    public interface FollowStateInvalidationListener {
+        /**
+         * Invoked on the main (UI) thread. Safe to touch views directly.
+         *
+         * @param userId the user id whose follow state changed, or
+         *               {@code null} if the caller can't scope the change
+         *               (i.e. a blanket "something changed somewhere" hint)
+         */
+        void onFollowStateInvalidated(@androidx.annotation.Nullable String userId);
+    }
+
+    /**
+     * Register a listener invoked whenever {@link #invalidateFollowState()}
+     * (or its scoped overload) fires. The SDK holds a strong reference —
+     * callers that need to break a reference cycle should pair this with
+     * {@link #removeFollowStateInvalidationListener}.
+     *
+     * <p><strong>Lifecycle:</strong> the default feed adapter registers its
+     * listener on attach and removes it on detach. If you attach the same
+     * adapter instance to two RecyclerViews simultaneously (unusual), the
+     * second detach will leave the SDK with no listener — by then the first
+     * detach already removed the only entry. Stick with one adapter per
+     * RecyclerView if you depend on follow-state broadcast.</p>
+     */
+    public void addFollowStateInvalidationListener(FollowStateInvalidationListener listener) {
+        if (listener == null) {
+            return;
+        }
+        followStateInvalidationListeners.addIfAbsent(listener);
+    }
+
+    /**
+     * Unregister a previously-added follow-state invalidation listener.
+     * No-op if the listener was never registered.
+     */
+    public void removeFollowStateInvalidationListener(FollowStateInvalidationListener listener) {
+        if (listener == null) {
+            return;
+        }
+        followStateInvalidationListeners.remove(listener);
+    }
+
+    /**
+     * Coarse signal that follow state has changed for some unspecified user.
+     * Prefer {@link #invalidateFollowState(String)} when the caller knows
+     * which user flipped — scoped invalidation lets visible-row listeners
+     * skip rows whose author didn't change.
+     *
+     * <p>Safe to call from any thread; the notification is marshalled to the
+     * main Looper.</p>
+     */
+    public void invalidateFollowState() {
+        invalidateFollowState(null);
+    }
+
+    /**
+     * Signal that follow state has changed for {@code userId}. Listeners
+     * that can filter by user id will only refresh rows authored by that
+     * user; listeners that can't will refresh everything as if this were
+     * the coarse form.
+     *
+     * <p>Safe to call from any thread; the notification is marshalled to the
+     * main Looper.</p>
+     *
+     * @param userId the user whose follow state changed, or {@code null}
+     *               for the coarse "something changed" signal
+     */
+    public void invalidateFollowState(@androidx.annotation.Nullable String userId) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            dispatchFollowStateInvalidated(userId);
+        } else {
+            mainHandler.post(() -> dispatchFollowStateInvalidated(userId));
+        }
+    }
+
+    private void dispatchFollowStateInvalidated(@androidx.annotation.Nullable String userId) {
+        for (FollowStateInvalidationListener listener : followStateInvalidationListeners) {
+            listener.onFollowStateInvalidated(userId);
+        }
     }
 
     /**

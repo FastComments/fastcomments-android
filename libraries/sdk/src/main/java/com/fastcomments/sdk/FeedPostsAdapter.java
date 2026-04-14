@@ -70,6 +70,47 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
     private ColorStateList followActionColorTint;
     private int followFilledTextColor;
 
+    // Bridges SDK-level {@link FastCommentsFeedSDK#invalidateFollowState}
+    // broadcasts to a payload-scoped notifyItemChanged, so visible rows
+    // re-query the provider without a full rebind of post content, media,
+    // reactions, etc.
+    //
+    // Instantiated as a field rather than an inline lambda inside
+    // onAttachedToRecyclerView because we need the same instance for
+    // addFollowStateInvalidationListener / removeFollowStateInvalidationListener
+    // — otherwise detach wouldn't actually unregister.
+    //
+    // Do NOT call FastCommentsFeedSDK#invalidateFollowState from
+    // bindFollowButton or anything it transitively invokes: this listener
+    // triggers notifyItem(Range)Changed, which re-binds the follow pill,
+    // which calls bindFollowButton — a reentrant call to invalidate from
+    // there would loop forever.
+    private final FastCommentsFeedSDK.FollowStateInvalidationListener followStateInvalidationListener =
+            new FastCommentsFeedSDK.FollowStateInvalidationListener() {
+                @Override
+                public void onFollowStateInvalidated(@androidx.annotation.Nullable String userId) {
+                    int count = getItemCount();
+                    if (count <= 0) {
+                        return;
+                    }
+                    if (userId == null) {
+                        // Coarse signal — caller didn't name the changed
+                        // user, so every row has to re-query.
+                        notifyItemRangeChanged(0, count, UpdateType.FOLLOW_STATE_UPDATE);
+                        return;
+                    }
+                    // Scoped signal — only rows whose author matches need
+                    // to re-query the provider. Saves N-1 provider calls
+                    // in the common tap-one-row-to-update-N case.
+                    for (int i = 0; i < feedPosts.size(); i++) {
+                        FeedPost post = feedPosts.get(i);
+                        if (post != null && userId.equals(post.getFromUserId())) {
+                            notifyItemChanged(i, UpdateType.FOLLOW_STATE_UPDATE);
+                        }
+                    }
+                }
+            };
+
     public interface OnFeedPostInteractionListener {
         void onCommentClick(FeedPost post);
 
@@ -206,9 +247,27 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     UpdateType updateType = (UpdateType) payload;
                     if (updateType == UpdateType.STATS_UPDATE) {
                         holder.updateStatsAndLikes(post);
+                    } else if (updateType == UpdateType.FOLLOW_STATE_UPDATE) {
+                        holder.bindFollowButton(post);
                     }
                 }
             }
+        }
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+        if (sdk != null) {
+            sdk.addFollowStateInvalidationListener(followStateInvalidationListener);
+        }
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView);
+        if (sdk != null) {
+            sdk.removeFollowStateInvalidationListener(followStateInvalidationListener);
         }
     }
 
@@ -400,7 +459,15 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
     }
 
     enum UpdateType {
-        STATS_UPDATE
+        STATS_UPDATE,
+        /**
+         * Partial-bind payload that asks a holder to re-query the registered
+         * {@link FollowStateProvider} and refresh its follow pill only. Fanned
+         * out by {@link FastCommentsFeedSDK#invalidateFollowState()} so that
+         * following a user from one post immediately updates every other
+         * visible post by that same user.
+         */
+        FOLLOW_STATE_UPDATE
     }
 
     /**
@@ -612,6 +679,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             followButton.setEnabled(true);
 
             final UserInfo userInfo = UserInfo.fromFeedPost(post);
+            // Captured once at bind so the invalidation broadcast can use it
+            // after the row has been recycled (post reference would point at
+            // a different user by then).
+            final String authorUserId = postUserId;
             final boolean initiallyFollowing = provider.isFollowing(userInfo);
             applyFollowButtonState(initiallyFollowing);
             followButton.setVisibility(View.VISIBLE);
@@ -638,12 +709,28 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     // post to the main Looper rather than View#post so the
                     // marshaling works even when the row's view is detached.
                     MAIN_HANDLER.post(() -> {
-                        // Drop stale callbacks for a recycled / rebound row.
-                        if (followGeneration != boundGeneration) {
-                            return;
+                        // Per-row UI update is gated by the generation guard
+                        // so a stale callback doesn't paint the previous
+                        // user's state onto a recycled row.
+                        if (followGeneration == boundGeneration) {
+                            applyFollowButtonState(nowFollowing);
+                            followButton.setEnabled(true);
                         }
-                        applyFollowButtonState(nowFollowing);
-                        followButton.setEnabled(true);
+                        // SDK-level fan-out is global truth about the
+                        // provider's state — it must fire regardless of
+                        // whether THIS row was recycled, because other
+                        // currently-visible rows by the same author still
+                        // need to refresh from that truth. Swallowing it on
+                        // recycle would strand those rows showing stale
+                        // follow state.
+                        //
+                        // Scoped by the original author's user id so rows by
+                        // other authors skip a provider.isFollowing round
+                        // trip — matters when the provider does any work
+                        // beyond a map lookup.
+                        if (sdk != null) {
+                            sdk.invalidateFollowState(authorUserId);
+                        }
                     });
                 });
             });

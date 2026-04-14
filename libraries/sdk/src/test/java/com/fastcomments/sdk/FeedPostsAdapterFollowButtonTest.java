@@ -4,7 +4,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import android.content.Context;
@@ -13,6 +17,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.model.FeedPost;
@@ -21,12 +26,14 @@ import com.fastcomments.model.UserSessionInfo;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -256,6 +263,200 @@ public class FeedPostsAdapterFollowButtonTest {
 
         assertEquals("Follow", btn.getText().toString());
         assertTrue(btn.isEnabled());
+    }
+
+    // ---------- cross-row synchronization ----------
+
+    /**
+     * When the viewer follows Alice from post #1, any other visible post also
+     * authored by Alice must refresh its pill to "Following" — the whole point
+     * of wiring the SDK invalidation broadcast. Mirrors the iOS
+     * {@code followStateRevision} behaviour added in the companion commit on
+     * fastcomments-ios.
+     */
+    @Test
+    public void clickFollow_doesNotBroadcastUntilProviderResolves() {
+        RecordingProvider provider = new RecordingProvider();
+        when(sdk.getFollowStateProvider()).thenReturn(provider);
+
+        FeedPostsAdapter.FeedPostViewHolder holder =
+                createAndBind(makePost("u-alice", "Alice"));
+
+        followButton(holder).performClick();
+        // Provider hasn't called back yet → nothing broadcast either coarse
+        // or scoped.
+        verify(sdk, never()).invalidateFollowState();
+        verify(sdk, never()).invalidateFollowState(any());
+    }
+
+    /**
+     * If the originating row is recycled / rebound before the provider
+     * resolves, the per-row apply is correctly skipped (the stale-generation
+     * guard) — but the SDK-level invalidation <em>must still fire</em>,
+     * because it's a global signal about provider truth that other visible
+     * rows (e.g. a second post by the same author still on screen) depend on
+     * to refresh. If the broadcast is swallowed here, those other rows stay
+     * stale until something else forces a rebind.
+     */
+    @Test
+    public void clickFollow_thenRowRecycled_stillBroadcastsInvalidation() {
+        RecordingProvider provider = new RecordingProvider();
+        when(sdk.getFollowStateProvider()).thenReturn(provider);
+
+        FeedPostsAdapter.FeedPostViewHolder holder =
+                createAndBind(makePost("u-alice", "Alice"));
+
+        followButton(holder).performClick();
+        assertNotNull(provider.lastCallback);
+
+        // Simulate RecyclerView recycling: rebind this holder to a different
+        // post BEFORE the provider resolves. Bumps the follow generation so
+        // the per-row apply path sees a stale callback.
+        posts.set(0, makePost("u-bob", "Bob"));
+        adapter.onBindViewHolder(holder, 0);
+
+        provider.backingState = true;
+        provider.lastCallback.onResult(true);
+        drainMainLooper();
+
+        // Even though Alice's row was recycled, the broadcast must still
+        // reach any other visible Alice row. The originating user id
+        // ("u-alice") is captured before recycling so the scoped variant
+        // still carries the right target.
+        verify(sdk).invalidateFollowState("u-alice");
+    }
+
+    /**
+     * A partial-bind with the {@link FeedPostsAdapter.UpdateType#FOLLOW_STATE_UPDATE}
+     * payload must re-query the provider and apply whatever state it currently
+     * reports — this is the refresh path the invalidation broadcast fans out
+     * to visible rows.
+     */
+    @Test
+    public void partialBind_withFollowStatePayload_refreshesFromProvider() {
+        RecordingProvider provider = new RecordingProvider();
+        when(sdk.getFollowStateProvider()).thenReturn(provider);
+
+        FeedPostsAdapter.FeedPostViewHolder holder =
+                createAndBind(makePost("u-alice", "Alice"));
+        TextView btn = followButton(holder);
+
+        assertEquals("Follow", btn.getText().toString());
+
+        // Provider's truth changes (e.g. because the user followed Alice on
+        // another row). A payload-only rebind should pick that up without a
+        // full rebind of the rest of the row.
+        provider.backingState = true;
+        adapter.onBindViewHolder(holder, 0,
+                Collections.singletonList(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+
+        assertEquals("Following", btn.getText().toString());
+        assertTrue(btn.isEnabled());
+    }
+
+    /**
+     * The adapter must register its invalidation listener on attach and drop
+     * it on detach so a stale adapter isn't kept alive by the SDK after the
+     * host view is gone.
+     */
+    @Test
+    public void onAttached_registersListener_onDetached_unregisters() {
+        RecyclerView rv = mock(RecyclerView.class);
+
+        adapter.onAttachedToRecyclerView(rv);
+        ArgumentCaptor<FastCommentsFeedSDK.FollowStateInvalidationListener> captor =
+                ArgumentCaptor.forClass(FastCommentsFeedSDK.FollowStateInvalidationListener.class);
+        verify(sdk).addFollowStateInvalidationListener(captor.capture());
+        FastCommentsFeedSDK.FollowStateInvalidationListener registered = captor.getValue();
+        assertNotNull(registered);
+
+        adapter.onDetachedFromRecyclerView(rv);
+        verify(sdk).removeFollowStateInvalidationListener(registered);
+    }
+
+    /**
+     * Broadcast invalidation (null userId) must fan out to every currently-
+     * bound post, since the caller hasn't told us which user changed.
+     */
+    @Test
+    public void onInvalidation_broadcast_notifiesItemRangeChangedWithFollowStatePayload() {
+        RecyclerView rv = mock(RecyclerView.class);
+        adapter.onAttachedToRecyclerView(rv);
+        ArgumentCaptor<FastCommentsFeedSDK.FollowStateInvalidationListener> captor =
+                ArgumentCaptor.forClass(FastCommentsFeedSDK.FollowStateInvalidationListener.class);
+        verify(sdk).addFollowStateInvalidationListener(captor.capture());
+
+        posts.clear();
+        posts.add(makePost("u-alice", "Alice"));
+        posts.add(makePost("u-alice", "Alice"));
+        posts.add(makePost("u-bob", "Bob"));
+
+        RecyclerView.AdapterDataObserver observer = mock(RecyclerView.AdapterDataObserver.class);
+        adapter.registerAdapterDataObserver(observer);
+
+        captor.getValue().onFollowStateInvalidated(null);
+
+        verify(observer).onItemRangeChanged(eq(0), eq(3),
+                eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+    }
+
+    /**
+     * Scoped invalidation (a specific user id) must only fan out to rows
+     * whose author matches — so in a feed of 50 posts, a single follow tap
+     * doesn't force 50 calls into {@code FollowStateProvider.isFollowing}.
+     */
+    @Test
+    public void onInvalidation_scopedToUserId_onlyNotifiesMatchingRows() {
+        RecyclerView rv = mock(RecyclerView.class);
+        adapter.onAttachedToRecyclerView(rv);
+        ArgumentCaptor<FastCommentsFeedSDK.FollowStateInvalidationListener> captor =
+                ArgumentCaptor.forClass(FastCommentsFeedSDK.FollowStateInvalidationListener.class);
+        verify(sdk).addFollowStateInvalidationListener(captor.capture());
+
+        posts.clear();
+        posts.add(makePost("u-alice", "Alice"));      // 0
+        posts.add(makePost("u-bob", "Bob"));          // 1
+        posts.add(makePost("u-alice", "Alice"));      // 2
+        posts.add(makePost("u-bob", "Bob"));          // 3
+        posts.add(makePost("u-alice", "Alice"));      // 4
+
+        RecyclerView.AdapterDataObserver observer = mock(RecyclerView.AdapterDataObserver.class);
+        adapter.registerAdapterDataObserver(observer);
+
+        captor.getValue().onFollowStateInvalidated("u-alice");
+
+        // Only the three Alice rows should be invalidated.
+        verify(observer).onItemRangeChanged(eq(0), eq(1),
+                eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+        verify(observer).onItemRangeChanged(eq(2), eq(1),
+                eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+        verify(observer).onItemRangeChanged(eq(4), eq(1),
+                eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+        // And none of the Bob rows.
+        verify(observer, never()).onItemRangeChanged(eq(1), eq(1),
+                eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+        verify(observer, never()).onItemRangeChanged(eq(3), eq(1),
+                eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+    }
+
+    /**
+     * A follow tap must broadcast the author's user id, not the coarse
+     * no-arg form, so adapters can skip rows whose author didn't change.
+     */
+    @Test
+    public void clickFollow_broadcastsInvalidationScopedToAuthorUserId() {
+        RecordingProvider provider = new RecordingProvider();
+        when(sdk.getFollowStateProvider()).thenReturn(provider);
+
+        FeedPostsAdapter.FeedPostViewHolder holder =
+                createAndBind(makePost("u-alice", "Alice"));
+
+        followButton(holder).performClick();
+        provider.backingState = true;
+        provider.lastCallback.onResult(true);
+        drainMainLooper();
+
+        verify(sdk).invalidateFollowState("u-alice");
     }
 
     // ---------- test doubles ----------
