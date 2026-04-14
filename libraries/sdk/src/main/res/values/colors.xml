@@ -32,4 +32,8 @@
     <color name="fastcomments_live_chat_connected_dot">#FF0000</color>
     <color name="fastcomments_live_chat_disconnected_dot">#BBBBBB</color>
     <color name="fastcomments_live_chat_user_count_text">#888888</color>
+
+    <!-- "Following" label in feed post headers. Overridden in values-night
+         for legibility on dark surfaces. -->
+    <color name="fastcomments_feed_follow_following_text">#FF8E8E93</color>
 </resources>

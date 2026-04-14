@@ -1,6 +1,8 @@
 package com.fastcomments;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Toast;
 
@@ -18,6 +20,7 @@ import com.fastcomments.sdk.CommentsDialog;
 import com.fastcomments.sdk.FastCommentsFeedSDK;
 import com.fastcomments.sdk.FastCommentsFeedView;
 import com.fastcomments.sdk.FeedPostCreateView;
+import com.fastcomments.sdk.FollowStateProvider;
 import com.fastcomments.sdk.OnUserClickListener;
 import com.fastcomments.sdk.TagSupplier;
 import com.fastcomments.sdk.UserClickContext;
@@ -26,7 +29,9 @@ import com.fastcomments.sdk.UserInfo;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Example activity showing how to use the FastCommentsFeedView
@@ -38,6 +43,7 @@ public class FeedExampleActivity extends AppCompatActivity {
     private FeedPostCreateView postCreateView;
     private FloatingActionButton createPostFab;
     private OnUserClickListener userClickListener;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     // Image picker launcher
     private final ActivityResultLauncher<String> pickImageLauncher = 
@@ -69,6 +75,33 @@ public class FeedExampleActivity extends AppCompatActivity {
 
         // Initialize the Feed SDK
         feedSDK = new FastCommentsFeedSDK(config);
+
+        // Demo in-memory follow provider so the follow button renders.
+        // A real app would persist this via its backend.
+        final Set<String> followedUserIds = new HashSet<>();
+        feedSDK.setFollowStateProvider(new FollowStateProvider() {
+            @Override
+            public boolean isFollowing(UserInfo user) {
+                return followedUserIds.contains(user.getUserId());
+            }
+
+            @Override
+            public void onFollowStateChangeRequested(UserInfo user, boolean desiredFollowing,
+                                                      FollowStateCallback resultCallback) {
+                // Simulate a 2s network round-trip.
+                mainHandler.postDelayed(() -> {
+                    if (desiredFollowing) {
+                        followedUserIds.add(user.getUserId());
+                    } else {
+                        followedUserIds.remove(user.getUserId());
+                    }
+                    Toast.makeText(FeedExampleActivity.this,
+                            (desiredFollowing ? "Followed " : "Unfollowed ") + user.getDisplayName(),
+                            Toast.LENGTH_SHORT).show();
+                    resultCallback.onResult(desiredFollowing);
+                }, 2000L);
+            }
+        });
 
         // Find the feed view in the layout
         feedView = findViewById(R.id.feedView);
@@ -299,6 +332,10 @@ public class FeedExampleActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        // Drop any in-flight simulated follow-request callbacks so they
+        // don't keep this Activity alive past destroy. Integrators copying
+        // this demo should cancel their own pending work here too.
+        mainHandler.removeCallbacksAndMessages(null);
         // Clean up the feed view to prevent memory leaks
         if (feedView != null) {
             feedView.cleanup();

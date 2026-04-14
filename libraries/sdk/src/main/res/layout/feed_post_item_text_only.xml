@@ -43,13 +43,28 @@
                 android:orientation="vertical"
                 android:layout_marginStart="8dp">
 
-                <TextView
-                    android:id="@+id/userNameTextView"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textStyle="bold"
-                    android:textSize="14sp"
-                    tools:text="User Name" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/userNameTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        tools:text="User Name" />
+
+                    <include
+                        layout="@layout/feed_post_follow_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/postTimeTextView"
@@ -59,14 +74,6 @@
                     android:textColor="@android:color/darker_gray"
                     tools:text="2 hours ago" />
             </LinearLayout>
-
-            <include
-                layout="@layout/feed_post_follow_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="4dp" />
 
             <!-- Menu Button -->
             <ImageButton

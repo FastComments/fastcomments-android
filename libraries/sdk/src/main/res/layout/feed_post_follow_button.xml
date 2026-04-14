@@ -1,34 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Follow / unfollow pill rendered in feed post headers. <include>'d by every
-  feed_post_item_*.xml variant.
+  Follow / unfollow text label rendered inline with the post author's name.
+  <include>'d by every feed_post_item_*.xml variant.
 
   Hidden by default; FeedPostsAdapter only makes it visible when a
-  FollowStateProvider has been registered with the SDK. The background
-  drawable is applied at bind time so it can pick up the current theme
-  action colour.
+  FollowStateProvider has been registered with the SDK. Text color is applied
+  at bind time from the theme action color (Follow) / neutral gray
+  (Following), and alpha is lowered while a state change is in flight.
+
+  Sized tightly to match the username line so the timestamp stays snug
+  below. The tap target is therefore smaller than Material's 48dp — if
+  accessibility feedback flags that, expand via a TouchDelegate on the
+  post header row rather than reintroducing a minHeight here (which pushes
+  the timestamp down).
 
   Per-row layout_* attributes (margins, gravity) live on the <include> tag
-  in each parent layout, not here. layout_width and layout_height are
-  declared on the root only because Android requires them for inflation;
-  they are overridden by the include tag at runtime.
+  in each parent layout, not here.
 -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/followButton"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
-    android:gravity="center"
-    android:minHeight="48dp"
-    android:minWidth="76dp"
-    android:paddingHorizontal="14dp"
-    android:paddingVertical="6dp"
+    android:paddingHorizontal="4dp"
+    android:paddingVertical="2dp"
     android:text="@string/follow"
     android:textAllCaps="false"
-    android:textSize="12sp"
+    android:textSize="13sp"
     android:textStyle="bold"
     android:visibility="gone"
     tools:visibility="visible" />

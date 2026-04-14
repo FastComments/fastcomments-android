@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Lighter neutral gray for legibility on dark surfaces. -->
+    <color name="fastcomments_feed_follow_following_text">#FFAEAEB2</color>
+</resources>

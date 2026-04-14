@@ -24,10 +24,11 @@ import androidx.annotation.NonNull;
  * Implementations therefore do not need to defend against these cases.
  *
  * <h3>Theme contrast</h3>
- * The follow button uses the configured theme action color for its filled
- * "Follow" state. The SDK automatically picks black or white text on top of
- * that color based on luminance, so any reasonable theme color will produce
- * legible labels.
+ * The follow button is rendered as inline text next to the post author's
+ * name (no pill background). "Follow" uses the configured theme action
+ * color; "Following" uses a neutral gray that adapts for light / dark
+ * surfaces via {@code values-night}. While a state change is in flight the
+ * label is disabled and its alpha is lowered, mirroring the iOS app.
  */
 public interface FollowStateProvider {
 

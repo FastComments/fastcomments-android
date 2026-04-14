@@ -2,8 +2,6 @@ package com.fastcomments.sdk;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Html;
@@ -22,7 +20,7 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.graphics.ColorUtils;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.AccessibilityDelegateCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
@@ -57,18 +55,17 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
     private final boolean useAbsoluteDates;
     private OnScrollToTopRequestedListener onScrollToTopRequestedListener;
 
-    // Cached follow-button resources, keyed by the resolved theme action
-    // colour. Re-resolving the colour itself per bind is cheap (matches the
-    // pattern in #applyThemeToButton, which task posts use), but allocating
-    // a fresh ColorStateList and re-running luminance maths per row would
-    // not be — so we cache those and recompute only when the colour changes.
-    // The colour-keyed cache also means a runtime theme swap (consumer calls
-    // sdk.setTheme(...) and notifies the adapter) automatically picks up the
-    // new colour without any explicit invalidation hook.
+    // Cached follow-button colours. Keyed by the resolved theme action
+    // colour value so a runtime theme swap is picked up on the next bind.
+    // The boolean is kept (rather than relying on followActionColor == 0 as
+    // a sentinel) so a legitimately-resolved zero colour still counts as
+    // "computed" and doesn't force a recompute on every bind.
     private boolean followResourcesResolved = false;
     private int followActionColor;
-    private ColorStateList followActionColorTint;
-    private int followFilledTextColor;
+    private int followFollowingTextColor;
+    // Alpha applied while a follow-state change is in flight, so the label
+    // visibly indicates "request pending" (mirrors the iOS app).
+    private static final float FOLLOW_BUTTON_PENDING_ALPHA = 0.4f;
 
     // Bridges SDK-level {@link FastCommentsFeedSDK#invalidateFollowState}
     // broadcasts to a payload-scoped notifyItemChanged, so visible rows
@@ -471,15 +468,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
     }
 
     /**
-     * Resolve the theme-derived colors used by the follow button. Picks
-     * black or white text for the filled "Follow" CTA based on the action
-     * color's luminance, so any reasonable theme color produces a legible
-     * label.
-     *
-     * <p>The cache is keyed on the resolved colour value, so a runtime theme
-     * swap (consumer calls {@code sdk.setTheme(newTheme)}) automatically
-     * picks up the new colour on the next bind without an explicit
-     * invalidation hook.</p>
+     * Resolve and cache the follow-button text colours. Cached keyed on the
+     * theme action colour value so a runtime theme swap is picked up on the
+     * next bind without any explicit invalidation hook.
      */
     private void ensureFollowButtonResources() {
         FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
@@ -488,9 +479,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             return;
         }
         followActionColor = actionColor;
-        followActionColorTint = ColorStateList.valueOf(actionColor);
-        double luminance = ColorUtils.calculateLuminance(actionColor);
-        followFilledTextColor = luminance > 0.5d ? Color.BLACK : Color.WHITE;
+        followFollowingTextColor = ContextCompat.getColor(context,
+                R.color.fastcomments_feed_follow_following_text);
         followResourcesResolved = true;
     }
 
@@ -673,10 +663,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 return;
             }
 
-            // Reset enabled in case a previous row left it disabled (e.g. a
-            // provider that never invoked its callback before the holder was
-            // recycled).
-            followButton.setEnabled(true);
+            // Reset enabled + alpha in case a previous row left the view in
+            // the pending-request state (e.g. a provider that never invoked
+            // its callback before the holder was recycled).
+            setFollowButtonPending(false);
 
             final UserInfo userInfo = UserInfo.fromFeedPost(post);
             // Captured once at bind so the invalidation broadcast can use it
@@ -697,10 +687,12 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 final boolean currentlyFollowing = provider.isFollowing(userInfo);
                 final boolean desired = !currentlyFollowing;
 
-                // Optimistic UI update + temporary disable to swallow rapid
-                // double-taps and to indicate work in progress.
+                // Optimistic UI update + temporary disable + lowered alpha
+                // to swallow rapid double-taps and to indicate work in
+                // progress (mirrors the iOS app's "greyed out while pending"
+                // behaviour).
                 applyFollowButtonState(desired);
-                followButton.setEnabled(false);
+                setFollowButtonPending(true);
 
                 provider.onFollowStateChangeRequested(userInfo, desired, nowFollowing -> {
                     // The SDK marshals to the UI thread regardless of which
@@ -714,7 +706,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         // user's state onto a recycled row.
                         if (followGeneration == boundGeneration) {
                             applyFollowButtonState(nowFollowing);
-                            followButton.setEnabled(true);
+                            setFollowButtonPending(false);
                         }
                         // SDK-level fan-out is global truth about the
                         // provider's state — it must fire regardless of
@@ -737,19 +729,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         }
 
         /**
-         * Apply the visual state (label, colors, background) for the follow
-         * button.
-         *
-         * <p>Uses {@link View#setBackgroundResource} +
-         * {@link View#setBackgroundTintList} with the cached theme tint.
-         * This avoids the per-call {@code new GradientDrawable()} that an
-         * earlier revision used; the {@link ColorStateList} is allocated
-         * once per theme colour and reused across all rows. Note that
-         * {@code setBackgroundResource} still returns a fresh
-         * {@code Drawable} wrapper each call, and the subsequent
-         * {@code setBackgroundTintList} triggers a {@code mutate()} clone of
-         * the underlying {@code ConstantState} — so the call isn't literally
-         * allocation-free, just much cheaper than the original.</p>
+         * Apply the text label + colour for the follow button. The button is
+         * rendered as plain inline text (no pill background) — theme action
+         * colour for "Follow", neutral gray for "Following", matching iOS.
          */
         private void applyFollowButtonState(boolean isFollowing) {
             if (followButton == null) {
@@ -757,22 +739,33 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             }
             ensureFollowButtonResources();
 
-            followButton.setBackgroundResource(isFollowing
-                    ? R.drawable.feed_follow_button_bg_outlined
-                    : R.drawable.feed_follow_button_bg_filled);
-            // Explicit SRC_IN belt-and-braces: AOSP defaults to SRC_IN, but a
-            // few forks have been observed defaulting to SRC_OVER, which
-            // would no-op the white-fill -> action-colour tint.
-            followButton.setBackgroundTintMode(PorterDuff.Mode.SRC_IN);
-            followButton.setBackgroundTintList(followActionColorTint);
-
             if (isFollowing) {
-                followButton.setTextColor(followActionColor);
+                followButton.setTextColor(followFollowingTextColor);
                 followButton.setText(R.string.following);
             } else {
-                followButton.setTextColor(followFilledTextColor);
+                followButton.setTextColor(followActionColor);
                 followButton.setText(R.string.follow);
             }
+        }
+
+        /**
+         * Toggle the "request in flight" visual. Disables taps and lowers
+         * alpha so the label reads as greyed-out while the provider is
+         * resolving.
+         *
+         * <p>Both are set intentionally: {@code setEnabled(false)} gates
+         * clicks and accessibility focus, but AOSP TextView does not
+         * consistently dim its own colour in the disabled state across
+         * themes (the default state list only fades the background/ripple).
+         * The explicit alpha is what reliably produces the greyed visual on
+         * every theme.</p>
+         */
+        private void setFollowButtonPending(boolean pending) {
+            if (followButton == null) {
+                return;
+            }
+            followButton.setEnabled(!pending);
+            followButton.setAlpha(pending ? FOLLOW_BUTTON_PENDING_ALPHA : 1f);
         }
 
         void bind(FeedPost post, int position) {
