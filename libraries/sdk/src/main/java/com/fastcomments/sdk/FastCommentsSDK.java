@@ -264,30 +264,18 @@ public class FastCommentsSDK {
                     .countChildren(true)
                     .locale(config.locale)
                     .includeNotificationCount(includeNotificationCount)
-                    .executeAsync(new ApiCallback<GetCommentsPublic200Response>() {
+                    .executeAsync(new ApiCallback<GetCommentsResponseWithPresencePublicComment>() {
                         @Override
                         public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(GetCommentsPublic200Response response, int i, Map<String, List<String>> map) {
-                            if (response.getActualInstance() instanceof APIError) {
-                                APIError error = (APIError) response.getActualInstance();
-
-                                // Set blockingErrorMessage from translatedError or reason
-                                if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
-                                    blockingErrorMessage = error.getTranslatedError();
-                                } else if (error.getReason() != null && !error.getReason().isEmpty()) {
-                                    blockingErrorMessage = error.getReason();
-                                }
-
-                                callback.onFailure(error);
-                            } else {
-                                final GetCommentsResponseWithPresencePublicComment commentsResponse = response.getGetCommentsResponseWithPresencePublicComment();
+                        public void onSuccess(GetCommentsResponseWithPresencePublicComment response, int i, Map<String, List<String>> map) {
+                                                            final GetCommentsResponseWithPresencePublicComment commentsResponse = response;
 
                                 callback.onSuccess(commentsResponse);
-                            }
+                            
                         }
 
                         @Override
@@ -331,21 +319,18 @@ public class FastCommentsSDK {
                     .limitChildren(limit)
                     .countChildren(true)
                     .locale(config.locale)
-                    .executeAsync(new ApiCallback<GetCommentsPublic200Response>() {
+                    .executeAsync(new ApiCallback<GetCommentsResponseWithPresencePublicComment>() {
                         @Override
                         public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(GetCommentsPublic200Response response, int i, Map<String, List<String>> map) {
-                            if (response.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) response.getActualInstance());
-                            } else {
-                                final GetCommentsResponseWithPresencePublicComment commentsResponse = response.getGetCommentsResponseWithPresencePublicComment();
+                        public void onSuccess(GetCommentsResponseWithPresencePublicComment response, int i, Map<String, List<String>> map) {
+                                                            final GetCommentsResponseWithPresencePublicComment commentsResponse = response;
                                 commentsTree.addForParent(parentId, commentsResponse.getComments());
                                 callback.onSuccess(commentsResponse);
-                            }
+                            
                         }
 
                         @Override
@@ -486,18 +471,15 @@ public class FastCommentsSDK {
             // Make the API call
             api.createCommentPublic(config.tenantId, config.urlId, broadcastId, commentData)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<CreateCommentPublic200Response>() {
+                    .executeAsync(new ApiCallback<SaveCommentsResponseWithPresence>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(CreateCommentPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                            } else {
-                                SaveCommentsResponseWithPresence response = result.getSaveCommentsResponseWithPresence();
+                        public void onSuccess(SaveCommentsResponseWithPresence result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            SaveCommentsResponseWithPresence response = result;
                                 if (response.getUser() != null) {
                                     currentUser = response.getUser();
                                 }
@@ -512,7 +494,7 @@ public class FastCommentsSDK {
                                 // The API should return the complete comment
                                 PublicComment createdComment = response.getComment();
                                 callback.onSuccess(createdComment);
-                            }
+                            
                         }
 
                         @Override
@@ -670,20 +652,17 @@ public class FastCommentsSDK {
             // because the vote is identified by its ID, but we'll keep the method signature consistent
             api.deleteCommentVote(config.tenantId, commentId, voteId, config.urlId, broadcastId)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<DeleteCommentVote200Response>() {
+                    .executeAsync(new ApiCallback<VoteDeleteResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(DeleteCommentVote200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                            } else {
-                                VoteDeleteResponse response = result.getVoteDeleteResponse();
+                        public void onSuccess(VoteDeleteResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            VoteDeleteResponse response = result;
                                 callback.onSuccess(response);
-                            }
+                            
                         }
 
                         @Override
@@ -735,7 +714,7 @@ public class FastCommentsSDK {
         try {
             api.deleteCommentPublic(config.tenantId, commentId, broadcastId)
                 .sso(config.getSSOToken())
-                .executeAsync(new ApiCallback<DeleteCommentPublic200Response>() {
+                .executeAsync(new ApiCallback<PublicAPIDeleteCommentResponse>() {
                     @Override
                     public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                         APIError error = CallbackWrapper.createErrorFromException(e);
@@ -743,18 +722,14 @@ public class FastCommentsSDK {
                     }
                     
                     @Override
-                    public void onSuccess(DeleteCommentPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                        if (result.getActualInstance() instanceof APIError) {
-                            APIError error = (APIError) result.getActualInstance();
-                            callback.onFailure(error);
-                        } else {
-                            mainHandler.post(() -> {
+                    public void onSuccess(PublicAPIDeleteCommentResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                    mainHandler.post(() -> {
                                 // Remove the comment from the local tree
                                 boolean removed = commentsTree.removeComment(commentId);
                                 Log.d("FastCommentsSDK", "deleteComment onSuccess: removed=" + removed + " commentId=" + commentId + " visibleSize=" + commentsTree.visibleSize());
                                 callback.onSuccess(new APIEmptyResponse());
                             });
-                        }
+                        
                     }
                     
                     @Override
@@ -905,7 +880,7 @@ public class FastCommentsSDK {
         // Call the API to get presence statuses
         try {
             api.getUserPresenceStatuses(config.tenantId, urlIdWS, userIdsCSV)
-                    .executeAsync(new ApiCallback<GetUserPresenceStatuses200Response>() {
+                    .executeAsync(new ApiCallback<GetUserPresenceStatusesResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             // Log error but continue - this is not critical functionality
@@ -913,16 +888,10 @@ public class FastCommentsSDK {
                         }
 
                         @Override
-                        public void onSuccess(GetUserPresenceStatuses200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                // Log error but continue
-                                Log.e("FastCommentsSDK", "API error when getting user presence statuses: " +
-                                        ((APIError) result.getActualInstance()).getReason());
-                                return;
-                            }
+                        public void onSuccess(GetUserPresenceStatusesResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
 
                             // Process presence statuses
-                            final Map<String, Boolean> statuses = result.getGetUserPresenceStatusesResponse().getUserIdsOnline();
+                            final Map<String, Boolean> statuses = result.getUserIdsOnline();
                             mainHandler.post(() -> {
                                 for (Map.Entry<String, Boolean> entry : statuses.entrySet()) {
                                     String userId = entry.getKey();
@@ -1269,21 +1238,17 @@ public class FastCommentsSDK {
             // Create the search users request with the proper parameters
             api.searchUsers(config.tenantId, config.urlId).usernameStartsWith(searchTerm)
                 .sso(config.getSSOToken())
-                .executeAsync(new ApiCallback<SearchUsers200Response>() {
+                .executeAsync(new ApiCallback<SearchUsersResult>() {
                     @Override
                     public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                         callback.onFailure(CallbackWrapper.createErrorFromException(e));
                     }
 
                     @Override
-                    public void onSuccess(SearchUsers200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                    public void onSuccess(SearchUsersResult result, int statusCode, Map<String, List<String>> responseHeaders) {
                         try {
                             List<UserMention> mentions = new ArrayList<>();
                             
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                                return;
-                            }
                             
                             // Get the search users response from the result
                             SearchUsersResponse response = result.getSearchUsersResponse();
@@ -1466,18 +1431,15 @@ public class FastCommentsSDK {
             api.setCommentText(config.tenantId, commentId, broadcastId, updateRequest)
                     .sso(config.getSSOToken())
                     .editKey(editKey)
-                    .executeAsync(new ApiCallback<SetCommentText200Response>() {
+                    .executeAsync(new ApiCallback<PublicAPISetCommentTextResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(SetCommentText200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                            } else {
-                                PublicAPISetCommentTextResponse response = result.getPublicAPISetCommentTextResponse();
+                        public void onSuccess(PublicAPISetCommentTextResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            PublicAPISetCommentTextResponse response = result;
                                 if (response.getComment() != null) {
                                     callback.onSuccess(response.getComment());
                                 } else {
@@ -1486,7 +1448,7 @@ public class FastCommentsSDK {
                                             .reason("No comment returned")
                                             .code("edit_comment_error"));
                                 }
-                            }
+                            
                         }
 
                         @Override
@@ -1523,19 +1485,16 @@ public class FastCommentsSDK {
             // Make the API call
             api.flagCommentPublic(config.tenantId, commentId, true)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<FlagCommentPublic200Response>() {
+                    .executeAsync(new ApiCallback<APIEmptyResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(FlagCommentPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                            } else {
-                                callback.onSuccess(result.getAPIEmptyResponse());
-                            }
+                        public void onSuccess(APIEmptyResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            callback.onSuccess(result.getAPIEmptyResponse());
+                            
                         }
 
                         @Override
@@ -1573,20 +1532,17 @@ public class FastCommentsSDK {
                     .commentIds(commentIdsToCheck != null ? commentIdsToCheck : new ArrayList<>());
             api.blockFromCommentPublic(config.tenantId, commentId, params)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<BlockFromCommentPublic200Response>() {
+                    .executeAsync(new ApiCallback<BlockSuccess>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(BlockFromCommentPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                            } else {
-                                BlockSuccess response = result.getBlockSuccess();
+                        public void onSuccess(BlockSuccess result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            BlockSuccess response = result;
                                 callback.onSuccess(response);
-                            }
+                            
                         }
 
                         @Override
@@ -1622,19 +1578,16 @@ public class FastCommentsSDK {
         try {
             api.flagCommentPublic(config.tenantId, commentId, false)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<FlagCommentPublic200Response>() {
+                    .executeAsync(new ApiCallback<APIEmptyResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(FlagCommentPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                            } else {
-                                callback.onSuccess(result.getAPIEmptyResponse());
-                            }
+                        public void onSuccess(APIEmptyResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            callback.onSuccess(result.getAPIEmptyResponse());
+                            
                         }
 
                         @Override
@@ -1669,19 +1622,16 @@ public class FastCommentsSDK {
         try {
             api.pinComment(config.tenantId, commentId, broadcastId)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<PinComment200Response>() {
+                    .executeAsync(new ApiCallback<ChangeCommentPinStatusResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(PinComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                            } else {
-                                callback.onSuccess(result.getChangeCommentPinStatusResponse());
-                            }
+                        public void onSuccess(ChangeCommentPinStatusResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            callback.onSuccess(result);
+                            
                         }
 
                         @Override
@@ -1716,19 +1666,16 @@ public class FastCommentsSDK {
         try {
             api.unPinComment(config.tenantId, commentId, broadcastId)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<PinComment200Response>() {
+                    .executeAsync(new ApiCallback<ChangeCommentPinStatusResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(PinComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                            } else {
-                                callback.onSuccess(result.getChangeCommentPinStatusResponse());
-                            }
+                        public void onSuccess(ChangeCommentPinStatusResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            callback.onSuccess(result);
+                            
                         }
 
                         @Override
@@ -1763,19 +1710,16 @@ public class FastCommentsSDK {
         try {
             api.lockComment(config.tenantId, commentId, broadcastId)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<LockComment200Response>() {
+                    .executeAsync(new ApiCallback<APIEmptyResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(LockComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                            } else {
-                                callback.onSuccess(result.getAPIEmptyResponse());
-                            }
+                        public void onSuccess(APIEmptyResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            callback.onSuccess(result.getAPIEmptyResponse());
+                            
                         }
 
                         @Override
@@ -1810,19 +1754,16 @@ public class FastCommentsSDK {
         try {
             api.unLockComment(config.tenantId, commentId, broadcastId)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<LockComment200Response>() {
+                    .executeAsync(new ApiCallback<APIEmptyResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(LockComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                            } else {
-                                callback.onSuccess(result.getAPIEmptyResponse());
-                            }
+                        public void onSuccess(APIEmptyResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            callback.onSuccess(result.getAPIEmptyResponse());
+                            
                         }
 
                         @Override
@@ -1856,19 +1797,16 @@ public class FastCommentsSDK {
                     .commentIds(commentIdsToCheck != null ? commentIdsToCheck : new ArrayList<>());
             api.unBlockCommentPublic(config.tenantId, commentId, params)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<UnBlockCommentPublic200Response>() {
+                    .executeAsync(new ApiCallback<UnblockSuccess>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(UnBlockCommentPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                            } else {
-                                callback.onSuccess(result.getUnblockSuccess());
-                            }
+                        public void onSuccess(UnblockSuccess result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            callback.onSuccess(result);
+                            
                         }
 
                         @Override
@@ -1928,20 +1866,17 @@ public class FastCommentsSDK {
             // Make the API call
             api.voteComment(config.tenantId, commentId, config.urlId, broadcastId, voteParams)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<VoteComment200Response>() {
+                    .executeAsync(new ApiCallback<VoteResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(VoteComment200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                            } else {
-                                VoteResponse response = result.getVoteResponse();
+                        public void onSuccess(VoteResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            VoteResponse response = result;
                                 callback.onSuccess(response);
-                            }
+                            
                         }
 
                         @Override

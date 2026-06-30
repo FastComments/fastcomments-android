@@ -13,24 +13,21 @@ import com.fastcomments.invoker.ApiException;
 import com.fastcomments.model.APIEmptyResponse;
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.CreateFeedPostParams;
-import com.fastcomments.model.CreateFeedPostPublic200Response;
 import com.fastcomments.model.CreateFeedPostResponse;
-import com.fastcomments.model.DeleteFeedPostPublic200Response;
+import com.fastcomments.model.DeleteFeedPostPublicResponse;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.FeedPostMediaItem;
 import com.fastcomments.model.FeedPostMediaItemAsset;
 import com.fastcomments.model.FeedPostStats;
 import com.fastcomments.model.FeedPostsStatsResponse;
-import com.fastcomments.model.GetFeedPostsStats200Response;
 import com.fastcomments.model.MediaAsset;
 import com.fastcomments.model.SizePreset;
 import com.fastcomments.model.UploadImageResponse;
-import com.fastcomments.model.GetFeedPostsPublic200Response;
+import com.fastcomments.model.PublicFeedPostsResponse;
 import com.fastcomments.model.LiveEvent;
 import com.fastcomments.model.LiveEventType;
-import com.fastcomments.model.PublicFeedPostsResponse;
 import com.fastcomments.model.ReactBodyParams;
-import com.fastcomments.model.ReactFeedPostPublic200Response;
+import com.fastcomments.model.ReactFeedPostResponse;
 import com.fastcomments.model.UserSessionInfo;
 
 import java.io.Serializable;
@@ -472,7 +469,7 @@ public class FastCommentsFeedSDK {
                     .sso(config.getSSOToken())
                     .includeUserInfo(lastPostId == null) // only include for initial req
                     .tags(tags)
-                    .executeAsync(new ApiCallback<GetFeedPostsPublic200Response>() {
+                    .executeAsync(new ApiCallback<PublicFeedPostsResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             APIError error = CallbackWrapper.createErrorFromException(e);
@@ -496,23 +493,9 @@ public class FastCommentsFeedSDK {
                         }
 
                         @Override
-                        public void onSuccess(GetFeedPostsPublic200Response response, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (response.getActualInstance() instanceof APIError) {
-                                APIError error = (APIError) response.getActualInstance();
-                                if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
-                                    blockingErrorMessage = error.getTranslatedError();
-                                } else if (error.getReason() != null && !error.getReason().isEmpty()) {
-                                    blockingErrorMessage = "Feed could not load! Details: " + error.getReason();
-                                }
-
-                                // Log this error case (API returned success but with error object)
-                                Log.e("FastCommentsFeedSDK", "API returned success status but with error object: " +
-                                        (error.getReason() != null ? error.getReason() : "unknown reason"));
-
-                                callback.onFailure(error);
-                            } else {
-                                mainHandler.post(() -> {
-                                    final PublicFeedPostsResponse publicResponse = response.getPublicFeedPostsResponse();
+                        public void onSuccess(PublicFeedPostsResponse response, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            mainHandler.post(() -> {
+                                    final PublicFeedPostsResponse publicResponse = response;
 
                                     boolean needsWebsocketReconnect = false;
 
@@ -593,7 +576,7 @@ public class FastCommentsFeedSDK {
 
                                     callback.onSuccess(publicResponse);
                                 });
-                            }
+                            
                         }
 
                         @Override
@@ -731,7 +714,7 @@ public class FastCommentsFeedSDK {
                     api.reactFeedPostPublic(config.tenantId, postId, reactParams)
                             .sso(config.getSSOToken())
                             .isUndo(isUndo)
-                            .executeAsync(new ApiCallback<ReactFeedPostPublic200Response>() {
+                            .executeAsync(new ApiCallback<ReactFeedPostResponse>() {
                                 @Override
                                 public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                                     // API call failed - revert the optimistic update
@@ -758,7 +741,7 @@ public class FastCommentsFeedSDK {
                                 }
 
                                 @Override
-                                public void onSuccess(ReactFeedPostPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                public void onSuccess(ReactFeedPostResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
                                     // API call succeeded, our optimistic update was correct
                                     mainHandler.post(() -> {
                                         callback.onSuccess(updatedPost);
@@ -1135,7 +1118,7 @@ public class FastCommentsFeedSDK {
             api.createFeedPostPublic(config.tenantId, params)
                     .broadcastId(broadcastId)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<CreateFeedPostPublic200Response>() {
+                    .executeAsync(new ApiCallback<CreateFeedPostResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             APIError error = CallbackWrapper.createErrorFromException(e);
@@ -1143,13 +1126,9 @@ public class FastCommentsFeedSDK {
                         }
 
                         @Override
-                        public void onSuccess(CreateFeedPostPublic200Response response, int statusCode, Map<String, List<String>> responseHeaders) {
+                        public void onSuccess(CreateFeedPostResponse response, int statusCode, Map<String, List<String>> responseHeaders) {
                             mainHandler.post(() -> {
-                                if (response.getActualInstance() instanceof APIError) {
-                                    APIError error = (APIError) response.getActualInstance();
-                                    callback.onFailure(error);
-                                } else {
-                                    CreateFeedPostResponse feedResponse = response.getCreateFeedPostResponse();
+                                                                    CreateFeedPostResponse feedResponse = response;
                                     FeedPost createdPost = feedResponse.getFeedPost();
 
                                     // Add post to the local list at the beginning
@@ -1160,7 +1139,7 @@ public class FastCommentsFeedSDK {
                                     }
 
                                     callback.onSuccess(createdPost);
-                                }
+                                
                             });
                         }
 
@@ -1303,7 +1282,7 @@ public class FastCommentsFeedSDK {
      * @param postIds  List of post IDs to fetch stats for
      * @param callback Callback to receive the response
      */
-    public void getFeedPostsStats(List<String> postIds, FCCallback<GetFeedPostsStats200Response> callback) {
+    public void getFeedPostsStats(List<String> postIds, FCCallback<FeedPostsStatsResponse> callback) {
         if (postIds == null || postIds.isEmpty()) {
             APIError error = new APIError();
             error.setReason("Post IDs are required");
@@ -1314,19 +1293,16 @@ public class FastCommentsFeedSDK {
         try {
             api.getFeedPostsStats(config.tenantId, postIds)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<GetFeedPostsStats200Response>() {
+                    .executeAsync(new ApiCallback<FeedPostsStatsResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             callback.onFailure(CallbackWrapper.createErrorFromException(e));
                         }
 
                         @Override
-                        public void onSuccess(GetFeedPostsStats200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                callback.onFailure((APIError) result.getActualInstance());
-                            } else {
-                                // Update cached posts with the new stats
-                                final FeedPostsStatsResponse statsResponse = result.getFeedPostsStatsResponse();
+                        public void onSuccess(FeedPostsStatsResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            // Update cached posts with the new stats
+                                final FeedPostsStatsResponse statsResponse = result;
                                 Map<String, FeedPostStats> statsMap = statsResponse.getStats();
 
                                 // Update posts in our cache
@@ -1353,7 +1329,7 @@ public class FastCommentsFeedSDK {
                                 }
 
                                 callback.onSuccess(result);
-                            }
+                            
                         }
 
                         @Override
@@ -1478,7 +1454,7 @@ public class FastCommentsFeedSDK {
         try {
             api.deleteFeedPostPublic(config.tenantId, postId)
                     .sso(config.getSSOToken())
-                    .executeAsync(new ApiCallback<DeleteFeedPostPublic200Response>() {
+                    .executeAsync(new ApiCallback<DeleteFeedPostPublicResponse>() {
                         @Override
                         public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
                             APIError error = CallbackWrapper.createErrorFromException(e);
@@ -1486,12 +1462,8 @@ public class FastCommentsFeedSDK {
                         }
 
                         @Override
-                        public void onSuccess(DeleteFeedPostPublic200Response result, int statusCode, Map<String, List<String>> responseHeaders) {
-                            if (result.getActualInstance() instanceof APIError) {
-                                APIError error = (APIError) result.getActualInstance();
-                                callback.onFailure(error);
-                            } else {
-                                mainHandler.post(() -> {
+                        public void onSuccess(DeleteFeedPostPublicResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                                                            mainHandler.post(() -> {
                                     // Remove the post from our local list
                                     for (int i = 0; i < feedPosts.size(); i++) {
                                         FeedPost post = feedPosts.get(i);
@@ -1505,7 +1477,7 @@ public class FastCommentsFeedSDK {
 
                                     callback.onSuccess(new APIEmptyResponse());
                                 });
-                            }
+                            
                         }
 
                         @Override

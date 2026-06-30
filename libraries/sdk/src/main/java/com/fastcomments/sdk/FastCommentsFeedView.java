@@ -24,7 +24,7 @@ import com.fastcomments.model.APIError;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.FeedPostMediaItem;
 import com.fastcomments.model.GetFeedPostsResponse;
-import com.fastcomments.model.GetFeedPostsStats200Response;
+import com.fastcomments.model.FeedPostsStatsResponse;
 import com.fastcomments.model.PublicFeedPostsResponse;
 
 import java.io.Serializable;
@@ -961,7 +961,7 @@ public class FastCommentsFeedView extends FrameLayout {
         
         // Fetch stats for visible posts
         final List<String> finalVisiblePostIds = visiblePostIds;
-        sdk.getFeedPostsStats(visiblePostIds, new FCCallback<GetFeedPostsStats200Response>() {
+        sdk.getFeedPostsStats(visiblePostIds, new FCCallback<FeedPostsStatsResponse>() {
             @Override
             public boolean onFailure(APIError error) {
                 // Silent failure - we'll try again next time
@@ -969,7 +969,7 @@ public class FastCommentsFeedView extends FrameLayout {
             }
             
             @Override
-            public boolean onSuccess(GetFeedPostsStats200Response response) {
+            public boolean onSuccess(FeedPostsStatsResponse response) {
                 // The SDK has already updated the post objects with new stats
                 // Now we need to update the UI for each visible post
                 handler.post(() -> {
