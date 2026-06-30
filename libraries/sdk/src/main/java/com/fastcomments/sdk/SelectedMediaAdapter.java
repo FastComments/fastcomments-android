@@ -7,13 +7,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,7 +55,7 @@ public class SelectedMediaAdapter extends RecyclerView.Adapter<SelectedMediaAdap
 
     /**
      * Add a new media item to the adapter
-     * 
+     *
      * @param uri Uri of the media item
      */
     public void addMedia(Uri uri) {
@@ -68,7 +65,7 @@ public class SelectedMediaAdapter extends RecyclerView.Adapter<SelectedMediaAdap
 
     /**
      * Remove a media item from the adapter
-     * 
+     *
      * @param position Position of the media item to remove
      */
     public void removeMedia(int position) {
@@ -81,7 +78,7 @@ public class SelectedMediaAdapter extends RecyclerView.Adapter<SelectedMediaAdap
 
     /**
      * Get all media URIs
-     * 
+     *
      * @return List of media URIs
      */
     public List<Uri> getMediaUris() {

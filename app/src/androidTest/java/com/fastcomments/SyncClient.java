@@ -1,15 +1,13 @@
 package com.fastcomments;
 
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.json.JSONObject;
 
 /**
  * HTTP client for coordinating dual-emulator tests via the sync server.
@@ -30,7 +28,7 @@ public class SyncClient {
         this.role = role;
         this.client = new OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(180, TimeUnit.SECONDS)  // /wait can block up to 120s
+                .readTimeout(180, TimeUnit.SECONDS) // /wait can block up to 120s
                 .writeTimeout(30, TimeUnit.SECONDS)
                 .build();
     }

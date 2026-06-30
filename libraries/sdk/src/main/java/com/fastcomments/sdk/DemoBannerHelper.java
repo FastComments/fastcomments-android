@@ -9,10 +9,10 @@ import android.widget.TextView;
  * Helper class for setting up demo banners across SDK views
  */
 public class DemoBannerHelper {
-    
+
     /**
      * Sets up the demo banner if tenant ID is "demo"
-     * 
+     *
      * @param containerView The view containing the demo banner
      * @param sdk The SDK instance to check tenant ID
      */
@@ -20,10 +20,10 @@ public class DemoBannerHelper {
         String tenantId = sdk != null ? sdk.getConfig().tenantId : null;
         setupDemoBannerInternal(containerView, tenantId);
     }
-    
+
     /**
      * Sets up the demo banner for feed views with feed SDK
-     * 
+     *
      * @param containerView The view containing the demo banner
      * @param feedSdk The feed SDK instance to check tenant ID
      */
@@ -31,10 +31,10 @@ public class DemoBannerHelper {
         String tenantId = feedSdk != null ? feedSdk.getConfig().tenantId : null;
         setupDemoBannerInternal(containerView, tenantId);
     }
-    
+
     /**
      * Internal method to handle the common demo banner setup logic
-     * 
+     *
      * @param containerView The view containing the demo banner
      * @param tenantId The tenant ID to check
      */
@@ -44,7 +44,7 @@ public class DemoBannerHelper {
             // Show banner only if tenant ID is "demo"
             if ("demo".equals(tenantId)) {
                 demoBanner.setVisibility(View.VISIBLE);
-                
+
                 // Set up click listener for "Create an account" link
                 TextView createAccountLink = demoBanner.findViewById(R.id.createAccountLink);
                 if (createAccountLink != null) {

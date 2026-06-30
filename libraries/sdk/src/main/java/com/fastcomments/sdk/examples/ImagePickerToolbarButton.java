@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.view.View;
-
 import com.fastcomments.sdk.BottomCommentInputView;
 import com.fastcomments.sdk.CustomToolbarButton;
 import com.fastcomments.sdk.R;

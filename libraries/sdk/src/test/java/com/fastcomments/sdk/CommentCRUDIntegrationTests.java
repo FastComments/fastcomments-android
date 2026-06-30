@@ -1,17 +1,16 @@
 package com.fastcomments.sdk;
 
-import com.fastcomments.model.PublicComment;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import com.fastcomments.model.PublicComment;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 /**
  * Integration tests for comment Create, Read, Update, Delete operations.
@@ -82,7 +81,8 @@ public class CommentCRUDIntegrationTests extends IntegrationTestBase {
         // But the parent should have the child
         PublicComment reloadedParent = sdk2.commentsTree.getPublicComment(parent.getId());
         assertNotNull(reloadedParent);
-        assertTrue("Parent should have children",
+        assertTrue(
+                "Parent should have children",
                 reloadedParent.getChildCount() != null && reloadedParent.getChildCount() >= 1);
     }
 
@@ -166,8 +166,7 @@ public class CommentCRUDIntegrationTests extends IntegrationTestBase {
         // Load more
         loadMoreSync(sdk2);
 
-        assertTrue("Total should increase after loadMore",
-                sdk2.commentsTree.totalSize() > firstPageSize);
+        assertTrue("Total should increase after loadMore", sdk2.commentsTree.totalSize() > firstPageSize);
     }
 
     @Test

@@ -18,22 +18,18 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.AccessibilityDelegateCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.FeedPostLink;
 import com.fastcomments.model.FeedPostMediaItem;
 import com.fastcomments.model.FeedPostMediaItemAsset;
-
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -122,7 +118,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         void onMediaClick(FeedPostMediaItem mediaItem);
 
         void onDeletePost(FeedPost post);
-        
+
         void onUserClick(FeedPost post, UserInfo userInfo, UserClickSource source);
     }
 
@@ -130,7 +126,11 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         void onScrollToTopRequested();
     }
 
-    public FeedPostsAdapter(Context context, List<FeedPost> feedPosts, FastCommentsFeedSDK sdk, OnFeedPostInteractionListener listener) {
+    public FeedPostsAdapter(
+            Context context,
+            List<FeedPost> feedPosts,
+            FastCommentsFeedSDK sdk,
+            OnFeedPostInteractionListener listener) {
         this.context = context;
         this.feedPosts = feedPosts;
         this.listener = listener;
@@ -320,7 +320,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         Log.d("FeedPostsAdapter", "Updated posts list with " + updatedPosts.size() + " posts");
     }
 
-
     public void addPosts(List<FeedPost> morePosts) {
         int startPosition = this.feedPosts.size();
         this.feedPosts.addAll(morePosts);
@@ -428,8 +427,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
      * @return The calculated height based on aspect ratio, or default height if dimensions are missing
      */
     private int calculateImageHeight(FeedPostMediaItemAsset asset, int displayWidth) {
-        if (asset == null || asset.getW() == null || asset.getH() == null ||
-                asset.getW() <= 0 || asset.getH() <= 0) {
+        if (asset == null || asset.getW() == null || asset.getH() == null || asset.getW() <= 0 || asset.getH() <= 0) {
             return getDefaultImageHeight(); // Fall back to default height
         }
 
@@ -479,11 +477,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             return;
         }
         followActionColor = actionColor;
-        followFollowingTextColor = ContextCompat.getColor(context,
-                R.color.fastcomments_feed_follow_following_text);
+        followFollowingTextColor = ContextCompat.getColor(context, R.color.fastcomments_feed_follow_following_text);
         followResourcesResolved = true;
     }
-
 
     class FeedPostViewHolder extends RecyclerView.ViewHolder {
         private final FeedPostType postType;
@@ -579,8 +575,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             if (followButton != null) {
                 ViewCompat.setAccessibilityDelegate(followButton, new AccessibilityDelegateCompat() {
                     @Override
-                    public void onInitializeAccessibilityNodeInfo(@NonNull View host,
-                                                                  @NonNull AccessibilityNodeInfoCompat info) {
+                    public void onInitializeAccessibilityNodeInfo(
+                            @NonNull View host, @NonNull AccessibilityNodeInfoCompat info) {
                         super.onInitializeAccessibilityNodeInfo(host, info);
                         info.setClassName(Button.class.getName());
                     }
@@ -590,16 +586,16 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             // Apply theme colors
             applyTheme();
         }
-        
+
         /**
          * Apply theme colors to buttons and UI elements
          */
         private void applyTheme() {
             FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
-            
+
             // Apply action button colors to buttons
             int actionButtonColor = ThemeColorResolver.getActionButtonColor(context, theme);
-            
+
             if (commentButton != null) {
                 commentButton.setTextColor(actionButtonColor);
             }
@@ -613,7 +609,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 postMenuButton.setImageTintList(ColorStateList.valueOf(actionButtonColor));
             }
         }
-        
+
         /**
          * Apply theme colors to a dynamically created button
          */
@@ -777,7 +773,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
                 // If there's an avatar URL, load it - otherwise show a default avatar
                 if (avatarImageView != null) {
-                    if (post.getFromUserAvatar() != null && !post.getFromUserAvatar().isEmpty()) {
+                    if (post.getFromUserAvatar() != null
+                            && !post.getFromUserAvatar().isEmpty()) {
                         avatarImageView.setVisibility(View.VISIBLE);
                         AvatarFetcher.fetchTransformInto(context, post.getFromUserAvatar(), avatarImageView);
                     } else {
@@ -786,7 +783,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         AvatarFetcher.fetchTransformInto(context, R.drawable.default_avatar, avatarImageView);
                     }
                 }
-                
+
                 // Set up user click listeners
                 userNameTextView.setOnClickListener(v -> {
                     if (listener != null) {
@@ -794,7 +791,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         listener.onUserClick(post, userInfo, UserClickSource.NAME);
                     }
                 });
-                
+
                 if (avatarImageView != null) {
                     avatarImageView.setOnClickListener(v -> {
                         if (listener != null) {
@@ -820,7 +817,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             } else {
                 contentTextView.setVisibility(View.GONE);
             }
-
 
             // Handle like count and comment count display
             updateLikeAndCommentCounts(post);
@@ -858,7 +854,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             if (postMenuButton != null) {
                 // Determine if this is the current user's post
                 boolean isCurrentUserPost = false;
-                String currentUserId = sdk.getCurrentUser() != null ? sdk.getCurrentUser().getId() : null;
+                String currentUserId =
+                        sdk.getCurrentUser() != null ? sdk.getCurrentUser().getId() : null;
                 String postUserId = post.getFromUserId();
 
                 if (currentUserId != null && postUserId != null && currentUserId.equals(postUserId)) {
@@ -922,10 +919,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                                 .into(mediaImageView);
 
                         // Determine if it's a video
-                        boolean isVideo = mediaItem.getLinkUrl() != null &&
-                                (mediaItem.getLinkUrl().contains("youtube") ||
-                                        mediaItem.getLinkUrl().contains("vimeo") ||
-                                        mediaItem.getLinkUrl().contains(".mp4"));
+                        boolean isVideo = mediaItem.getLinkUrl() != null
+                                && (mediaItem.getLinkUrl().contains("youtube")
+                                        || mediaItem.getLinkUrl().contains("vimeo")
+                                        || mediaItem.getLinkUrl().contains(".mp4"));
 
                         playButton.setVisibility(isVideo ? View.VISIBLE : View.GONE);
 
@@ -951,11 +948,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             }
         }
 
-
         private void bindMultiImagePost(FeedPost post) {
             if (post.getMedia() != null && !post.getMedia().isEmpty()) {
                 mediaItems = post.getMedia();
-
 
                 // For posts with 1 image, use grid layout
                 if (mediaItems.size() <= 1) {
@@ -981,18 +976,19 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     // Pre-size the ViewPager to prevent layout shifts
                     int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
                     int viewPagerHeight = getDefaultImageHeight(); // Use default height for consistency
-                    
+
                     // Try to calculate a better height from the first image
                     if (!mediaItems.isEmpty()) {
                         FeedPostMediaItem firstItem = mediaItems.get(0);
-                        if (firstItem.getSizes() != null && !firstItem.getSizes().isEmpty()) {
+                        if (firstItem.getSizes() != null
+                                && !firstItem.getSizes().isEmpty()) {
                             FeedPostMediaItemAsset bestAsset = selectBestImageSize(firstItem.getSizes());
                             if (bestAsset != null) {
                                 viewPagerHeight = calculateImageHeight(bestAsset, screenWidth);
                             }
                         }
                     }
-                    
+
                     // Set the ViewPager height
                     imageViewPager.getLayoutParams().height = viewPagerHeight;
                     imageViewPager.requestLayout();
@@ -1040,7 +1036,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             if (count == 1) {
                 // Single image takes full size
                 FeedPostMediaItem mediaItem = mediaItems.get(0);
-                
+
                 // Pre-calculate and set grid height to prevent layout shifts
                 if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
                     FeedPostMediaItemAsset bestAsset = selectBestImageSize(mediaItem.getSizes());
@@ -1050,11 +1046,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         imageGridLayout.requestLayout();
                     }
                 }
-                
+
                 ImageView imageView = createImageView(post, mediaItem, 0);
-                GridLayout.LayoutParams params = new GridLayout.LayoutParams(
-                        GridLayout.spec(0, 2, 1f),
-                        GridLayout.spec(0, 2, 1f));
+                GridLayout.LayoutParams params =
+                        new GridLayout.LayoutParams(GridLayout.spec(0, 2, 1f), GridLayout.spec(0, 2, 1f));
                 params.width = GridLayout.LayoutParams.MATCH_PARENT;
                 params.height = GridLayout.LayoutParams.MATCH_PARENT;
                 imageGridLayout.addView(imageView, params);
@@ -1100,8 +1095,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
                     // Set up layout parameters for wrap_content height
                     ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT);
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                     imageView.setLayoutParams(layoutParams);
 
                     int calculatedHeight = calculateImageHeight(bestSizeAsset, parentWidth);
@@ -1120,16 +1114,14 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 } else {
                     // Set fallback if no valid asset
                     ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT);
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                     imageView.setLayoutParams(layoutParams);
                     imageView.setImageResource(R.drawable.image_placeholder);
                 }
             } else {
                 // Set fallback if no sizes
                 ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 imageView.setLayoutParams(layoutParams);
                 imageView.setImageResource(R.drawable.image_placeholder);
             }
@@ -1218,9 +1210,10 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                 FeedPostLink primaryLink = post.getLinks().get(0); // Use the first link as primary
 
                 // Check if we have a title or description to display
-                boolean hasTitleOrDescription =
-                        (primaryLink.getTitle() != null && !primaryLink.getTitle().isEmpty()) ||
-                                (primaryLink.getDescription() != null && !primaryLink.getDescription().isEmpty());
+                boolean hasTitleOrDescription = (primaryLink.getTitle() != null
+                                && !primaryLink.getTitle().isEmpty())
+                        || (primaryLink.getDescription() != null
+                                && !primaryLink.getDescription().isEmpty());
 
                 if (hasTitleOrDescription) {
                     // layout with title/description + button on right
@@ -1228,7 +1221,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     taskButtonsContainer.setVisibility(View.GONE); // Hide regular buttons container
 
                     // Display link title if available
-                    if (primaryLink.getTitle() != null && !primaryLink.getTitle().isEmpty()) {
+                    if (primaryLink.getTitle() != null
+                            && !primaryLink.getTitle().isEmpty()) {
                         linkTitleTextView.setText(primaryLink.getTitle());
                         linkTitleTextView.setVisibility(View.VISIBLE);
                     } else {
@@ -1236,7 +1230,8 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                     }
 
                     // Display link description if available
-                    if (primaryLink.getDescription() != null && !primaryLink.getDescription().isEmpty()) {
+                    if (primaryLink.getDescription() != null
+                            && !primaryLink.getDescription().isEmpty()) {
                         linkDescriptionTextView.setText(primaryLink.getDescription());
                         linkDescriptionTextView.setVisibility(View.VISIBLE);
                     } else {
@@ -1251,8 +1246,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
                         // Vertical button on right side
                         LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.WRAP_CONTENT,
-                                LinearLayout.LayoutParams.WRAP_CONTENT);
+                                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                         buttonParams.setMargins(0, i > 0 ? 8 : 0, 0, 0); // Add top margin for subsequent buttons
 
                         actionButton.setLayoutParams(buttonParams);
@@ -1260,7 +1254,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         // Apply modern styling with our custom background
                         actionButton.setBackgroundResource(R.drawable.task_button_background);
                         actionButton.setPadding(16, 12, 16, 12); // Increased vertical padding for taller buttons
-                        
+
                         // Apply theme colors
                         applyThemeToButton(actionButton);
 
@@ -1269,9 +1263,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         if (buttonText == null || buttonText.isEmpty()) {
                             buttonText = link.getTitle(); // Try title next
                             if (buttonText == null || buttonText.isEmpty()) {
-                                buttonText = link.getUrl() != null ?
-                                        context.getString(R.string.view_details) :
-                                        context.getString(R.string.learn_more);
+                                buttonText = link.getUrl() != null
+                                        ? context.getString(R.string.view_details)
+                                        : context.getString(R.string.learn_more);
                             }
                         }
 
@@ -1311,8 +1305,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                         // Create a horizontal layout for the buttons
                         LinearLayout buttonRow = new LinearLayout(context);
                         buttonRow.setLayoutParams(new LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.MATCH_PARENT,
-                                LinearLayout.LayoutParams.WRAP_CONTENT));
+                                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
                         buttonRow.setOrientation(LinearLayout.HORIZONTAL);
 
                         // Set equal distribution of buttons
@@ -1349,9 +1342,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                             // Set button text
                             String buttonText = link.getText(); // Prefer the display text if available
                             if (buttonText == null || buttonText.isEmpty()) {
-                                buttonText = link.getUrl() != null ?
-                                        context.getString(R.string.view_details) :
-                                        context.getString(R.string.learn_more);
+                                buttonText = link.getUrl() != null
+                                        ? context.getString(R.string.view_details)
+                                        : context.getString(R.string.learn_more);
                             }
 
                             actionButton.setText(buttonText);
@@ -1383,8 +1376,7 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
                             // Full width button
                             LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
-                                    LinearLayout.LayoutParams.MATCH_PARENT,
-                                    LinearLayout.LayoutParams.WRAP_CONTENT);
+                                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
                             // Add margin between buttons
                             if (i > 0) {
@@ -1403,9 +1395,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
                             // Set button text
                             String buttonText = link.getText(); // Prefer the display text if available
                             if (buttonText == null || buttonText.isEmpty()) {
-                                buttonText = link.getUrl() != null ?
-                                        context.getString(R.string.view_details) :
-                                        context.getString(R.string.learn_more);
+                                buttonText = link.getUrl() != null
+                                        ? context.getString(R.string.view_details)
+                                        : context.getString(R.string.learn_more);
                             }
 
                             actionButton.setText(buttonText);
@@ -1434,7 +1426,6 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
             }
         }
 
-
         /**
          * Get the best quality image URL for full-screen viewing
          * For full-screen viewing, we want the highest quality image available
@@ -1443,7 +1434,9 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
          * @return The URL of the highest quality image, or null if not available
          */
         private String getBestQualityImageUrl(FeedPostMediaItem mediaItem) {
-            if (mediaItem == null || mediaItem.getSizes() == null || mediaItem.getSizes().isEmpty()) {
+            if (mediaItem == null
+                    || mediaItem.getSizes() == null
+                    || mediaItem.getSizes().isEmpty()) {
                 return null;
             }
 
@@ -1499,41 +1492,40 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
         private void updateLikeAndCommentCounts(FeedPost post) {
             final int likeCount = sdk.getPostLikeCount(post.getId());
             final Integer commentCount = post.getCommentCount();
-            
+
             if (likeCount > 0 || (commentCount != null && commentCount > 0)) {
                 likeCountTextView.setVisibility(View.VISIBLE);
-                
+
                 StringBuilder displayText = new StringBuilder();
-                
+
                 // Add likes text if there are likes
                 if (likeCount > 0) {
                     // Show heart icon only when there are likes
                     likeCountTextView.setCompoundDrawablesWithIntrinsicBounds(
-                            context.getResources().getDrawable(R.drawable.heart_filled_small, null), 
-                            null, null, null);
-                            
-                    String likesText = likeCount == 1 ?
-                            context.getString(R.string.like_count_singular, likeCount) :
-                            context.getString(R.string.like_count_plural, likeCount);
+                            context.getResources().getDrawable(R.drawable.heart_filled_small, null), null, null, null);
+
+                    String likesText = likeCount == 1
+                            ? context.getString(R.string.like_count_singular, likeCount)
+                            : context.getString(R.string.like_count_plural, likeCount);
                     displayText.append(likesText);
                 } else {
                     // No likes, so don't show heart icon
                     likeCountTextView.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
                 }
-                
+
                 // Add comment count if there are comments
                 if (commentCount != null && commentCount > 0) {
                     // Add separator if needed
                     if (likeCount > 0) {
                         displayText.append(" · ");
                     }
-                    
-                    String commentsText = commentCount == 1 ?
-                            context.getString(R.string.comment_count_singular, commentCount) :
-                            context.getString(R.string.comment_count_plural, commentCount);
+
+                    String commentsText = commentCount == 1
+                            ? context.getString(R.string.comment_count_singular, commentCount)
+                            : context.getString(R.string.comment_count_plural, commentCount);
                     displayText.append(commentsText);
                 }
-                
+
                 // Set the text
                 likeCountTextView.setText(displayText.toString());
             } else {
@@ -1599,19 +1591,17 @@ public class FeedPostsAdapter extends RecyclerView.Adapter<FeedPostsAdapter.Feed
 
             if (useAbsoluteDates) {
                 // Use system's locale-aware date formatting
-                Locale currentLocale = context.getResources().getConfiguration().getLocales().get(0);
-                DateTimeFormatter formatter = DateTimeFormatter
-                        .ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+                Locale currentLocale =
+                        context.getResources().getConfiguration().getLocales().get(0);
+                DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(
+                                FormatStyle.MEDIUM, FormatStyle.SHORT)
                         .withLocale(currentLocale);
 
                 return date.format(formatter);
             } else {
                 // Format as relative date: 2 minutes ago, 1 hour ago, etc.
                 CharSequence relativeTime = DateUtils.getRelativeTimeSpanString(
-                        date.toInstant().toEpochMilli(),
-                        System.currentTimeMillis(),
-                        DateUtils.MINUTE_IN_MILLIS
-                );
+                        date.toInstant().toEpochMilli(), System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS);
                 return relativeTime.toString();
             }
         }

@@ -1,19 +1,17 @@
 package com.fastcomments.sdk;
 
-import com.fastcomments.core.CommentWidgetConfig;
-import com.fastcomments.model.PublicComment;
-import com.fastcomments.model.SortDirections;
-
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+
+import com.fastcomments.core.CommentWidgetConfig;
+import com.fastcomments.model.PublicComment;
+import com.fastcomments.model.SortDirections;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 /**
  * Integration tests for comment sorting operations.
@@ -52,7 +50,8 @@ public class SortingIntegrationTests extends IntegrationTestBase {
         // First visible comment should be the newest (C)
         RenderableComment first = getFirstVisibleComment(sdk2);
         assertNotNull(first);
-        assertTrue("Newest first: first comment should contain 'Comment C'",
+        assertTrue(
+                "Newest first: first comment should contain 'Comment C'",
                 first.getComment().getCommentHTML().contains("Comment C"));
     }
 
@@ -74,7 +73,8 @@ public class SortingIntegrationTests extends IntegrationTestBase {
         assertTrue("Should have comments", sdk2.commentsTree.visibleNodes.size() >= 3);
         RenderableComment first = getFirstVisibleComment(sdk2);
         assertNotNull(first);
-        assertTrue("Oldest first: first comment should contain 'Comment A'",
+        assertTrue(
+                "Oldest first: first comment should contain 'Comment A'",
                 first.getComment().getCommentHTML().contains("Comment A"));
     }
 
@@ -96,7 +96,8 @@ public class SortingIntegrationTests extends IntegrationTestBase {
         assertTrue("Should have comments", sdk2.commentsTree.visibleNodes.size() >= 2);
         RenderableComment first = getFirstVisibleComment(sdk2);
         assertNotNull(first);
-        assertTrue("Most relevant: first comment should be the upvoted one",
+        assertTrue(
+                "Most relevant: first comment should be the upvoted one",
                 first.getComment().getCommentHTML().contains("Comment A"));
     }
 
@@ -125,7 +126,8 @@ public class SortingIntegrationTests extends IntegrationTestBase {
         assertNotNull(firstNF);
         assertNotNull(firstOF);
         // The first comment should differ between NF and OF
-        assertTrue("Different sort directions should produce different first comment",
+        assertTrue(
+                "Different sort directions should produce different first comment",
                 !firstNF.getComment().getId().equals(firstOF.getComment().getId()));
     }
 
@@ -148,14 +150,16 @@ public class SortingIntegrationTests extends IntegrationTestBase {
         pinCommentSync(adminSdk, a.getId());
 
         // Reload with each sort direction and verify pinned comment is first
-        for (SortDirections dir : new SortDirections[]{SortDirections.NF, SortDirections.OF, SortDirections.MR}) {
+        for (SortDirections dir : new SortDirections[] {SortDirections.NF, SortDirections.OF, SortDirections.MR}) {
             FastCommentsSDK sorted = makeSDKWithSort(urlId, dir);
             loadSync(sorted);
 
             RenderableComment first = getFirstVisibleComment(sorted);
             assertNotNull("First comment should exist for sort " + dir, first);
-            assertEquals("Pinned comment should be first for sort " + dir,
-                    a.getId(), first.getComment().getId());
+            assertEquals(
+                    "Pinned comment should be first for sort " + dir,
+                    a.getId(),
+                    first.getComment().getId());
         }
     }
 

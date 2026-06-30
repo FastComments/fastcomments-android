@@ -1,9 +1,7 @@
 package com.fastcomments;
 
 import android.os.Bundle;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.model.SortDirections;
 import com.fastcomments.sdk.FastCommentsSDK;

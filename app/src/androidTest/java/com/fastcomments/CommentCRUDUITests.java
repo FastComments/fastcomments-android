@@ -1,10 +1,9 @@
 package com.fastcomments;
 
 import static androidx.test.espresso.Espresso.onView;
-import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.clearText;
+import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
-import static androidx.test.espresso.action.ViewActions.replaceText;
 import static androidx.test.espresso.action.ViewActions.typeText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.RootMatchers.isDialog;
@@ -16,11 +15,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertTrue;
 
 import android.util.Log;
-
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import com.fastcomments.sdk.R;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -76,10 +72,8 @@ public class CommentCRUDUITests extends UITestBase {
             }
         });
 
-        onView(withId(R.id.commentInput))
-                .perform(click(), typeText("Hello from UI test"), closeSoftKeyboard());
-        onView(withId(R.id.sendButton))
-                .perform(click());
+        onView(withId(R.id.commentInput)).perform(click(), typeText("Hello from UI test"), closeSoftKeyboard());
+        onView(withId(R.id.sendButton)).perform(click());
 
         boolean found = false;
         long deadline = System.currentTimeMillis() + 15000;
@@ -111,8 +105,7 @@ public class CommentCRUDUITests extends UITestBase {
             }
         });
 
-        onView(withId(R.id.commentInput))
-                .perform(click(), typeText("Original text"), closeSoftKeyboard());
+        onView(withId(R.id.commentInput)).perform(click(), typeText("Original text"), closeSoftKeyboard());
         onView(withId(R.id.sendButton)).perform(click());
 
         // Wait for comment to appear
@@ -134,9 +127,7 @@ public class CommentCRUDUITests extends UITestBase {
         onView(withId(R.id.editCommentText))
                 .inRoot(isDialog())
                 .perform(clearText(), typeText("Edited text"), closeSoftKeyboard());
-        onView(withId(R.id.saveEditButton))
-                .inRoot(isDialog())
-                .perform(click());
+        onView(withId(R.id.saveEditButton)).inRoot(isDialog()).perform(click());
 
         // Verify edited text appears
         boolean found = false;
@@ -169,8 +160,7 @@ public class CommentCRUDUITests extends UITestBase {
             }
         });
 
-        onView(withId(R.id.commentInput))
-                .perform(click(), typeText("Delete me"), closeSoftKeyboard());
+        onView(withId(R.id.commentInput)).perform(click(), typeText("Delete me"), closeSoftKeyboard());
         onView(withId(R.id.sendButton)).perform(click());
 
         // Wait for comment to appear
@@ -189,9 +179,7 @@ public class CommentCRUDUITests extends UITestBase {
         onView(withText(R.string.delete_comment)).perform(click());
 
         // Confirm in AlertDialog — positive button is R.string.delete ("Delete"), not R.string.delete_comment
-        onView(withText(R.string.delete))
-                .inRoot(isDialog())
-                .perform(click());
+        onView(withText(R.string.delete)).inRoot(isDialog()).perform(click());
         Thread.sleep(1000); // Let dialog dismiss and delete API complete
 
         // Verify comment disappeared — check that the empty state reappears
@@ -260,8 +248,8 @@ public class CommentCRUDUITests extends UITestBase {
             try {
                 // Try scrolling to the last adapter position to find older comments
                 onView(withId(R.id.recyclerViewComments))
-                        .perform(androidx.test.espresso.contrib.RecyclerViewActions
-                                .scrollToPosition(34)); // 0-indexed, position 34 = 35th item
+                        .perform(androidx.test.espresso.contrib.RecyclerViewActions.scrollToPosition(
+                                34)); // 0-indexed, position 34 = 35th item
                 Thread.sleep(500);
                 onView(withId(R.id.recyclerViewComments))
                         .check(matches(hasDescendant(withText(containsString("Comment 1")))));

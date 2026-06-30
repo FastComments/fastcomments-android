@@ -13,11 +13,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertTrue;
 
 import android.util.Log;
-
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import com.fastcomments.sdk.R;
-
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -56,8 +53,7 @@ public class ThreadingUITests extends UITestBase {
             }
         });
 
-        onView(withId(R.id.commentInput))
-                .perform(click(), typeText("Parent comment"), closeSoftKeyboard());
+        onView(withId(R.id.commentInput)).perform(click(), typeText("Parent comment"), closeSoftKeyboard());
         onView(withId(R.id.sendButton)).perform(click());
 
         // Wait for parent to appear
@@ -86,8 +82,7 @@ public class ThreadingUITests extends UITestBase {
 
         // Type and submit reply
         Log.d(TAG, "Typing reply...");
-        onView(withId(R.id.commentInput))
-                .perform(click(), typeText("This is a reply"), closeSoftKeyboard());
+        onView(withId(R.id.commentInput)).perform(click(), typeText("This is a reply"), closeSoftKeyboard());
         Thread.sleep(500); // Let keyboard dismiss
         Log.d(TAG, "Clicking send for reply...");
         onView(withId(R.id.sendButton)).perform(click());

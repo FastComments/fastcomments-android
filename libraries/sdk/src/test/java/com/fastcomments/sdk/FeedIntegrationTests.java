@@ -1,17 +1,16 @@
 package com.fastcomments.sdk;
 
-import com.fastcomments.model.FeedPost;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import com.fastcomments.model.FeedPost;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 /**
  * Integration tests for Feed SDK operations.
@@ -74,8 +73,7 @@ public class FeedIntegrationTests extends IntegrationTestBase {
 
         likeFeedPostSync(sdk, post.getId());
 
-        assertTrue("User should have reacted to post",
-                sdk.hasUserReactedToPost(post.getId(), "l"));
+        assertTrue("User should have reacted to post", sdk.hasUserReactedToPost(post.getId(), "l"));
         assertEquals("Like count should be 1", 1, sdk.getPostLikeCount(post.getId()));
     }
 
@@ -96,8 +94,7 @@ public class FeedIntegrationTests extends IntegrationTestBase {
 
         // Unlike (toggle)
         likeFeedPostSync(sdk, post.getId());
-        assertFalse("User should no longer have reacted after toggle",
-                sdk.hasUserReactedToPost(post.getId(), "l"));
+        assertFalse("User should no longer have reacted after toggle", sdk.hasUserReactedToPost(post.getId(), "l"));
         assertEquals("Like count should be 0 after toggle", 0, sdk.getPostLikeCount(post.getId()));
     }
 
@@ -127,7 +124,10 @@ public class FeedIntegrationTests extends IntegrationTestBase {
         sdk2.restorePaginationState(state);
 
         assertNotNull(sdk2.getFeedPosts());
-        assertEquals("Feed posts count should match", state.getFeedPosts().size(), sdk2.getFeedPosts().size());
+        assertEquals(
+                "Feed posts count should match",
+                state.getFeedPosts().size(),
+                sdk2.getFeedPosts().size());
     }
 
     @Test
@@ -140,9 +140,9 @@ public class FeedIntegrationTests extends IntegrationTestBase {
 
         FastCommentsSDK commentsSDK = sdk.createCommentsSDKForPost(post);
         assertNotNull(commentsSDK);
-        assertEquals("Comments SDK tenantId should match",
-                getTenantId(), commentsSDK.getConfig().tenantId);
-        assertTrue("Comments SDK urlId should start with 'post:'",
+        assertEquals("Comments SDK tenantId should match", getTenantId(), commentsSDK.getConfig().tenantId);
+        assertTrue(
+                "Comments SDK urlId should start with 'post:'",
                 commentsSDK.getConfig().urlId.startsWith("post:"));
     }
 

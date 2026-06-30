@@ -8,7 +8,7 @@ public enum UserClickSource {
      * User clicked on the name/username
      */
     NAME,
-    
+
     /**
      * User clicked on the avatar/profile picture
      */

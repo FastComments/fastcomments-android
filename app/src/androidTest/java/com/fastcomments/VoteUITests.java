@@ -13,9 +13,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import com.fastcomments.sdk.R;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,14 +45,12 @@ public class VoteUITests extends UITestBase {
             }
         });
 
-        onView(withId(R.id.commentInput))
-                .perform(click(), typeText(text), closeSoftKeyboard());
+        onView(withId(R.id.commentInput)).perform(click(), typeText(text), closeSoftKeyboard());
         onView(withId(R.id.sendButton)).perform(click());
 
         pollUntil(10000, () -> {
             try {
-                onView(withId(R.id.recyclerViewComments))
-                        .check(matches(hasDescendant(withText(containsString(text)))));
+                onView(withId(R.id.recyclerViewComments)).check(matches(hasDescendant(withText(containsString(text)))));
                 return true;
             } catch (Exception | AssertionError e) {
                 return false;

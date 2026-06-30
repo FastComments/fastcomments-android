@@ -1,18 +1,14 @@
 package com.fastcomments.sdk;
 
 import android.content.Context;
-import android.util.Log;
-
 import com.fastcomments.model.PublicComment;
 import com.fastcomments.model.SortDirections;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 
 /**
  * The way the RecyclerView works is that when it needs to load an element at an index it calls onBindViewHolder(index)
@@ -49,15 +45,15 @@ public class CommentsTree {
     public void setAdapter(CommentsAdapter adapter) {
         this.adapter = adapter;
     }
-    
+
     public CommentsAdapter getAdapter() {
         return this.adapter;
     }
-    
+
     public Context getContext() {
         return adapter != null ? adapter.getContext() : null;
     }
-    
+
     /**
      * Set whether this tree should use live chat style rendering (with date separators)
      * @param liveChatStyle true for live chat style
@@ -100,20 +96,20 @@ public class CommentsTree {
                 final RenderableComment renderableComment = new RenderableComment(comment);
                 addToMapAndRelated(renderableComment);
                 allComments.add(renderableComment);
-                
+
                 // Check if we need a date separator
                 if (comment.getDate() != null) {
                     java.time.LocalDate commentDate = comment.getDate().toLocalDate();
-                    
+
                     if (currentDate == null || !currentDate.equals(commentDate)) {
                         // Add date separator for this new date
                         currentDate = commentDate;
                         visibleNodes.add(new RenderableNode.DateSeparator(currentDate));
                     }
                 }
-                
+
                 visibleNodes.add(renderableComment);
-                
+
                 // In live chat, we typically don't show children/replies
                 // But process them anyway in case this changes
                 if (comment.getChildren() != null) {
@@ -155,8 +151,8 @@ public class CommentsTree {
         }
 
         // Notify the adapter of exactly what changed (the newly added comments) TODO doesn't work right
-//        int itemCount = visibleNodes.size() - initialSize;
-//        adapter.notifyItemRangeInserted(initialSize, itemCount);
+        //        int itemCount = visibleNodes.size() - initialSize;
+        //        adapter.notifyItemRangeInserted(initialSize, itemCount);
         adapter.notifyDataSetChanged();
     }
 
@@ -195,7 +191,11 @@ public class CommentsTree {
         }
     }
 
-    private void handleChildren(List<RenderableComment> allComments, List<RenderableNode> visibleNodes, List<PublicComment> comments, boolean visible) {
+    private void handleChildren(
+            List<RenderableComment> allComments,
+            List<RenderableNode> visibleNodes,
+            List<PublicComment> comments,
+            boolean visible) {
         for (PublicComment child : comments) {
             final RenderableComment childRenderable = new RenderableComment(child);
             addToMapAndRelated(childRenderable);
@@ -235,7 +235,8 @@ public class CommentsTree {
             final RenderableComment childRenderable = commentsById.get(child.getId());
             // see explanation at top of class
             allComments.remove(childRenderable);
-            int index = visibleNodes.indexOf(childRenderable); // TODO optimize away lookup if parent does not have children visible
+            int index = visibleNodes.indexOf(
+                    childRenderable); // TODO optimize away lookup if parent does not have children visible
             if (index >= 0) {
                 indexesRemoved.add(index);
                 visibleNodes.remove(index);
@@ -246,7 +247,10 @@ public class CommentsTree {
         }
     }
 
-    public void setRepliesVisible(RenderableComment renderableComment, boolean areRepliesVisible, Producer<GetChildrenRequest, List<PublicComment>> getChildren) {
+    public void setRepliesVisible(
+            RenderableComment renderableComment,
+            boolean areRepliesVisible,
+            Producer<GetChildrenRequest, List<PublicComment>> getChildren) {
         final boolean wasRepliesVisible = renderableComment.isRepliesShown;
         if (wasRepliesVisible == areRepliesVisible) {
             return;
@@ -274,8 +278,7 @@ public class CommentsTree {
                     RenderableButton newRepliesButton = new RenderableButton(
                             RenderableButton.TYPE_NEW_CHILD_COMMENTS,
                             renderableComment.getNewChildCommentsCount(),
-                            renderableComment.getComment().getId()
-                    );
+                            renderableComment.getComment().getId());
 
                     // Add the button after the last child and track it
                     String parentId = renderableComment.getComment().getId();
@@ -294,12 +297,7 @@ public class CommentsTree {
                 // Create GetChildrenRequest with the comment ID and the toggle button
                 // Note: We can't directly get the button here, so we'll handle button reference via the adapter
                 GetChildrenRequest request = new GetChildrenRequest(
-                        renderableComment.getComment().getId(),
-                        null,
-                        0,
-                        renderableComment.childPageSize,
-                        false
-                );
+                        renderableComment.getComment().getId(), null, 0, renderableComment.childPageSize, false);
 
                 final String parentId = renderableComment.getComment().getId();
                 getChildren.get(request, (asyncFetchedChildren) -> {
@@ -309,8 +307,9 @@ public class CommentsTree {
                     // Set hasMoreChildren based on child count vs. loaded children count
                     if (renderableComment.getComment().getChildCount() != null) {
                         int totalChildCount = renderableComment.getComment().getChildCount();
-                        int loadedChildCount = renderableComment.getComment().getChildren() != null ?
-                                renderableComment.getComment().getChildren().size() : 0;
+                        int loadedChildCount = renderableComment.getComment().getChildren() != null
+                                ? renderableComment.getComment().getChildren().size()
+                                : 0;
                         renderableComment.hasMoreChildren = (loadedChildCount < totalChildCount);
                     }
 
@@ -323,8 +322,7 @@ public class CommentsTree {
                         RenderableButton newRepliesButton = new RenderableButton(
                                 RenderableButton.TYPE_NEW_CHILD_COMMENTS,
                                 renderableComment.getNewChildCommentsCount(),
-                                parentId
-                        );
+                                parentId);
 
                         // Add the button after the last child and track it
                         visibleNodes.add(lastChildIndex + 1, newRepliesButton);
@@ -386,8 +384,8 @@ public class CommentsTree {
                 lastChildIndex = i;
             } else if (node instanceof RenderableButton) {
                 RenderableButton button = (RenderableButton) node;
-                if (button.getButtonType() == RenderableButton.TYPE_NEW_CHILD_COMMENTS &&
-                        parentId.equals(button.getParentId())) {
+                if (button.getButtonType() == RenderableButton.TYPE_NEW_CHILD_COMMENTS
+                        && parentId.equals(button.getParentId())) {
                     lastChildIndex = i;
                 } else {
                     break;
@@ -409,8 +407,9 @@ public class CommentsTree {
             // see explanation at top of class
             visibleNodes.add(indexer, childRenderable);
         }
-        adapter.notifyItemRangeInserted(myIndex + 1, children.size()); // everything after me has changed/moved since it's a flat list
-        
+        adapter.notifyItemRangeInserted(
+                myIndex + 1, children.size()); // everything after me has changed/moved since it's a flat list
+
         // Check if we need to fetch presence status for newly visible comments
         // Use the specific list of children that were just added for efficiency
         checkAndRequestUserPresenceStatuses(children);
@@ -440,7 +439,7 @@ public class CommentsTree {
 
     /**
      * Backward-compatible method that defaults to NEWEST_FIRST sort direction
-     * 
+     *
      * @param comment    The comment to add
      * @param displayNow Whether to show the comment immediately
      */
@@ -452,7 +451,7 @@ public class CommentsTree {
     private boolean isNewestFirst(SortDirections sortDirections) {
         return sortDirections == SortDirections.NF || sortDirections == SortDirections.MR;
     }
-    
+
     /**
      * Add a new comment to the tree (from live events) with the specified sort direction
      *
@@ -474,7 +473,7 @@ public class CommentsTree {
             // For NEWEST_FIRST, add at index 0 (top)
             // For OLDEST_FIRST, add at the end (bottom)
             boolean isNewestFirst = isNewestFirst(sortDirection);
-            
+
             if (isNewestFirst) {
                 allComments.add(0, renderableComment);
             } else {
@@ -490,12 +489,12 @@ public class CommentsTree {
                 } else {
                     // For oldest first (like chat), add at the bottom
                     position = visibleNodes.size();
-                    
+
                     // Check if we need to add a date separator in live chat mode
                     if (liveChatStyle && comment.getDate() != null) {
                         java.time.LocalDate commentDate = comment.getDate().toLocalDate();
                         boolean needDateSeparator = true;
-                        
+
                         // Check if there are any comments already with the same date
                         for (int i = visibleNodes.size() - 1; i >= 0; i--) {
                             RenderableNode node = visibleNodes.get(i);
@@ -508,15 +507,19 @@ public class CommentsTree {
                                 break; // Exit after finding the most recent date separator
                             } else if (node instanceof RenderableComment) {
                                 RenderableComment lastComment = (RenderableComment) node;
-                                if (lastComment.getComment().getDate() != null && 
-                                    lastComment.getComment().getDate().toLocalDate().equals(commentDate)) {
+                                if (lastComment.getComment().getDate() != null
+                                        && lastComment
+                                                .getComment()
+                                                .getDate()
+                                                .toLocalDate()
+                                                .equals(commentDate)) {
                                     // The previous comment is from the same date
                                     needDateSeparator = false;
                                     break;
                                 }
                             }
                         }
-                        
+
                         if (needDateSeparator) {
                             RenderableNode.DateSeparator separator = new RenderableNode.DateSeparator(commentDate);
                             visibleNodes.add(separator);
@@ -524,11 +527,11 @@ public class CommentsTree {
                             position++;
                         }
                     }
-                    
+
                     visibleNodes.add(renderableComment);
                 }
                 adapter.notifyItemInserted(position);
-                
+
                 // Check for new user presence (optimized for single comment)
                 checkAndRequestUserPresenceStatus(renderableComment);
             } else {
@@ -537,10 +540,8 @@ public class CommentsTree {
 
                 // If this is the first new comment, add a "New Comments" button at the top
                 if (newRootCommentsButton == null) {
-                    newRootCommentsButton = new RenderableButton(
-                            RenderableButton.TYPE_NEW_ROOT_COMMENTS,
-                            newRootComments.size()
-                    );
+                    newRootCommentsButton =
+                            new RenderableButton(RenderableButton.TYPE_NEW_ROOT_COMMENTS, newRootComments.size());
                     visibleNodes.add(0, newRootCommentsButton);
                     adapter.notifyItemInserted(0);
                 } else {
@@ -548,10 +549,8 @@ public class CommentsTree {
                     int buttonIndex = visibleNodes.indexOf(newRootCommentsButton);
                     if (buttonIndex >= 0) {
                         // Replace with updated button
-                        newRootCommentsButton = new RenderableButton(
-                                RenderableButton.TYPE_NEW_ROOT_COMMENTS,
-                                newRootComments.size()
-                        );
+                        newRootCommentsButton =
+                                new RenderableButton(RenderableButton.TYPE_NEW_ROOT_COMMENTS, newRootComments.size());
                         visibleNodes.set(buttonIndex, newRootCommentsButton);
                         adapter.notifyItemChanged(buttonIndex);
                     }
@@ -594,7 +593,7 @@ public class CommentsTree {
                         int insertionIndex = findLastChildIndex(parent) + 1;
                         visibleNodes.add(insertionIndex, renderableComment);
                         adapter.notifyItemInserted(insertionIndex);
-                        
+
                         // Check for new user presence (optimized for single comment)
                         checkAndRequestUserPresenceStatus(renderableComment);
                     } else if (parent.isRepliesShown) {
@@ -613,8 +612,7 @@ public class CommentsTree {
                                 RenderableButton updatedButton = new RenderableButton(
                                         RenderableButton.TYPE_NEW_CHILD_COMMENTS,
                                         parent.getNewChildCommentsCount(),
-                                        parentId
-                                );
+                                        parentId);
                                 visibleNodes.set(buttonIndex, updatedButton);
                                 newChildCommentsButtons.put(parentId, updatedButton);
                                 adapter.notifyItemChanged(buttonIndex);
@@ -625,8 +623,7 @@ public class CommentsTree {
                             RenderableButton newRepliesButton = new RenderableButton(
                                     RenderableButton.TYPE_NEW_CHILD_COMMENTS,
                                     parent.getNewChildCommentsCount(),
-                                    parentId
-                            );
+                                    parentId);
                             visibleNodes.add(insertionIndex, newRepliesButton);
                             newChildCommentsButtons.put(parentId, newRepliesButton);
                             adapter.notifyItemInserted(insertionIndex);
@@ -659,7 +656,7 @@ public class CommentsTree {
         // Add all buffered comments at the top of the list in chronological order (oldest first)
         // Convert PublicComment list to RenderableComment list as we add them
         List<PublicComment> addedComments = new ArrayList<>();
-        
+
         for (int i = 0; i < newRootComments.size(); i++) {
             PublicComment comment = newRootComments.get(i);
             RenderableComment renderableComment = commentsById.get(comment.getId());
@@ -669,7 +666,7 @@ public class CommentsTree {
                 addedComments.add(comment);
             }
         }
-        
+
         // Check for new user presence (optimized for the specific comments)
         if (!addedComments.isEmpty()) {
             checkAndRequestUserPresenceStatuses(addedComments);
@@ -726,7 +723,7 @@ public class CommentsTree {
         // the starting position by subtracting the number of inserted items
         int startPosition = insertionIndex - newChildComments.size();
         adapter.notifyItemRangeInserted(startPosition, newChildComments.size());
-        
+
         // Check for new user presence (optimized for specific comments)
         checkAndRequestUserPresenceStatuses(newChildComments);
     }
@@ -811,26 +808,26 @@ public class CommentsTree {
             notifyItemChanged(comment);
         }
     }
-    
+
     /**
      * Check for newly visible comments and return any user IDs we need to fetch presence for
-     * 
+     *
      * @return A set of user IDs needing presence status updates
      */
     public Set<String> checkForNewlyVisibleCommentUsers() {
         Set<String> userIdsToFetch = new HashSet<>();
-        
+
         // Check all visible comments
         for (RenderableNode node : visibleNodes) {
             if (node instanceof RenderableComment) {
                 RenderableComment comment = (RenderableComment) node;
-                
+
                 // Check regular user ID
                 String userId = comment.getComment().getUserId();
                 if (userId != null && !userId.isEmpty() && !userPresenceCache.containsKey(userId)) {
                     userIdsToFetch.add(userId);
                 }
-                
+
                 // Check anonymous user ID
                 String anonUserId = comment.getComment().getAnonUserId();
                 if (anonUserId != null && !anonUserId.isEmpty() && !userPresenceCache.containsKey(anonUserId)) {
@@ -838,10 +835,10 @@ public class CommentsTree {
                 }
             }
         }
-        
+
         return userIdsToFetch;
     }
-    
+
     /**
      * Check for newly visible comments and request presence status updates if needed
      */
@@ -849,62 +846,62 @@ public class CommentsTree {
         Set<String> userIdsToFetch = checkForNewlyVisibleCommentUsers();
         requestPresenceStatusesIfNeeded(userIdsToFetch);
     }
-    
+
     /**
      * Check for newly visible comment and request presence status updates if needed
-     * 
+     *
      * @param comment The specific comment that became visible
      */
     public void checkAndRequestUserPresenceStatus(RenderableComment comment) {
         Set<String> userIdsToFetch = new HashSet<>();
-        
+
         // Check regular user ID
         String userId = comment.getComment().getUserId();
         if (userId != null && !userId.isEmpty() && !userPresenceCache.containsKey(userId)) {
             userIdsToFetch.add(userId);
         }
-        
+
         // Check anonymous user ID
         String anonUserId = comment.getComment().getAnonUserId();
         if (anonUserId != null && !anonUserId.isEmpty() && !userPresenceCache.containsKey(anonUserId)) {
             userIdsToFetch.add(anonUserId);
         }
-        
+
         requestPresenceStatusesIfNeeded(userIdsToFetch);
     }
-    
+
     /**
      * Check for newly visible comments and request presence status updates if needed
-     * 
+     *
      * @param comments The specific comments that became visible
      */
     public void checkAndRequestUserPresenceStatuses(List<PublicComment> comments) {
         if (comments == null || comments.isEmpty()) {
             return;
         }
-        
+
         Set<String> userIdsToFetch = new HashSet<>();
-        
+
         for (PublicComment comment : comments) {
             // Check regular user ID
             String userId = comment.getUserId();
             if (userId != null && !userId.isEmpty() && !userPresenceCache.containsKey(userId)) {
                 userIdsToFetch.add(userId);
             }
-            
+
             // Check anonymous user ID
             String anonUserId = comment.getAnonUserId();
             if (anonUserId != null && !anonUserId.isEmpty() && !userPresenceCache.containsKey(anonUserId)) {
                 userIdsToFetch.add(anonUserId);
             }
         }
-        
+
         requestPresenceStatusesIfNeeded(userIdsToFetch);
     }
-    
+
     /**
      * Request presence status updates for a set of user IDs
-     * 
+     *
      * @param userIdsToFetch The set of user IDs to fetch status for
      */
     private void requestPresenceStatusesIfNeeded(Set<String> userIdsToFetch) {
@@ -917,22 +914,22 @@ public class CommentsTree {
                 }
                 userIdsCSV.append(userId);
             }
-            
+
             // Request presence status updates
             presenceStatusListener.onPresenceStatusNeeded(userIdsCSV.toString());
         }
     }
-    
+
     // Interface for requesting presence status updates
     public interface PresenceStatusListener {
         void onPresenceStatusNeeded(String userIdsCSV);
     }
-    
+
     private PresenceStatusListener presenceStatusListener;
-    
+
     /**
      * Set the listener for presence status update requests
-     * 
+     *
      * @param listener The listener to set
      */
     public void setPresenceStatusListener(PresenceStatusListener listener) {
@@ -960,18 +957,19 @@ public class CommentsTree {
 
         // Remove this from the cached list of user's comments.
         if (comment.getComment().getUserId() != null) {
-            final List<RenderableComment> usersComments = commentsByUserId.get(comment.getComment().getUserId());
+            final List<RenderableComment> usersComments =
+                    commentsByUserId.get(comment.getComment().getUserId());
             if (usersComments != null) {
                 usersComments.remove(comment);
             }
         }
         if (comment.getComment().getAnonUserId() != null) {
-            final List<RenderableComment> usersComments = commentsByUserId.get(comment.getComment().getAnonUserId());
+            final List<RenderableComment> usersComments =
+                    commentsByUserId.get(comment.getComment().getAnonUserId());
             if (usersComments != null) {
                 usersComments.remove(comment);
             }
         }
-
 
         // Handle parent's child count if this is a reply
         final String parentId = comment.getComment().getParentId();
@@ -1010,7 +1008,8 @@ public class CommentsTree {
             adapter.notifyItemRemoved(visibleIndex);
 
             if (comment.isRepliesShown && comment.getComment().getChildren() != null) {
-                final List<Integer> indexesToRemove = new ArrayList<>(comment.getComment().getChildren().size());
+                final List<Integer> indexesToRemove =
+                        new ArrayList<>(comment.getComment().getChildren().size());
                 removeChildren(comment.getComment().getChildren(), indexesToRemove);
                 for (Integer i : indexesToRemove) {
                     adapter.notifyItemRemoved(i); // TODO worth to optimize into one notification?
@@ -1020,7 +1019,7 @@ public class CommentsTree {
 
         return true;
     }
-    
+
     /**
      * Updates the isBlocked status of comments based on the commentStatuses map
      * returned from the block/unblock API response, and notifies the adapter.

@@ -9,14 +9,11 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.viewpager2.widget.ViewPager2;
-
 import com.bumptech.glide.Glide;
 import com.fastcomments.model.FeedPostMediaItem;
 import com.github.chrisbanes.photoview.PhotoView;
-
 import java.util.List;
 
 /**
@@ -54,9 +51,9 @@ public class FullImageDialog extends Dialog {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        
+
         if (isGalleryMode) {
             setContentView(R.layout.dialog_full_image_gallery);
             setupGalleryMode();
@@ -64,25 +61,24 @@ public class FullImageDialog extends Dialog {
             setContentView(R.layout.dialog_full_image);
             setupSingleImageMode();
         }
-        
+
         // Make dialog fill the screen
         Window window = getWindow();
         if (window != null) {
-            window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, 
-                    WindowManager.LayoutParams.MATCH_PARENT);
+            window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
             window.setBackgroundDrawable(new ColorDrawable(Color.BLACK));
-            
+
             // Set window flags for immersive mode
             window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            window.getDecorView().setSystemUiVisibility(
-                    android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    | android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+            window.getDecorView()
+                    .setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            | android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         }
-        
+
         // Set up close button
         ImageButton closeButton = findViewById(R.id.closeButton);
         closeButton.setOnClickListener(v -> dismiss());
@@ -91,7 +87,7 @@ public class FullImageDialog extends Dialog {
     private void setupSingleImageMode() {
         // Set up photo view with the image
         PhotoView photoView = findViewById(R.id.photoView);
-        
+
         // Load image with Glide
         if (imageUrl != null && !imageUrl.isEmpty()) {
             Glide.with(getContext())

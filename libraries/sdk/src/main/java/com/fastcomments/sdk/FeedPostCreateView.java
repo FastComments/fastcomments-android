@@ -1,7 +1,6 @@
 package com.fastcomments.sdk;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Handler;
@@ -24,12 +23,10 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.CreateFeedPostParams;
 import com.fastcomments.model.FeedPost;
@@ -37,11 +34,9 @@ import com.fastcomments.model.FeedPostLink;
 import com.fastcomments.model.FeedPostMediaItem;
 import com.fastcomments.model.FeedPostMediaItemAsset;
 import com.fastcomments.model.UserSessionInfo;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * A custom view for creating feed posts with text, images and links
@@ -244,7 +239,7 @@ public class FeedPostCreateView extends FrameLayout {
             // Set user name
             if (userInfo.getDisplayName() != null && !userInfo.getDisplayName().isEmpty()) {
                 formUserNameTextView.setText(userInfo.getDisplayName());
-            } else if(userInfo.getUsername() != null && !userInfo.getUsername().isEmpty()) {
+            } else if (userInfo.getUsername() != null && !userInfo.getUsername().isEmpty()) {
                 formUserNameTextView.setText(userInfo.getUsername());
             } else {
                 formUserNameTextView.setText(R.string.anonymous);
@@ -322,9 +317,9 @@ public class FeedPostCreateView extends FrameLayout {
             // Handle as remote media - add directly to remoteMediaItems
             FeedPostMediaItem mediaItem = new FeedPostMediaItem();
             FeedPostMediaItemAsset asset = new FeedPostMediaItemAsset()
-                .src(imageUri.toString())
-                .w(400)  // Default dimensions for GIFs
-                .h(300);
+                    .src(imageUri.toString())
+                    .w(400) // Default dimensions for GIFs
+                    .h(300);
             mediaItem.setSizes(java.util.Arrays.asList(asset));
             remoteMediaItems.add(mediaItem);
 
@@ -383,9 +378,11 @@ public class FeedPostCreateView extends FrameLayout {
     private void showAddLinkDialog() {
         // Don't show dialog if a link is already attached
         if (attachedLink != null) {
-            Toast.makeText(getContext(),
-                    "A link is already attached. Remove it first to add a new one.",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(
+                            getContext(),
+                            "A link is already attached. Remove it first to add a new one.",
+                            Toast.LENGTH_SHORT)
+                    .show();
             return;
         }
 
@@ -450,10 +447,10 @@ public class FeedPostCreateView extends FrameLayout {
      * Enable/disable submit button based on content
      */
     private void updateSubmitButtonState() {
-        boolean hasContent = !TextUtils.isEmpty(postContentEditText.getText()) ||
-                !selectedMediaUris.isEmpty() ||
-                !remoteMediaItems.isEmpty() ||
-                attachedLink != null;
+        boolean hasContent = !TextUtils.isEmpty(postContentEditText.getText())
+                || !selectedMediaUris.isEmpty()
+                || !remoteMediaItems.isEmpty()
+                || attachedLink != null;
 
         submitPostButton.setEnabled(hasContent);
 
@@ -492,12 +489,17 @@ public class FeedPostCreateView extends FrameLayout {
         hideError();
 
         // Check that we have content — serialize spans to HTML
-        String plainContent = postContentEditText.getText() != null ?
-                postContentEditText.getText().toString().trim() : "";
-        String content = plainContent.isEmpty() ? "" :
-                RichTextHelper.toHtml(postContentEditText.getText()).trim();
+        String plainContent = postContentEditText.getText() != null
+                ? postContentEditText.getText().toString().trim()
+                : "";
+        String content = plainContent.isEmpty()
+                ? ""
+                : RichTextHelper.toHtml(postContentEditText.getText()).trim();
 
-        boolean hasContent = !plainContent.isEmpty() || !selectedMediaUris.isEmpty() || !remoteMediaItems.isEmpty() || attachedLink != null;
+        boolean hasContent = !plainContent.isEmpty()
+                || !selectedMediaUris.isEmpty()
+                || !remoteMediaItems.isEmpty()
+                || attachedLink != null;
 
         if (!hasContent) {
             showError(getContext().getString(R.string.content_required));
@@ -510,16 +512,19 @@ public class FeedPostCreateView extends FrameLayout {
         createPostFromInput(content, new FCCallback<FeedPost>() {
             @Override
             public boolean onFailure(APIError error) {
-                Log.e("FeedPostCreateView", "Create post from input failed: " +
-                    (error != null ? error.getReason() : "Unknown error") +
-                    ", translated: " + (error != null ? error.getTranslatedError() : "None"));
+                Log.e(
+                        "FeedPostCreateView",
+                        "Create post from input failed: " + (error != null ? error.getReason() : "Unknown error")
+                                + ", translated: "
+                                + (error != null ? error.getTranslatedError() : "None"));
                 mainHandler.post(() -> {
                     // Hide loading state
                     setSubmitting(false);
 
                     // Show error message
-                    String errorMessage = error != null && error.getTranslatedError() != null ?
-                            error.getTranslatedError() : getContext().getString(R.string.post_error);
+                    String errorMessage = error != null && error.getTranslatedError() != null
+                            ? error.getTranslatedError()
+                            : getContext().getString(R.string.post_error);
 
                     showError(errorMessage);
 
@@ -539,16 +544,19 @@ public class FeedPostCreateView extends FrameLayout {
                     sdk.createPost(params, new FCCallback<FeedPost>() {
                         @Override
                         public boolean onFailure(APIError error) {
-                            Log.e("FeedPostCreateView", "Post creation failed: " +
-                                (error != null ? error.getReason() : "Unknown error") +
-                                ", translated: " + (error != null ? error.getTranslatedError() : "None"));
+                            Log.e(
+                                    "FeedPostCreateView",
+                                    "Post creation failed: " + (error != null ? error.getReason() : "Unknown error")
+                                            + ", translated: "
+                                            + (error != null ? error.getTranslatedError() : "None"));
                             mainHandler.post(() -> {
                                 // Hide loading state
                                 setSubmitting(false);
 
                                 // Show error message
-                                String errorMessage = error != null && error.getTranslatedError() != null ?
-                                        error.getTranslatedError() : getContext().getString(R.string.post_error);
+                                String errorMessage = error != null && error.getTranslatedError() != null
+                                        ? error.getTranslatedError()
+                                        : getContext().getString(R.string.post_error);
 
                                 showError(errorMessage);
 
@@ -567,7 +575,8 @@ public class FeedPostCreateView extends FrameLayout {
                                 setSubmitting(false);
 
                                 // Show success message and reset form
-                                Toast.makeText(getContext(), R.string.post_success, Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getContext(), R.string.post_success, Toast.LENGTH_SHORT)
+                                        .show();
                                 resetForm();
 
                                 // Notify listener
@@ -619,8 +628,9 @@ public class FeedPostCreateView extends FrameLayout {
             sdk.uploadImages(getContext(), selectedMediaUris, new FCCallback<List<FeedPostMediaItem>>() {
                 @Override
                 public boolean onFailure(APIError error) {
-                    Log.e("FeedPostCreateView", "Image upload failed: " +
-                        (error != null ? error.getReason() : "Unknown error"));
+                    Log.e(
+                            "FeedPostCreateView",
+                            "Image upload failed: " + (error != null ? error.getReason() : "Unknown error"));
                     mainHandler.post(() -> feedPostCallback.onFailure(error));
                     return CONSUME;
                 }
@@ -660,7 +670,7 @@ public class FeedPostCreateView extends FrameLayout {
         params.setLinks(post.getLinks());
         params.setFromUserId(post.getFromUserId());
         params.setFromUserDisplayName(post.getFromUserDisplayName());
-        
+
         // Use tags from TagSupplier if available, otherwise use post's tags
         if (sdk != null && sdk.getTagSupplier() != null) {
             List<String> supplierTags = sdk.getTagSupplier().getTags(sdk.getCurrentUser());
@@ -672,7 +682,7 @@ public class FeedPostCreateView extends FrameLayout {
         } else {
             params.setTags(post.getTags());
         }
-        
+
         params.setMeta(post.getMeta());
 
         return params;

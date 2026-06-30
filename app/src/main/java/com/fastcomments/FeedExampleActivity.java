@@ -5,13 +5,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.widget.Toast;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
-
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.core.sso.FastCommentsSSO;
 import com.fastcomments.core.sso.SimpleSSOUserData;
@@ -22,13 +20,9 @@ import com.fastcomments.sdk.FastCommentsFeedView;
 import com.fastcomments.sdk.FeedPostCreateView;
 import com.fastcomments.sdk.FollowStateProvider;
 import com.fastcomments.sdk.OnUserClickListener;
-import com.fastcomments.sdk.TagSupplier;
-import com.fastcomments.sdk.UserClickContext;
 import com.fastcomments.sdk.UserClickSource;
 import com.fastcomments.sdk.UserInfo;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,7 +40,7 @@ public class FeedExampleActivity extends AppCompatActivity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     // Image picker launcher
-    private final ActivityResultLauncher<String> pickImageLauncher = 
+    private final ActivityResultLauncher<String> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
                 if (uri != null && postCreateView != null) {
                     postCreateView.handleImageResult(uri);
@@ -63,13 +57,12 @@ public class FeedExampleActivity extends AppCompatActivity {
         config.tenantId = "demo"; // Use your tenant ID here
         config.urlId = "https://example.com/page1"; // Use your URL ID here
         config.pageTitle = "Feed Example";
-        
-        // Set up Simple SSO for user authentication. In production you probably want to use SecureSSO and create a token from your server.
+
+        // Set up Simple SSO for user authentication. In production you probably want to use SecureSSO and create a
+        // token from your server.
         SimpleSSOUserData userData = new SimpleSSOUserData(
-                "Example User", 
-                "user@example.com", 
-                "https://staticm.fastcomments.com/1639362726066-DSC_0841.JPG");
-        
+                "Example User", "user@example.com", "https://staticm.fastcomments.com/1639362726066-DSC_0841.JPG");
+
         FastCommentsSSO sso = new FastCommentsSSO(userData);
         config.sso = sso.prepareToSend();
 
@@ -86,29 +79,33 @@ public class FeedExampleActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFollowStateChangeRequested(UserInfo user, boolean desiredFollowing,
-                                                      FollowStateCallback resultCallback) {
+            public void onFollowStateChangeRequested(
+                    UserInfo user, boolean desiredFollowing, FollowStateCallback resultCallback) {
                 // Simulate a 2s network round-trip.
-                mainHandler.postDelayed(() -> {
-                    if (desiredFollowing) {
-                        followedUserIds.add(user.getUserId());
-                    } else {
-                        followedUserIds.remove(user.getUserId());
-                    }
-                    Toast.makeText(FeedExampleActivity.this,
-                            (desiredFollowing ? "Followed " : "Unfollowed ") + user.getDisplayName(),
-                            Toast.LENGTH_SHORT).show();
-                    resultCallback.onResult(desiredFollowing);
-                }, 2000L);
+                mainHandler.postDelayed(
+                        () -> {
+                            if (desiredFollowing) {
+                                followedUserIds.add(user.getUserId());
+                            } else {
+                                followedUserIds.remove(user.getUserId());
+                            }
+                            Toast.makeText(
+                                            FeedExampleActivity.this,
+                                            (desiredFollowing ? "Followed " : "Unfollowed ") + user.getDisplayName(),
+                                            Toast.LENGTH_SHORT)
+                                    .show();
+                            resultCallback.onResult(desiredFollowing);
+                        },
+                        2000L);
             }
         });
 
         // Find the feed view in the layout
         feedView = findViewById(R.id.feedView);
-        
+
         // Set the SDK instance for the view
         feedView.setSDK(feedSDK);
-        
+
         feedView.setTagSupplier(currentUser -> {
             // You can customize the user's experience. Only feed items with the same tags will be returned.
             // return null or don't set a supplier to get a "global" feed.
@@ -131,15 +128,16 @@ public class FeedExampleActivity extends AppCompatActivity {
             public void onFeedError(String errorMessage) {
                 // Error loading feed
                 // Consumer can handle this error as needed
-                Toast.makeText(FeedExampleActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                Toast.makeText(FeedExampleActivity.this, errorMessage, Toast.LENGTH_SHORT)
+                        .show();
             }
 
             @Override
             public void onPostSelected(FeedPost post) {
                 // User selected a post
-                // Here you would typically navigate to a detail view 
+                // Here you would typically navigate to a detail view
                 // or show comments for this post
-                
+
                 // In a real app, you might do:
                 // navigateToPostDetail(post);
                 // or
@@ -150,7 +148,7 @@ public class FeedExampleActivity extends AppCompatActivity {
             public void onCommentsRequested(FeedPost post) {
                 // Show comments dialog for the post from the SDK
                 CommentsDialog dialog = new CommentsDialog(FeedExampleActivity.this, post, feedSDK);
-                
+
                 // Set comment added listener to update the post in the feed
                 dialog.setOnCommentAddedListener(postId -> {
                     // Post stats already updated in feedSDK, just need to refresh UI
@@ -159,13 +157,13 @@ public class FeedExampleActivity extends AppCompatActivity {
                         feedView.refreshPost(postId);
                     });
                 });
-                
+
                 dialog.setOnUserClickListener(userClickListener);
-                
+
                 dialog.show();
             }
         });
-        
+
         feedView.setOnUserClickListener(userClickListener);
 
         // Load the feed
@@ -176,9 +174,11 @@ public class FeedExampleActivity extends AppCompatActivity {
         userClickListener = (context, userInfo, source) -> {
             String sourceText = source == UserClickSource.NAME ? "name" : "avatar";
             String contextText = context.isComment() ? "comment" : "feed post";
-            Toast.makeText(FeedExampleActivity.this, 
-                "Clicked " + userInfo.getDisplayName() + "'s " + sourceText + " in " + contextText, 
-                Toast.LENGTH_SHORT).show();
+            Toast.makeText(
+                            FeedExampleActivity.this,
+                            "Clicked " + userInfo.getDisplayName() + "'s " + sourceText + " in " + contextText,
+                            Toast.LENGTH_SHORT)
+                    .show();
         };
     }
 
@@ -197,20 +197,22 @@ public class FeedExampleActivity extends AppCompatActivity {
 
         // Create constraints for post creation view (full width at top, floating above content)
         ConstraintLayout.LayoutParams postCreateParams = new ConstraintLayout.LayoutParams(
-                ConstraintLayout.LayoutParams.MATCH_PARENT,
-                ConstraintLayout.LayoutParams.WRAP_CONTENT);
+                ConstraintLayout.LayoutParams.MATCH_PARENT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
         postCreateView.setLayoutParams(postCreateParams);
         postCreateView.setElevation(16f); // Elevate above other content
-        
+
         // Add view to parent
         parentLayout.addView(postCreateView);
 
         // Update constraints to position the view at the top
         ConstraintSet initialConstraintSet = new ConstraintSet();
         initialConstraintSet.clone(parentLayout);
-        initialConstraintSet.connect(postCreateView.getId(), ConstraintSet.TOP, parentLayout.getId(), ConstraintSet.TOP, 0);
-        initialConstraintSet.connect(postCreateView.getId(), ConstraintSet.START, parentLayout.getId(), ConstraintSet.START, 0);
-        initialConstraintSet.connect(postCreateView.getId(), ConstraintSet.END, parentLayout.getId(), ConstraintSet.END, 0);
+        initialConstraintSet.connect(
+                postCreateView.getId(), ConstraintSet.TOP, parentLayout.getId(), ConstraintSet.TOP, 0);
+        initialConstraintSet.connect(
+                postCreateView.getId(), ConstraintSet.START, parentLayout.getId(), ConstraintSet.START, 0);
+        initialConstraintSet.connect(
+                postCreateView.getId(), ConstraintSet.END, parentLayout.getId(), ConstraintSet.END, 0);
         initialConstraintSet.applyTo(parentLayout);
 
         // Create FAB
@@ -221,8 +223,7 @@ public class FeedExampleActivity extends AppCompatActivity {
 
         // Create params for FAB
         ConstraintLayout.LayoutParams fabParams = new ConstraintLayout.LayoutParams(
-                ConstraintLayout.LayoutParams.WRAP_CONTENT,
-                ConstraintLayout.LayoutParams.WRAP_CONTENT);
+                ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
         createPostFab.setLayoutParams(fabParams);
 
         // Add FAB to parent
@@ -231,7 +232,8 @@ public class FeedExampleActivity extends AppCompatActivity {
         // Update constraints to position the FAB at bottom-end
         ConstraintSet fabConstraintSet = new ConstraintSet();
         fabConstraintSet.clone(parentLayout);
-        fabConstraintSet.connect(createPostFab.getId(), ConstraintSet.BOTTOM, parentLayout.getId(), ConstraintSet.BOTTOM, 32);
+        fabConstraintSet.connect(
+                createPostFab.getId(), ConstraintSet.BOTTOM, parentLayout.getId(), ConstraintSet.BOTTOM, 32);
         fabConstraintSet.connect(createPostFab.getId(), ConstraintSet.END, parentLayout.getId(), ConstraintSet.END, 32);
         fabConstraintSet.applyTo(parentLayout);
 
@@ -240,7 +242,7 @@ public class FeedExampleActivity extends AppCompatActivity {
             // Configure post creation view and prepare it for showing
             postCreateView.show();
             createPostFab.setVisibility(View.GONE);
-            
+
             // Apply animation to slide it down
             postCreateView.startAnimation(android.view.animation.AnimationUtils.loadAnimation(
                     FeedExampleActivity.this, com.fastcomments.sdk.R.anim.slide_down_from_top));
@@ -253,13 +255,13 @@ public class FeedExampleActivity extends AppCompatActivity {
                 // Use our new slide up and fade animation
                 android.view.animation.Animation slideUpFade = android.view.animation.AnimationUtils.loadAnimation(
                         FeedExampleActivity.this, com.fastcomments.sdk.R.anim.slide_up_and_fade);
-                
+
                 slideUpFade.setAnimationListener(new android.view.animation.Animation.AnimationListener() {
                     @Override
                     public void onAnimationStart(android.view.animation.Animation animation) {
                         // No need to change visibility yet
                     }
-                    
+
                     @Override
                     public void onAnimationEnd(android.view.animation.Animation animation) {
                         // Make form completely gone and unclickable
@@ -267,27 +269,28 @@ public class FeedExampleActivity extends AppCompatActivity {
                         postCreateView.setVisibility(View.GONE);
                         postCreateView.setClickable(false);
                         postCreateView.setEnabled(false);
-                        
+
                         // Show FAB button
                         createPostFab.setVisibility(View.VISIBLE);
-                        
+
                         // Refresh the feed to show the new post
                         feedView.refresh();
                     }
-                    
+
                     @Override
                     public void onAnimationRepeat(android.view.animation.Animation animation) {}
                 });
-                
+
                 postCreateView.startAnimation(slideUpFade);
-                
+
                 // Refresh the feed to show the new post
                 feedView.refresh();
             }
 
             @Override
             public void onPostCreateError(String errorMessage) {
-                Toast.makeText(FeedExampleActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                Toast.makeText(FeedExampleActivity.this, errorMessage, Toast.LENGTH_SHORT)
+                        .show();
             }
 
             @Override
@@ -295,13 +298,13 @@ public class FeedExampleActivity extends AppCompatActivity {
                 // Use our new slide up and fade animation
                 android.view.animation.Animation slideUpFade = android.view.animation.AnimationUtils.loadAnimation(
                         FeedExampleActivity.this, com.fastcomments.sdk.R.anim.slide_up_and_fade);
-                
+
                 slideUpFade.setAnimationListener(new android.view.animation.Animation.AnimationListener() {
                     @Override
                     public void onAnimationStart(android.view.animation.Animation animation) {
                         // No need to change visibility yet
                     }
-                    
+
                     @Override
                     public void onAnimationEnd(android.view.animation.Animation animation) {
                         // Make form completely gone and unclickable
@@ -309,15 +312,15 @@ public class FeedExampleActivity extends AppCompatActivity {
                         postCreateView.setVisibility(View.GONE);
                         postCreateView.setClickable(false);
                         postCreateView.setEnabled(false);
-                        
+
                         // Show FAB button
                         createPostFab.setVisibility(View.VISIBLE);
                     }
-                    
+
                     @Override
                     public void onAnimationRepeat(android.view.animation.Animation animation) {}
                 });
-                
+
                 postCreateView.startAnimation(slideUpFade);
             }
 
@@ -328,7 +331,7 @@ public class FeedExampleActivity extends AppCompatActivity {
             }
         });
     }
-    
+
     @Override
     protected void onDestroy() {
         super.onDestroy();

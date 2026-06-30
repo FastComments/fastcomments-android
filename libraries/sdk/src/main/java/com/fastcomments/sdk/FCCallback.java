@@ -14,7 +14,6 @@ public interface FCCallback<ResponseType> {
     /**
      * @return true to stop the callback chain
      */
-
     boolean onSuccess(ResponseType response);
 
     default void onUploadProgress(long bytesWritten, long contentLength, boolean done) {

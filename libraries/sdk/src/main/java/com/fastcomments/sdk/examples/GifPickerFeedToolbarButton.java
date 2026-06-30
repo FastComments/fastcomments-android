@@ -2,11 +2,9 @@ package com.fastcomments.sdk.examples;
 
 import android.net.Uri;
 import android.view.View;
-
 import com.fastcomments.sdk.FeedCustomToolbarButton;
 import com.fastcomments.sdk.FeedPostCreateView;
 import com.fastcomments.sdk.R;
-
 import java.util.Random;
 
 /**

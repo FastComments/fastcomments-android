@@ -7,7 +7,6 @@ import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -15,13 +14,10 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
-
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.PublicComment;
 import com.fastcomments.model.UserSessionInfo;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +36,7 @@ public class CommentFormView extends LinearLayout {
     private OnCancelReplyListener cancelListener;
     private String parentId;
     private RenderableComment parentComment;
-    
+
     // For @mentions functionality
     private FastCommentsSDK sdk;
     private MentionSuggestionsAdapter mentionsAdapter;
@@ -125,7 +121,7 @@ public class CommentFormView extends LinearLayout {
                         cancelMention();
                         return;
                     }
-                    
+
                     // We're in the middle of typing a mention
                     if (start < mentionStartPosition) {
                         // Cursor moved before the @ symbol, cancel mention
@@ -134,12 +130,13 @@ public class CommentFormView extends LinearLayout {
                         // Extract the text between @ and cursor
                         int mentionLength = start + count - mentionStartPosition;
                         if (mentionLength > 0 && start + count <= s.length()) {
-                            String newMentionText = s.subSequence(mentionStartPosition + 1, start + count).toString();
-                            
+                            String newMentionText = s.subSequence(mentionStartPosition + 1, start + count)
+                                    .toString();
+
                             // Check if mention text changed
                             if (!newMentionText.equals(currentMentionText)) {
                                 currentMentionText = newMentionText;
-                                
+
                                 // Cancel mention if space is added (end of mention)
                                 if (currentMentionText.contains(" ")) {
                                     cancelMention();
@@ -162,8 +159,9 @@ public class CommentFormView extends LinearLayout {
         // Set up the submit button — serialize spans to HTML
         submitButton.setOnClickListener(v -> {
             String plainText = commentEditText.getText().toString().trim();
-            String commentText = TextUtils.isEmpty(plainText) ? "" :
-                    RichTextHelper.toHtml(commentEditText.getText()).trim();
+            String commentText = TextUtils.isEmpty(plainText)
+                    ? ""
+                    : RichTextHelper.toHtml(commentEditText.getText()).trim();
             if (TextUtils.isEmpty(plainText)) {
                 errorTextView.setText(R.string.empty_comment_error);
                 errorTextView.setVisibility(View.VISIBLE);
@@ -225,7 +223,7 @@ public class CommentFormView extends LinearLayout {
             }
         }
         userNameTextView.setText(nameToShow);
-        
+
         if (userInfo.getAvatarSrc() != null) {
             AvatarFetcher.fetchTransformInto(getContext(), userInfo.getAvatarSrc(), avatarImageView);
         } else {
@@ -255,10 +253,10 @@ public class CommentFormView extends LinearLayout {
             selectedMentions.clear();
         }
     }
-    
+
     /**
      * Check if the comment text input is empty
-     * 
+     *
      * @return true if the comment text is empty, false otherwise
      */
     public boolean isTextEmpty() {
@@ -310,44 +308,44 @@ public class CommentFormView extends LinearLayout {
         commentEditText.setHint(R.string.comment_hint);
         clearText(); // This will also clear selected mentions
     }
-    
+
     /**
      * Get the parent comment that's being replied to
-     * 
+     *
      * @return The parent RenderableComment or null if not replying
      */
     public RenderableComment getParentComment() {
         return parentComment;
     }
-    
+
     /**
      * Set the SDK instance for API access
-     * 
+     *
      * @param sdk FastCommentsSDK instance
      */
     public void setSDK(FastCommentsSDK sdk) {
         this.sdk = sdk;
         applyTheme();
     }
-    
+
     /**
      * Apply theme colors to buttons and UI elements
      */
     private void applyTheme() {
         FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
-        
+
         // Apply action button color to submit button
         int actionButtonColor = ThemeColorResolver.getActionButtonColor(getContext(), theme);
         if (submitButton != null) {
             submitButton.setTextColor(actionButtonColor);
         }
-        
+
         // Apply action button color to cancel button as well
         if (cancelButton != null) {
             cancelButton.setTextColor(actionButtonColor);
         }
     }
-    
+
     /**
      * Show the mention suggestions list
      */
@@ -358,7 +356,7 @@ public class CommentFormView extends LinearLayout {
             hideMentionSuggestions();
         }
     }
-    
+
     /**
      * Hide the mention suggestions list
      */
@@ -367,7 +365,7 @@ public class CommentFormView extends LinearLayout {
             mentionSuggestionsList.setVisibility(View.GONE);
         }
     }
-    
+
     /**
      * Cancel the current mention being typed
      */
@@ -376,31 +374,31 @@ public class CommentFormView extends LinearLayout {
         currentMentionText = "";
         hideMentionSuggestions();
     }
-    
+
     /**
      * Search for users by partial name
-     * 
+     *
      * @param searchTerm The search term (text after @ symbol)
      */
     private void searchUsers(String searchTerm) {
         if (sdk == null) {
             return;
         }
-        
+
         // Don't search if the term is empty
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
             mentionSuggestions.clear();
             mentionsAdapter.notifyDataSetChanged();
             return;
         }
-        
+
         // Don't search if already searching
         if (isSearchingUsers) {
             return;
         }
-        
+
         isSearchingUsers = true;
-        
+
         // Call the API to search for users
         sdk.searchUsers(searchTerm, new FCCallback<List<UserMention>>() {
             @Override
@@ -411,7 +409,7 @@ public class CommentFormView extends LinearLayout {
                     // Clear any previous results
                     mentionSuggestions.clear();
                     mentionsAdapter.notifyDataSetChanged();
-                    
+
                     // Hide the list on error
                     hideMentionSuggestions();
                 });
@@ -421,12 +419,12 @@ public class CommentFormView extends LinearLayout {
             @Override
             public boolean onSuccess(List<UserMention> users) {
                 isSearchingUsers = false;
-                
+
                 // Use the main thread to update UI
                 post(() -> {
                     // Update the suggestions list
                     mentionSuggestions.clear();
-                    
+
                     // Only show the list if we have actual results
                     if (users != null && !users.isEmpty()) {
                         mentionSuggestions.addAll(users);
@@ -441,10 +439,10 @@ public class CommentFormView extends LinearLayout {
             }
         });
     }
-    
+
     /**
      * Select a user mention from the suggestions list
-     * 
+     *
      * @param mention The user mention to select
      */
     private void selectUserMention(UserMention mention) {
@@ -471,10 +469,10 @@ public class CommentFormView extends LinearLayout {
         // Reset the mention state
         cancelMention();
     }
-    
+
     /**
      * Get the selected user mentions for the current comment
-     * 
+     *
      * @return List of selected user mentions
      */
     public List<UserMention> getSelectedMentions() {

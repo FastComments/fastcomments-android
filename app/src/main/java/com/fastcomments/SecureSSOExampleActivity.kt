@@ -22,14 +22,14 @@ class SecureSSOExampleActivity : AppCompatActivity() {
             "ssotest",
             "https://fastcomments.com/demo",
             "fastcomments.com",
-            "Demo"
+            "Demo",
         )
         config.sso = getSSOTokenFromServer()
         val sdk = FastCommentsSDK(config)
 
         // Find the comments view in the layout
         commentsView = findViewById(R.id.commentsView)
-        
+
         // Set the SDK instance for the view
         commentsView.setSDK(sdk)
         commentsView.load()
@@ -37,8 +37,8 @@ class SecureSSOExampleActivity : AppCompatActivity() {
 
     private fun getSSOTokenFromServer(): String {
         // DO THIS ON THE SERVER. THIS IS ONLY IN THE APP AS AN EXAMPLE!
-        val userData = SecureSSOUserData("user-123", "user@example.com", "Example User", "https://staticm.fastcomments.com/1639362726066-DSC_0841.JPG");
-        userData.displayName = "Fancy Name";
+        val userData = SecureSSOUserData("user-123", "user@example.com", "Example User", "https://staticm.fastcomments.com/1639362726066-DSC_0841.JPG")
+        userData.displayName = "Fancy Name"
         val sso = FastCommentsSSO.createSecure("DEMO_API_SECRET", userData)
         return sso.prepareToSend(); // send to client
     }

@@ -13,15 +13,12 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertTrue;
 
 import android.util.Log;
-
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.fastcomments.sdk.R;
-
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 /**
  * Observer role for live chat — runs on Emulator A.
@@ -66,7 +63,9 @@ public class LiveChatUserA_UITests extends UITestBase {
             try {
                 onView(withId(R.id.connectionStatusText)).check(matches(withText(R.string.live_chat_live)));
                 return true;
-            } catch (Exception | AssertionError e) { return false; }
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
         });
         Log.d(TAG, "Connected");
 
@@ -87,7 +86,9 @@ public class LiveChatUserA_UITests extends UITestBase {
                         .check(matches(hasDescendant(withText(containsString(messageText)))));
                 found = true;
                 break;
-            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+            } catch (Exception | AssertionError e) {
+                Thread.sleep(250);
+            }
         }
         Log.d(TAG, "Phase 1 result: " + found);
         assertTrue("UserB's message should appear in UserA's chat", found);
@@ -100,7 +101,9 @@ public class LiveChatUserA_UITests extends UITestBase {
                 onView(withId(R.id.userCountText)).check(matches(isDisplayed()));
                 userCountVisible = true;
                 break;
-            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+            } catch (Exception | AssertionError e) {
+                Thread.sleep(250);
+            }
         }
         Log.d(TAG, "User count visible: " + userCountVisible);
         assertTrue("User count should be visible in header", userCountVisible);
@@ -108,8 +111,7 @@ public class LiveChatUserA_UITests extends UITestBase {
         // --- Phase 2: UserA sends, UserB receives ---
         Log.d(TAG, "=== Phase 2: Send message to UserB ===");
         String myMessage = "Hello from A " + System.currentTimeMillis();
-        onView(withId(R.id.commentInput))
-                .perform(click(), typeText(myMessage), closeSoftKeyboard());
+        onView(withId(R.id.commentInput)).perform(click(), typeText(myMessage), closeSoftKeyboard());
         onView(withId(R.id.sendButton)).perform(click());
 
         // Verify own message appears
@@ -121,7 +123,9 @@ public class LiveChatUserA_UITests extends UITestBase {
                         .check(matches(hasDescendant(withText(containsString(myMessage)))));
                 ownAppeared = true;
                 break;
-            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+            } catch (Exception | AssertionError e) {
+                Thread.sleep(250);
+            }
         }
         assertTrue("Own message should appear after sending", ownAppeared);
 

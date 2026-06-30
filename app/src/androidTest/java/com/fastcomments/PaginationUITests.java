@@ -10,14 +10,11 @@ import static org.junit.Assert.assertTrue;
 
 import android.view.View;
 import android.widget.TextView;
-
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.espresso.UiController;
 import androidx.test.espresso.ViewAction;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import com.fastcomments.sdk.R;
-
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;

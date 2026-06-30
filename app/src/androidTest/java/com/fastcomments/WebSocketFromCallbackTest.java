@@ -1,21 +1,22 @@
 package com.fastcomments;
 
+import static org.junit.Assert.*;
+
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.pubsub.LiveEventSubscriber;
 import com.fastcomments.pubsub.SubscribeToChangesResult;
-import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.*;
-import static org.junit.Assert.*;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Calls subscribeToChanges from WITHIN an OkHttp async callback,
@@ -70,7 +71,9 @@ public class WebSocketFromCallbackTest extends UITestBase {
                     String tenantIdWS = json.optString("tenantIdWS", "");
                     String urlIdWS = json.optString("urlIdWS", "");
                     String userIdWS = json.optString("userIdWS", "");
-                    Log.d(TAG, "API response on thread: " + Thread.currentThread().getName());
+                    Log.d(
+                            TAG,
+                            "API response on thread: " + Thread.currentThread().getName());
                     Log.d(TAG, "WS params: " + tenantIdWS + " / " + urlIdWS + " / " + userIdWS);
 
                     // Create WS from within THIS callback (OkHttp dispatcher thread)
@@ -86,9 +89,8 @@ public class WebSocketFromCallbackTest extends UITestBase {
                         }
                     });
 
-                    SubscribeToChangesResult result = subscriber.subscribeToChanges(
-                            config, tenantIdWS, urlId, urlIdWS, userIdWS,
-                            null, event -> {
+                    SubscribeToChangesResult result =
+                            subscriber.subscribeToChanges(config, tenantIdWS, urlId, urlIdWS, userIdWS, null, event -> {
                                 double elapsed = (System.currentTimeMillis() - start) / 1000.0;
                                 Log.d(TAG, String.format("[%.1fs] Event: %s", elapsed, event.getType()));
                             });

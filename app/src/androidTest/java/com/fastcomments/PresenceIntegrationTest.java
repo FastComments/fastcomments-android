@@ -1,28 +1,23 @@
 package com.fastcomments;
 
+import static org.junit.Assert.*;
+
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import com.fastcomments.core.CommentWidgetConfig;
-import com.fastcomments.model.LiveEvent;
 import com.fastcomments.pubsub.LiveEventSubscriber;
 import com.fastcomments.pubsub.SubscribeToChangesResult;
-
-import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-
-import static org.junit.Assert.*;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Integration test for the presence update system.
@@ -59,12 +54,11 @@ public class PresenceIntegrationTest extends UITestBase {
         List<String> usersJoinedSeen = new CopyOnWriteArrayList<>();
         CountDownLatch joinLatch = new CountDownLatch(1);
 
-        subscriberA.setOnConnectionStatusChange((connected, lastEventTime) ->
-                Log.d(TAG, "UserA connection: " + connected));
+        subscriberA.setOnConnectionStatusChange(
+                (connected, lastEventTime) -> Log.d(TAG, "UserA connection: " + connected));
 
         SubscribeToChangesResult resultA = subscriberA.subscribeToChanges(
-                configA, wsParamsA[0], urlId, wsParamsA[1], wsParamsA[2],
-                null, event -> {
+                configA, wsParamsA[0], urlId, wsParamsA[1], wsParamsA[2], null, event -> {
                     if (event.getType() != null && "p-u".equals(event.getType().getValue())) {
                         List<String> uj = event.getUj();
                         if (uj != null) {
@@ -89,8 +83,7 @@ public class PresenceIntegrationTest extends UITestBase {
         LiveEventSubscriber subscriberB = LiveEventSubscriber.createTesting();
         CommentWidgetConfig configB = new CommentWidgetConfig(testTenantId, urlId);
         SubscribeToChangesResult resultB = subscriberB.subscribeToChanges(
-                configB, wsParamsB[0], urlId, wsParamsB[1], wsParamsB[2],
-                null, event -> {});
+                configB, wsParamsB[0], urlId, wsParamsB[1], wsParamsB[2], null, event -> {});
         assertNotNull("UserB should subscribe", resultB);
         Log.d(TAG, "UserB subscribed, waiting for UserA to see the join...");
 
@@ -116,12 +109,11 @@ public class PresenceIntegrationTest extends UITestBase {
         List<String> allJoins = new CopyOnWriteArrayList<>();
         CountDownLatch secondJoinLatch = new CountDownLatch(1);
 
-        subscriberA.setOnConnectionStatusChange((connected, lastEventTime) ->
-                Log.d(TAG, "UserA connection: " + connected));
+        subscriberA.setOnConnectionStatusChange(
+                (connected, lastEventTime) -> Log.d(TAG, "UserA connection: " + connected));
 
         SubscribeToChangesResult resultA = subscriberA.subscribeToChanges(
-                configA, wsParamsA[0], urlId, wsParamsA[1], wsParamsA[2],
-                null, event -> {
+                configA, wsParamsA[0], urlId, wsParamsA[1], wsParamsA[2], null, event -> {
                     if (event.getType() != null && "p-u".equals(event.getType().getValue())) {
                         List<String> uj = event.getUj();
                         if (uj != null) {
@@ -145,8 +137,7 @@ public class PresenceIntegrationTest extends UITestBase {
         LiveEventSubscriber subscriberB1 = LiveEventSubscriber.createTesting();
         CommentWidgetConfig configB = new CommentWidgetConfig(testTenantId, urlId);
         SubscribeToChangesResult resultB1 = subscriberB1.subscribeToChanges(
-                configB, wsParamsB[0], urlId, wsParamsB[1], wsParamsB[2],
-                null, event -> {});
+                configB, wsParamsB[0], urlId, wsParamsB[1], wsParamsB[2], null, event -> {});
         Log.d(TAG, "UserB first connection established");
         Thread.sleep(3000); // Let the join propagate
 
@@ -159,8 +150,7 @@ public class PresenceIntegrationTest extends UITestBase {
         String[] wsParamsB2 = getWsParams(urlId, ssoB);
         LiveEventSubscriber subscriberB2 = LiveEventSubscriber.createTesting();
         SubscribeToChangesResult resultB2 = subscriberB2.subscribeToChanges(
-                configB, wsParamsB2[0], urlId, wsParamsB2[1], wsParamsB2[2],
-                null, event -> {});
+                configB, wsParamsB2[0], urlId, wsParamsB2[1], wsParamsB2[2], null, event -> {});
         Log.d(TAG, "UserB reconnected, waiting for UserA to see second join...");
 
         boolean sawSecondJoin = secondJoinLatch.await(10, TimeUnit.SECONDS);
@@ -184,10 +174,8 @@ public class PresenceIntegrationTest extends UITestBase {
             String body = resp.body().string();
             JSONObject json = new JSONObject(body);
             client.dispatcher().executorService().shutdown();
-            return new String[]{
-                    json.optString("tenantIdWS", ""),
-                    json.optString("urlIdWS", ""),
-                    json.optString("userIdWS", "")
+            return new String[] {
+                json.optString("tenantIdWS", ""), json.optString("urlIdWS", ""), json.optString("userIdWS", "")
             };
         }
     }

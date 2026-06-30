@@ -14,11 +14,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertTrue;
 
 import android.util.Log;
-
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import com.fastcomments.sdk.R;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,8 +68,7 @@ public class MentionUITests extends UITestBase {
         });
 
         // Type @Tester a to trigger mention search (should match "Tester alice1")
-        onView(withId(R.id.commentInput))
-                .perform(click(), typeText("@Tester a"), closeSoftKeyboard());
+        onView(withId(R.id.commentInput)).perform(click(), typeText("@Tester a"), closeSoftKeyboard());
 
         // Poll until the mention popup appears with "Tester alice1"
         boolean popupFound = false;
@@ -96,10 +92,8 @@ public class MentionUITests extends UITestBase {
                 .perform(click());
 
         // Type additional text and submit
-        onView(withId(R.id.commentInput))
-                .perform(typeText("hello!"), closeSoftKeyboard());
-        onView(withId(R.id.sendButton))
-                .perform(click());
+        onView(withId(R.id.commentInput)).perform(typeText("hello!"), closeSoftKeyboard());
+        onView(withId(R.id.sendButton)).perform(click());
 
         // Verify the posted comment appears with the mentioned username
         boolean commentFound = false;
@@ -138,8 +132,7 @@ public class MentionUITests extends UITestBase {
         });
 
         // Type @Tester a to trigger mention search
-        onView(withId(R.id.commentInput))
-                .perform(click(), typeText("@Tester a"), closeSoftKeyboard());
+        onView(withId(R.id.commentInput)).perform(click(), typeText("@Tester a"), closeSoftKeyboard());
 
         // Wait for popup to appear
         boolean popupFound = false;
@@ -158,8 +151,7 @@ public class MentionUITests extends UITestBase {
         assertTrue("Mention popup should appear before dismissal test", popupFound);
 
         // Type a space to dismiss the mention (triggers cancelMention)
-        onView(withId(R.id.commentInput))
-                .perform(typeText(" "));
+        onView(withId(R.id.commentInput)).perform(typeText(" "));
 
         // Verify popup is gone
         boolean popupDismissed = false;

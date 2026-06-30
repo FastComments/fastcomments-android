@@ -9,7 +9,6 @@ import android.text.TextWatcher;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
-import android.text.style.URLSpan;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -24,13 +23,10 @@ import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.UserSessionInfo;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -167,21 +163,33 @@ public class BottomCommentInputView extends FrameLayout {
                             switch (format) {
                                 case "bold":
                                     if (!hasMatchingStyleSpan(s, Typeface.BOLD, applyStart, applyEnd)) {
-                                        s.setSpan(new StyleSpan(Typeface.BOLD), applyStart, applyEnd,
+                                        s.setSpan(
+                                                new StyleSpan(Typeface.BOLD),
+                                                applyStart,
+                                                applyEnd,
                                                 Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
                                     }
                                     break;
                                 case "italic":
                                     if (!hasMatchingStyleSpan(s, Typeface.ITALIC, applyStart, applyEnd)) {
-                                        s.setSpan(new StyleSpan(Typeface.ITALIC), applyStart, applyEnd,
+                                        s.setSpan(
+                                                new StyleSpan(Typeface.ITALIC),
+                                                applyStart,
+                                                applyEnd,
                                                 Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
                                     }
                                     break;
                                 case "code":
                                     if (!hasMatchingSpan(s, TypefaceSpan.class, applyStart, applyEnd)) {
-                                        s.setSpan(new TypefaceSpan("monospace"), applyStart, applyEnd,
+                                        s.setSpan(
+                                                new TypefaceSpan("monospace"),
+                                                applyStart,
+                                                applyEnd,
                                                 Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
-                                        s.setSpan(new BackgroundColorSpan(0x20808080), applyStart, applyEnd,
+                                        s.setSpan(
+                                                new BackgroundColorSpan(0x20808080),
+                                                applyStart,
+                                                applyEnd,
                                                 Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
                                     }
                                     break;
@@ -198,7 +206,8 @@ public class BottomCommentInputView extends FrameLayout {
             String plainText = commentInput.getText().toString().trim();
             if (!plainText.isEmpty() && submitListener != null) {
                 String html = getText();
-                String parentId = parentComment != null ? parentComment.getComment().getId() : null;
+                String parentId =
+                        parentComment != null ? parentComment.getComment().getId() : null;
                 submitListener.onCommentSubmit(html, parentId);
             }
         });
@@ -290,7 +299,8 @@ public class BottomCommentInputView extends FrameLayout {
         sendButton.setVisibility(submitting ? View.GONE : View.VISIBLE);
         sendProgress.setVisibility(submitting ? View.VISIBLE : View.GONE);
         commentInput.setEnabled(!submitting);
-        sendButton.setEnabled(!submitting && !commentInput.getText().toString().trim().isEmpty());
+        sendButton.setEnabled(
+                !submitting && !commentInput.getText().toString().trim().isEmpty());
     }
 
     public void showError(String error) {
@@ -367,11 +377,11 @@ public class BottomCommentInputView extends FrameLayout {
     private void setupMentions() {
         // Initialize mention suggestions adapter
         mentionsAdapter = new MentionSuggestionsAdapter(getContext(), mentionSuggestions);
-        
+
         // Create the popup window for mentions
         createMentionPopup();
     }
-    
+
     /**
      * Create the popup window for mention suggestions
      */
@@ -383,18 +393,17 @@ public class BottomCommentInputView extends FrameLayout {
         popupListView.setDivider(getContext().getResources().getDrawable(android.R.color.darker_gray));
         popupListView.setDividerHeight(1);
         popupListView.setPadding(8, 8, 8, 8);
-        
+
         // Handle mention selection
         popupListView.setOnItemClickListener((parent, view, position, id) -> {
             if (position < mentionSuggestions.size()) {
                 selectUserMention(mentionSuggestions.get(position));
             }
         });
-        
+
         // Create the popup window
-        mentionPopup = new PopupWindow(popupListView, 
-            LinearLayout.LayoutParams.MATCH_PARENT, 
-            LinearLayout.LayoutParams.WRAP_CONTENT);
+        mentionPopup = new PopupWindow(
+                popupListView, LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         mentionPopup.setOutsideTouchable(true);
         mentionPopup.setFocusable(false);
         mentionPopup.setElevation(12);
@@ -417,7 +426,7 @@ public class BottomCommentInputView extends FrameLayout {
                 cancelMention();
                 return;
             }
-            
+
             // We're in the middle of typing a mention
             if (start < mentionStartPosition) {
                 // Cursor moved before the @ symbol, cancel mention
@@ -426,12 +435,13 @@ public class BottomCommentInputView extends FrameLayout {
                 // Extract the text between @ and cursor
                 int mentionLength = start + count - mentionStartPosition;
                 if (mentionLength > 0 && start + count <= s.length()) {
-                    String newMentionText = s.subSequence(mentionStartPosition + 1, start + count).toString();
-                    
+                    String newMentionText = s.subSequence(mentionStartPosition + 1, start + count)
+                            .toString();
+
                     // Check if mention text changed
                     if (!newMentionText.equals(currentMentionText)) {
                         currentMentionText = newMentionText;
-                        
+
                         // Cancel mention if space is added (end of mention)
                         if (currentMentionText.contains(" ")) {
                             cancelMention();
@@ -453,26 +463,26 @@ public class BottomCommentInputView extends FrameLayout {
             // Calculate height based on number of items (max 3 visible)
             int maxItems = Math.min(mentionSuggestions.size(), 3);
             float density = getContext().getResources().getDisplayMetrics().density;
-            int itemHeight = (int)(50 * density); // 50dp per item
-            int totalHeight = maxItems * itemHeight + (int)(16 * density); // Add padding
-            
+            int itemHeight = (int) (50 * density); // 50dp per item
+            int totalHeight = maxItems * itemHeight + (int) (16 * density); // Add padding
+
             // Set the popup height
             mentionPopup.setHeight(totalHeight);
-            
+
             // Calculate position and size
             int[] location = new int[2];
             commentInput.getLocationOnScreen(location);
             int inputWidth = commentInput.getWidth();
-            int popupWidth = (int)(inputWidth * 0.9f); // 90% of input width
+            int popupWidth = (int) (inputWidth * 0.9f); // 90% of input width
             mentionPopup.setWidth(popupWidth);
-            
+
             // Position popup above the entire bottom input view
             int[] thisViewLocation = new int[2];
             this.getLocationOnScreen(thisViewLocation);
-            
-            int xPos = location[0] + (int)(12 * density); // Small margin from left of input
-            int yPos = thisViewLocation[1] - totalHeight - (int)(8 * density); // Above the entire view with margin
-            
+
+            int xPos = location[0] + (int) (12 * density); // Small margin from left of input
+            int yPos = thisViewLocation[1] - totalHeight - (int) (8 * density); // Above the entire view with margin
+
             if (!mentionPopup.isShowing()) {
                 mentionPopup.showAtLocation(commentInput, android.view.Gravity.NO_GRAVITY, xPos, yPos);
             }
@@ -480,7 +490,7 @@ public class BottomCommentInputView extends FrameLayout {
             hideMentionSuggestions();
         }
     }
-    
+
     /**
      * Hide the mention suggestions list
      */
@@ -489,7 +499,7 @@ public class BottomCommentInputView extends FrameLayout {
             mentionPopup.dismiss();
         }
     }
-    
+
     /**
      * Cancel the current mention being typed
      */
@@ -506,21 +516,21 @@ public class BottomCommentInputView extends FrameLayout {
         if (sdk == null) {
             return;
         }
-        
+
         // Don't search if the term is empty
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
             mentionSuggestions.clear();
             mentionsAdapter.notifyDataSetChanged();
             return;
         }
-        
+
         // Don't search if already searching
         if (isSearchingUsers) {
             return;
         }
 
         isSearchingUsers = true;
-        
+
         sdk.searchUsers(searchTerm, new FCCallback<List<UserMention>>() {
             @Override
             public boolean onFailure(APIError error) {
@@ -530,13 +540,13 @@ public class BottomCommentInputView extends FrameLayout {
                     // Clear any previous results
                     mentionSuggestions.clear();
                     mentionsAdapter.notifyDataSetChanged();
-                    
+
                     // Hide the list on error
                     hideMentionSuggestions();
                 });
                 return FCCallback.CONSUME;
             }
-            
+
             @Override
             public boolean onSuccess(List<UserMention> users) {
                 isSearchingUsers = false;
@@ -544,12 +554,12 @@ public class BottomCommentInputView extends FrameLayout {
                 post(() -> {
                     // Clear previous suggestions
                     mentionSuggestions.clear();
-                    
+
                     if (users != null && !users.isEmpty()) {
                         // Add new suggestions
                         mentionSuggestions.addAll(users);
                         mentionsAdapter.notifyDataSetChanged();
-                        
+
                         // Show the suggestions list
                         showMentionSuggestions();
                     } else {
@@ -589,17 +599,17 @@ public class BottomCommentInputView extends FrameLayout {
         // Reset the mention state
         cancelMention();
     }
-    
+
     /**
      * Apply theme colors to the UI elements
      */
     private void applyTheme() {
         FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
-        
+
         // Apply action button color to the send button
         int actionButtonColor = ThemeColorResolver.getActionButtonColor(getContext(), theme);
         sendButton.setImageTintList(ColorStateList.valueOf(actionButtonColor));
-        
+
         // Also apply to cancel reply button
         if (cancelReplyButton != null) {
             cancelReplyButton.setImageTintList(ColorStateList.valueOf(actionButtonColor));
@@ -732,23 +742,22 @@ public class BottomCommentInputView extends FrameLayout {
         defaultToolbarButtons.clear();
 
         // Bold button
-        ImageButton boldBtn = addDefaultToolbarButton(R.drawable.ic_format_bold, R.string.format_bold,
-                v -> toggleFormat("bold"));
+        ImageButton boldBtn =
+                addDefaultToolbarButton(R.drawable.ic_format_bold, R.string.format_bold, v -> toggleFormat("bold"));
         defaultToolbarButtons.put("bold", boldBtn);
 
         // Italic button
-        ImageButton italicBtn = addDefaultToolbarButton(R.drawable.ic_format_italic, R.string.format_italic,
-                v -> toggleFormat("italic"));
+        ImageButton italicBtn = addDefaultToolbarButton(
+                R.drawable.ic_format_italic, R.string.format_italic, v -> toggleFormat("italic"));
         defaultToolbarButtons.put("italic", italicBtn);
 
         // Link button
-        ImageButton linkBtn = addDefaultToolbarButton(R.drawable.link_icon, R.string.add_link,
-                v -> showLinkDialog());
+        ImageButton linkBtn = addDefaultToolbarButton(R.drawable.link_icon, R.string.add_link, v -> showLinkDialog());
         defaultToolbarButtons.put("link", linkBtn);
 
         // Code button
-        ImageButton codeBtn = addDefaultToolbarButton(R.drawable.ic_code, R.string.format_code,
-                v -> toggleFormat("code"));
+        ImageButton codeBtn =
+                addDefaultToolbarButton(R.drawable.ic_code, R.string.format_code, v -> toggleFormat("code"));
         codeBtn.setOnLongClickListener(v -> {
             toggleFormat("codeblock");
             return true;
@@ -761,7 +770,8 @@ public class BottomCommentInputView extends FrameLayout {
      *
      * @return The created ImageButton, for tracking active states
      */
-    private ImageButton addDefaultToolbarButton(int iconRes, int contentDescriptionRes, View.OnClickListener clickListener) {
+    private ImageButton addDefaultToolbarButton(
+            int iconRes, int contentDescriptionRes, View.OnClickListener clickListener) {
         ImageButton button = new ImageButton(getContext());
         button.setImageResource(iconRes);
         button.setContentDescription(getContext().getString(contentDescriptionRes));
@@ -999,8 +1009,10 @@ public class BottomCommentInputView extends FrameLayout {
             return "";
         }
 
-        return commentInput.getText().subSequence(
-            Math.min(start, end), Math.max(start, end)).toString();
+        return commentInput
+                .getText()
+                .subSequence(Math.min(start, end), Math.max(start, end))
+                .toString();
     }
 
     /**
@@ -1150,10 +1162,9 @@ public class BottomCommentInputView extends FrameLayout {
         Editable editable = commentInput.getText();
         int pos = Math.max(commentInput.getSelectionStart(), 0);
 
-        boolean boldActive = RichTextHelper.isBoldActive(editable, pos)
-                || activeFormatsForNextChar.contains("bold");
-        boolean italicActive = RichTextHelper.isItalicActive(editable, pos)
-                || activeFormatsForNextChar.contains("italic");
+        boolean boldActive = RichTextHelper.isBoldActive(editable, pos) || activeFormatsForNextChar.contains("bold");
+        boolean italicActive =
+                RichTextHelper.isItalicActive(editable, pos) || activeFormatsForNextChar.contains("italic");
         boolean codeActive = RichTextHelper.isCodeActive(editable, pos)
                 || activeFormatsForNextChar.contains("code")
                 || activeFormatsForNextChar.contains("codeblock");
@@ -1171,8 +1182,7 @@ public class BottomCommentInputView extends FrameLayout {
             button.setBackgroundColor(0x33000000);
         } else {
             TypedValue outValue = new TypedValue();
-            getContext().getTheme().resolveAttribute(
-                    android.R.attr.selectableItemBackgroundBorderless, outValue, true);
+            getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true);
             button.setBackgroundResource(outValue.resourceId);
         }
     }

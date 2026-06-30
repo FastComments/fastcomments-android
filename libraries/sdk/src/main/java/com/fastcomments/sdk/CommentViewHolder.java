@@ -2,36 +2,22 @@ package com.fastcomments.sdk;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.text.Html;
 import android.text.format.DateUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
 import com.fastcomments.core.VoteStyle;
 import com.fastcomments.model.CommentUserBadgeInfo;
-
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -102,7 +88,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         childPaginationControls = itemView.findViewById(R.id.childPaginationControls);
         btnLoadMoreReplies = itemView.findViewById(R.id.btnLoadMoreReplies);
         childPaginationProgressBar = itemView.findViewById(R.id.childPaginationProgressBar);
-        
+
         // Apply theme colors
         applyTheme();
     }
@@ -112,7 +98,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
      */
     private void applyTheme() {
         FastCommentsTheme theme = sdk != null ? sdk.getTheme() : null;
-        
+
         // Apply action button colors to ImageButtons
         int actionButtonColor = ThemeColorResolver.getActionButtonColor(context, theme);
         if (upVoteButton != null) {
@@ -127,19 +113,19 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         if (commentMenuButton != null) {
             commentMenuButton.setImageTintList(ColorStateList.valueOf(actionButtonColor));
         }
-        
+
         // Apply reply button color
         int replyButtonColor = ThemeColorResolver.getReplyButtonColor(context, theme);
         if (replyButton != null) {
             replyButton.setTextColor(replyButtonColor);
         }
-        
+
         // Apply toggle replies button color
         int toggleRepliesButtonColor = ThemeColorResolver.getToggleRepliesButtonColor(context, theme);
         if (toggleRepliesButton != null) {
             toggleRepliesButton.setTextColor(toggleRepliesButtonColor);
         }
-        
+
         // Apply load more button text color
         int loadMoreButtonTextColor = ThemeColorResolver.getLoadMoreButtonTextColor(context, theme);
         if (btnLoadMoreReplies != null) {
@@ -148,19 +134,22 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     }
 
     private boolean liveChatStyle = false;
-    
+
     /**
      * Set whether this view is using live chat styling
      * @param liveChatStyle True for live chat style
      */
     public void setLiveChatStyle(boolean liveChatStyle) {
         this.liveChatStyle = liveChatStyle;
-        
+
         // No need to modify the view since we're using different layouts
         // Just store the flag for other behavior adjustments
     }
-    
-    public void setComment(final RenderableComment comment, boolean disableUnverifiedLabel, final CommentsAdapter.OnToggleRepliesListener listener) {
+
+    public void setComment(
+            final RenderableComment comment,
+            boolean disableUnverifiedLabel,
+            final CommentsAdapter.OnToggleRepliesListener listener) {
         Boolean isBlocked = comment.getComment().getIsBlocked();
         boolean blocked = isBlocked != null && isBlocked;
 
@@ -264,7 +253,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             String htmlContent = comment.getComment().getCommentHTML();
             contentTextView.setText(HtmlLinkHandler.parseHtml(context, htmlContent, contentTextView));
         }
-        
+
         // No need for special handling for live chat - we're using a dedicated layout
 
         // Indent child comments to reflect hierarchy
@@ -453,23 +442,20 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
 
         if (useAbsoluteDates) {
             // Use system's locale-aware date formatting
-            Locale currentLocale = context.getResources().getConfiguration().getLocales().get(0);
-            DateTimeFormatter formatter = DateTimeFormatter
-                    .ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+            Locale currentLocale =
+                    context.getResources().getConfiguration().getLocales().get(0);
+            DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
                     .withLocale(currentLocale);
 
             dateTextView.setText(date.format(formatter));
         } else {
             // Format as relative date: 2 minutes ago, 1 hour ago, etc.
             CharSequence relativeTime = DateUtils.getRelativeTimeSpanString(
-                    date.toInstant().toEpochMilli(),
-                    System.currentTimeMillis(),
-                    DateUtils.MINUTE_IN_MILLIS
-            );
+                    date.toInstant().toEpochMilli(), System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS);
             dateTextView.setText(relativeTime);
         }
     }
-    
+
     /**
      * Update badges display for a comment
      *
@@ -477,27 +463,27 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
      */
     public void updateBadges(List<CommentUserBadgeInfo> badges) {
         badgesContainer.removeAllViews();
-        
+
         if (badges == null || badges.isEmpty()) {
             badgesContainer.setVisibility(View.GONE);
             return;
         }
-        
+
         badgesContainer.setVisibility(View.VISIBLE);
-        
+
         for (com.fastcomments.model.CommentUserBadgeInfo badge : badges) {
             View badgeView = BadgeView.createBadgeView(context, badge);
             badgesContainer.addView(badgeView);
         }
     }
-    
+
     /**
      * Format a count number to an abbreviated format
      * Examples:
      * - 0-999: Shows as is (123)
      * - 1,000-999,999: Shows as #K (1.2K, 45K, 999K)
      * - 1,000,000+: Shows as #M (1.2M, 45M)
-     * 
+     *
      * @param count The count to format
      * @return Formatted string
      */
@@ -525,59 +511,59 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             }
         }
     }
-    
+
     /**
      * Set the click listener for the comment menu button
-     * 
+     *
      * @param commentMenuListener The listener to handle menu items
      */
     public void setCommentMenuClickListener(final CommentsAdapter.OnCommentMenuItemListener commentMenuListener) {
         commentMenuButton.setOnClickListener(v -> showCommentMenu(commentMenuListener));
     }
-    
+
     /**
      * Set the click listener for the user avatar
-     * 
+     *
      * @param clickListener The click listener to set
      */
     public void setAvatarClickListener(View.OnClickListener clickListener) {
         avatarImageView.setOnClickListener(clickListener);
     }
-    
+
     /**
      * Set the click listener for the user name
-     * 
+     *
      * @param clickListener The click listener to set
      */
     public void setUserNameClickListener(View.OnClickListener clickListener) {
         nameTextView.setOnClickListener(clickListener);
     }
-    
+
     /**
      * Show the comment menu
-     * 
+     *
      * @param commentMenuListener The listener to handle menu items
      */
     private void showCommentMenu(final CommentsAdapter.OnCommentMenuItemListener commentMenuListener) {
         // Create popup menu
         PopupMenu popupMenu = new PopupMenu(context, commentMenuButton);
         popupMenu.inflate(R.menu.comment_menu);
-        
+
         // Get menu for adjustments
         android.view.Menu menu = popupMenu.getMenu();
-        
+
         // Only show edit option for user's own comments
         boolean isCurrentUserComment = false;
-        
+
         if (currentComment != null && sdk.getCurrentUser() != null) {
             String commentUserId = currentComment.getComment().getUserId();
             String currentUserId = sdk.getCurrentUser().getId();
-            
+
             if (commentUserId != null && currentUserId != null) {
                 isCurrentUserComment = commentUserId.equals(currentUserId);
             }
         }
-        
+
         // Show/hide edit and delete options based on ownership
         menu.findItem(R.id.menu_edit_comment).setVisible(isCurrentUserComment);
         menu.findItem(R.id.menu_delete_comment).setVisible(isCurrentUserComment);
@@ -636,7 +622,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
 
             return false;
         });
-        
+
         // Show the popup menu
         popupMenu.show();
     }

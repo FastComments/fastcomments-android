@@ -3,13 +3,11 @@ package com.fastcomments;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
-
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.core.sso.FastCommentsSSO;
 import com.fastcomments.core.sso.SimpleSSOUserData;
@@ -22,7 +20,6 @@ import com.fastcomments.sdk.OnUserClickListener;
 import com.fastcomments.sdk.UserClickSource;
 import com.fastcomments.sdk.examples.GifPickerFeedToolbarButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
 import java.util.List;
 
 /**
@@ -105,7 +102,8 @@ public class FeedExampleCustomButtonsActivity extends AppCompatActivity {
             @Override
             public void onFeedError(String errorMessage) {
                 // Error loading feed
-                Toast.makeText(FeedExampleCustomButtonsActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                Toast.makeText(FeedExampleCustomButtonsActivity.this, errorMessage, Toast.LENGTH_SHORT)
+                        .show();
             }
 
             @Override
@@ -158,9 +156,11 @@ public class FeedExampleCustomButtonsActivity extends AppCompatActivity {
         userClickListener = (context, userInfo, source) -> {
             String sourceText = source == UserClickSource.NAME ? "name" : "avatar";
             String contextText = context.isComment() ? "comment" : "feed post";
-            Toast.makeText(FeedExampleCustomButtonsActivity.this,
-                "Clicked " + userInfo.getDisplayName() + "'s " + sourceText + " in " + contextText,
-                Toast.LENGTH_SHORT).show();
+            Toast.makeText(
+                            FeedExampleCustomButtonsActivity.this,
+                            "Clicked " + userInfo.getDisplayName() + "'s " + sourceText + " in " + contextText,
+                            Toast.LENGTH_SHORT)
+                    .show();
         };
     }
 
@@ -183,8 +183,7 @@ public class FeedExampleCustomButtonsActivity extends AppCompatActivity {
 
         // Create constraints for post creation view (full width at top, floating above content)
         ConstraintLayout.LayoutParams postCreateParams = new ConstraintLayout.LayoutParams(
-                ConstraintLayout.LayoutParams.MATCH_PARENT,
-                ConstraintLayout.LayoutParams.WRAP_CONTENT);
+                ConstraintLayout.LayoutParams.MATCH_PARENT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
         postCreateView.setLayoutParams(postCreateParams);
         postCreateView.setElevation(16f); // Elevate above other content
 
@@ -194,9 +193,12 @@ public class FeedExampleCustomButtonsActivity extends AppCompatActivity {
         // Update constraints to position the view at the top
         ConstraintSet initialConstraintSet = new ConstraintSet();
         initialConstraintSet.clone(parentLayout);
-        initialConstraintSet.connect(postCreateView.getId(), ConstraintSet.TOP, parentLayout.getId(), ConstraintSet.TOP, 0);
-        initialConstraintSet.connect(postCreateView.getId(), ConstraintSet.START, parentLayout.getId(), ConstraintSet.START, 0);
-        initialConstraintSet.connect(postCreateView.getId(), ConstraintSet.END, parentLayout.getId(), ConstraintSet.END, 0);
+        initialConstraintSet.connect(
+                postCreateView.getId(), ConstraintSet.TOP, parentLayout.getId(), ConstraintSet.TOP, 0);
+        initialConstraintSet.connect(
+                postCreateView.getId(), ConstraintSet.START, parentLayout.getId(), ConstraintSet.START, 0);
+        initialConstraintSet.connect(
+                postCreateView.getId(), ConstraintSet.END, parentLayout.getId(), ConstraintSet.END, 0);
         initialConstraintSet.applyTo(parentLayout);
 
         // Create FAB
@@ -207,8 +209,7 @@ public class FeedExampleCustomButtonsActivity extends AppCompatActivity {
 
         // Create params for FAB
         ConstraintLayout.LayoutParams fabParams = new ConstraintLayout.LayoutParams(
-                ConstraintLayout.LayoutParams.WRAP_CONTENT,
-                ConstraintLayout.LayoutParams.WRAP_CONTENT);
+                ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
         createPostFab.setLayoutParams(fabParams);
 
         // Add FAB to parent
@@ -217,7 +218,8 @@ public class FeedExampleCustomButtonsActivity extends AppCompatActivity {
         // Update constraints to position the FAB at bottom-end
         ConstraintSet fabConstraintSet = new ConstraintSet();
         fabConstraintSet.clone(parentLayout);
-        fabConstraintSet.connect(createPostFab.getId(), ConstraintSet.BOTTOM, parentLayout.getId(), ConstraintSet.BOTTOM, 32);
+        fabConstraintSet.connect(
+                createPostFab.getId(), ConstraintSet.BOTTOM, parentLayout.getId(), ConstraintSet.BOTTOM, 32);
         fabConstraintSet.connect(createPostFab.getId(), ConstraintSet.END, parentLayout.getId(), ConstraintSet.END, 32);
         fabConstraintSet.applyTo(parentLayout);
 
@@ -273,7 +275,8 @@ public class FeedExampleCustomButtonsActivity extends AppCompatActivity {
 
             @Override
             public void onPostCreateError(String errorMessage) {
-                Toast.makeText(FeedExampleCustomButtonsActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                Toast.makeText(FeedExampleCustomButtonsActivity.this, errorMessage, Toast.LENGTH_SHORT)
+                        .show();
             }
 
             @Override

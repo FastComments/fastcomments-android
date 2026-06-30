@@ -1,27 +1,23 @@
 package com.fastcomments.sdk;
 
-import com.fastcomments.model.PublicComment;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
-
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+
+import com.fastcomments.model.PublicComment;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 /**
  * Unit tests for CommentsTree in-memory data structure.
@@ -40,11 +36,8 @@ public class CommentsTreeTests {
 
     @Test
     public void testBuild() {
-        List<PublicComment> comments = Arrays.asList(
-                MockComment.make("c1"),
-                MockComment.make("c2"),
-                MockComment.make("c3")
-        );
+        List<PublicComment> comments =
+                Arrays.asList(MockComment.make("c1"), MockComment.make("c2"), MockComment.make("c3"));
 
         tree.build(comments);
 
@@ -61,8 +54,20 @@ public class CommentsTreeTests {
         PublicComment child2 = MockComment.make("child2", null, "parent");
         List<PublicComment> children = Arrays.asList(child1, child2);
 
-        PublicComment parent = MockComment.make("parent", null, "Test User", "<p>Parent</p>",
-                null, OffsetDateTime.now(), 0, true, 2, children, null, null, null);
+        PublicComment parent = MockComment.make(
+                "parent",
+                null,
+                "Test User",
+                "<p>Parent</p>",
+                null,
+                OffsetDateTime.now(),
+                0,
+                true,
+                2,
+                children,
+                null,
+                null,
+                null);
 
         tree.build(Collections.singletonList(parent));
 
@@ -115,8 +120,8 @@ public class CommentsTreeTests {
         // Should be in visibleNodes
         boolean found = false;
         for (RenderableNode node : tree.visibleNodes) {
-            if (node instanceof RenderableComment &&
-                    "c2".equals(((RenderableComment) node).getComment().getId())) {
+            if (node instanceof RenderableComment
+                    && "c2".equals(((RenderableComment) node).getComment().getId())) {
                 found = true;
                 break;
             }
@@ -184,9 +189,20 @@ public class CommentsTreeTests {
 
     @Test
     public void testUpdateComment() {
-        tree.build(Collections.singletonList(
-                MockComment.make("c1", null, "Test User", "<p>original</p>",
-                        null, OffsetDateTime.now(), 0, true, null, null, null, null, null)));
+        tree.build(Collections.singletonList(MockComment.make(
+                "c1",
+                null,
+                "Test User",
+                "<p>original</p>",
+                null,
+                OffsetDateTime.now(),
+                0,
+                true,
+                null,
+                null,
+                null,
+                null,
+                null)));
 
         PublicComment comment = tree.getPublicComment("c1");
         assertNotNull(comment);
@@ -214,7 +230,8 @@ public class CommentsTreeTests {
         tree.showNewRootComments();
 
         int visibleCommentsAfter = countVisibleComments();
-        assertTrue("Visible comments should increase after showNewRootComments",
+        assertTrue(
+                "Visible comments should increase after showNewRootComments",
                 visibleCommentsAfter > visibleCommentsBefore);
     }
 
@@ -240,10 +257,7 @@ public class CommentsTreeTests {
     @Test
     public void testPresenceUpdate() {
         List<PublicComment> comments = Arrays.asList(
-                MockComment.make("c1", "user1"),
-                MockComment.make("c2", "user1"),
-                MockComment.make("c3", "user2")
-        );
+                MockComment.make("c1", "user1"), MockComment.make("c2", "user1"), MockComment.make("c3", "user2"));
         tree.build(comments);
 
         tree.updateUserPresence("user1", true);
@@ -259,10 +273,7 @@ public class CommentsTreeTests {
 
     @Test
     public void testPresenceIndexingAndPropagation() {
-        List<PublicComment> comments = Arrays.asList(
-                MockComment.make("c1", "user1"),
-                MockComment.make("c2", "user1")
-        );
+        List<PublicComment> comments = Arrays.asList(MockComment.make("c1", "user1"), MockComment.make("c2", "user1"));
         tree.build(comments);
 
         // commentsByUserId should have entries for "user1"
@@ -285,8 +296,8 @@ public class CommentsTreeTests {
 
         List<PublicComment> comments = Arrays.asList(
                 MockComment.make("c1", null, "User", "<p>Day 1</p>", null, day1, 0, true, null, null, null, null, null),
-                MockComment.make("c2", null, "User", "<p>Day 2</p>", null, day2, 0, true, null, null, null, null, null)
-        );
+                MockComment.make(
+                        "c2", null, "User", "<p>Day 2</p>", null, day2, 0, true, null, null, null, null, null));
 
         tree.build(comments);
 
@@ -302,14 +313,24 @@ public class CommentsTreeTests {
 
     @Test
     public void testAddForParent() {
-        PublicComment parent = MockComment.make("parent", null, "User", "<p>Parent</p>",
-                null, OffsetDateTime.now(), 0, true, 5, null, null, null, null);
+        PublicComment parent = MockComment.make(
+                "parent",
+                null,
+                "User",
+                "<p>Parent</p>",
+                null,
+                OffsetDateTime.now(),
+                0,
+                true,
+                5,
+                null,
+                null,
+                null,
+                null);
         tree.build(Collections.singletonList(parent));
 
-        List<PublicComment> children = Arrays.asList(
-                MockComment.make("child1", null, "parent"),
-                MockComment.make("child2", null, "parent")
-        );
+        List<PublicComment> children =
+                Arrays.asList(MockComment.make("child1", null, "parent"), MockComment.make("child2", null, "parent"));
         tree.addForParent("parent", children);
 
         assertEquals(3, tree.totalSize());
@@ -326,10 +347,7 @@ public class CommentsTreeTests {
 
     @Test
     public void testResetPresence() {
-        List<PublicComment> comments = Arrays.asList(
-                MockComment.make("c1", "user1"),
-                MockComment.make("c2", "user2")
-        );
+        List<PublicComment> comments = Arrays.asList(MockComment.make("c1", "user1"), MockComment.make("c2", "user2"));
         tree.build(comments);
 
         // Manually set online

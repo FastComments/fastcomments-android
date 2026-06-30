@@ -5,15 +5,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.fastcomments.model.FeedPostMediaItem;
 import com.fastcomments.model.FeedPostMediaItemAsset;
-
 import java.util.List;
 
 /**
@@ -90,11 +87,11 @@ public class PostImagesAdapter extends RecyclerView.Adapter<PostImagesAdapter.Im
             if (mediaItem.getSizes() != null && !mediaItem.getSizes().isEmpty()) {
                 // Select best size for display
                 FeedPostMediaItemAsset bestSizeAsset = selectBestImageSize(mediaItem.getSizes());
-                
+
                 if (bestSizeAsset != null && bestSizeAsset.getSrc() != null) {
                     // Pre-set a minimum height for consistency
                     imageView.setMinimumHeight(context.getResources().getDimensionPixelSize(R.dimen.feed_image_height));
-                    
+
                     Glide.with(context)
                             .load(bestSizeAsset.getSrc())
                             .centerCrop()
@@ -105,30 +102,32 @@ public class PostImagesAdapter extends RecyclerView.Adapter<PostImagesAdapter.Im
             }
 
             // Determine if it's a video
-            boolean isVideo = mediaItem.getLinkUrl() != null &&
-                             (mediaItem.getLinkUrl().contains("youtube") ||
-                              mediaItem.getLinkUrl().contains("vimeo") ||
-                              mediaItem.getLinkUrl().contains(".mp4"));
-            
+            boolean isVideo = mediaItem.getLinkUrl() != null
+                    && (mediaItem.getLinkUrl().contains("youtube")
+                            || mediaItem.getLinkUrl().contains("vimeo")
+                            || mediaItem.getLinkUrl().contains(".mp4"));
+
             playButton.setVisibility(isVideo ? View.VISIBLE : View.GONE);
         }
-        
+
         /**
          * Get the best quality image URL for full-screen viewing
          * For full-screen viewing, we want the highest quality image available
-         * 
+         *
          * @param mediaItem The media item to get the URL from
          * @return The URL of the highest quality image, or null if not available
          */
         private String getBestQualityImageUrl(FeedPostMediaItem mediaItem) {
-            if (mediaItem == null || mediaItem.getSizes() == null || mediaItem.getSizes().isEmpty()) {
+            if (mediaItem == null
+                    || mediaItem.getSizes() == null
+                    || mediaItem.getSizes().isEmpty()) {
                 return null;
             }
-            
+
             // Find the image with the highest resolution (largest width)
             FeedPostMediaItemAsset highestQualityAsset = null;
             double maxWidth = 0;
-            
+
             for (FeedPostMediaItemAsset asset : mediaItem.getSizes()) {
                 if (asset != null && asset.getSrc() != null && asset.getW() != null) {
                     double width = asset.getW();
@@ -138,10 +137,10 @@ public class PostImagesAdapter extends RecyclerView.Adapter<PostImagesAdapter.Im
                     }
                 }
             }
-            
+
             return highestQualityAsset != null ? highestQualityAsset.getSrc() : null;
         }
-        
+
         /**
          * Select the best image size based on device display metrics
          */
@@ -149,56 +148,56 @@ public class PostImagesAdapter extends RecyclerView.Adapter<PostImagesAdapter.Im
             if (sizes == null || sizes.isEmpty()) {
                 return null;
             }
-            
+
             // If there's only one size, use it
             if (sizes.size() == 1) {
                 return sizes.get(0);
             }
-            
+
             // Get screen width for comparison
             int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
-            
+
             // Target a size that's close to the screen width for optimal display
             double optimalWidth = screenWidth;
             double maxAcceptableWidth = screenWidth * 1.5;
-            
+
             FeedPostMediaItemAsset bestMatch = null;
             double smallestDiff = Double.MAX_VALUE;
-            
+
             // First pass: find close matches to optimal width
             for (FeedPostMediaItemAsset asset : sizes) {
                 if (asset == null || asset.getW() == null || asset.getSrc() == null) {
                     continue;
                 }
-                
+
                 double width = asset.getW();
                 double diff = Math.abs(width - optimalWidth);
-                
+
                 // If width is within acceptable range and has smaller difference than current best match
                 if (width <= maxAcceptableWidth && diff < smallestDiff) {
                     bestMatch = asset;
                     smallestDiff = diff;
                 }
             }
-            
+
             // If no match found in optimal range, just use the largest that's not excessively large
             if (bestMatch == null) {
                 double largestAcceptableWidth = 0;
-                
+
                 for (FeedPostMediaItemAsset asset : sizes) {
                     if (asset == null || asset.getW() == null || asset.getSrc() == null) {
                         continue;
                     }
-                    
+
                     double width = asset.getW();
-                    
+
                     // Find largest image that's not too oversized
                     if (width > largestAcceptableWidth && width <= maxAcceptableWidth * 2) {
                         bestMatch = asset;
                         largestAcceptableWidth = width;
                     }
                 }
-                
+
                 // If still no match, use the first valid asset
                 if (bestMatch == null) {
                     for (FeedPostMediaItemAsset asset : sizes) {
@@ -208,7 +207,7 @@ public class PostImagesAdapter extends RecyclerView.Adapter<PostImagesAdapter.Im
                     }
                 }
             }
-            
+
             // Return best match or first asset if no match found
             return bestMatch != null ? bestMatch : sizes.get(0);
         }

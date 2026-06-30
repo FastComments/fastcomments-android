@@ -15,22 +15,18 @@ import android.text.style.TypefaceSpan;
 import android.text.style.URLSpan;
 import android.util.DisplayMetrics;
 import android.widget.EditText;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
-
-import org.xml.sax.XMLReader;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.xml.sax.XMLReader;
 
 /**
  * Utility class for WYSIWYG rich text editing using Android's Spannable system.
@@ -64,17 +60,25 @@ public final class RichTextHelper {
         private final String alt;
         private final String style;
 
-        public RichImageSpan(@NonNull Drawable drawable, @NonNull String src,
-                             @Nullable String alt, @Nullable String style) {
+        public RichImageSpan(
+                @NonNull Drawable drawable, @NonNull String src, @Nullable String alt, @Nullable String style) {
             super(drawable);
             this.src = src;
             this.alt = alt;
             this.style = style;
         }
 
-        public String getSrc() { return src; }
-        public String getAlt() { return alt; }
-        public String getStyle() { return style; }
+        public String getSrc() {
+            return src;
+        }
+
+        public String getAlt() {
+            return alt;
+        }
+
+        public String getStyle() {
+            return style;
+        }
     }
 
     // ========== EditableImageGetter ==========
@@ -108,7 +112,8 @@ public final class RichTextHelper {
             int placeholderH = (int) (48 * editText.getResources().getDisplayMetrics().density);
             urlDrawable.setBounds(0, 0, maxWidth, placeholderH);
 
-            boolean isGif = source != null && (source.endsWith(".gif") || source.contains(".gif?") || source.contains("/giphy.gif"));
+            boolean isGif = source != null
+                    && (source.endsWith(".gif") || source.contains(".gif?") || source.contains("/giphy.gif"));
 
             if (isGif) {
                 loadGif(source, urlDrawable);
@@ -122,62 +127,62 @@ public final class RichTextHelper {
         private void loadGif(String source, URLDrawable urlDrawable) {
             CustomTarget<com.bumptech.glide.load.resource.gif.GifDrawable> target =
                     new CustomTarget<com.bumptech.glide.load.resource.gif.GifDrawable>() {
-                @Override
-                public void onResourceReady(@NonNull com.bumptech.glide.load.resource.gif.GifDrawable resource,
-                                            @Nullable Transition<? super com.bumptech.glide.load.resource.gif.GifDrawable> transition) {
-                    int w = resource.getIntrinsicWidth();
-                    int h = resource.getIntrinsicHeight();
-                    if (w > maxWidth) {
-                        h = (int) ((long) h * maxWidth / w);
-                        w = maxWidth;
-                    }
-                    if (h > maxHeightPx) {
-                        w = (int) ((long) w * maxHeightPx / h);
-                        h = maxHeightPx;
-                    }
-
-                    resource.setBounds(0, 0, w, h);
-                    resource.setLoopCount(com.bumptech.glide.load.resource.gif.GifDrawable.LOOP_FOREVER);
-
-                    resource.setCallback(new Drawable.Callback() {
                         @Override
-                        public void invalidateDrawable(@NonNull Drawable who) {
+                        public void onResourceReady(
+                                @NonNull com.bumptech.glide.load.resource.gif.GifDrawable resource,
+                                @Nullable
+                                        Transition<? super com.bumptech.glide.load.resource.gif.GifDrawable>
+                                                transition) {
+                            int w = resource.getIntrinsicWidth();
+                            int h = resource.getIntrinsicHeight();
+                            if (w > maxWidth) {
+                                h = (int) ((long) h * maxWidth / w);
+                                w = maxWidth;
+                            }
+                            if (h > maxHeightPx) {
+                                w = (int) ((long) w * maxHeightPx / h);
+                                h = maxHeightPx;
+                            }
+
+                            resource.setBounds(0, 0, w, h);
+                            resource.setLoopCount(com.bumptech.glide.load.resource.gif.GifDrawable.LOOP_FOREVER);
+
+                            resource.setCallback(new Drawable.Callback() {
+                                @Override
+                                public void invalidateDrawable(@NonNull Drawable who) {
+                                    editText.invalidate();
+                                }
+
+                                @Override
+                                public void scheduleDrawable(@NonNull Drawable who, @NonNull Runnable what, long when) {
+                                    editText.postDelayed(what, when - android.os.SystemClock.uptimeMillis());
+                                }
+
+                                @Override
+                                public void unscheduleDrawable(@NonNull Drawable who, @NonNull Runnable what) {
+                                    editText.removeCallbacks(what);
+                                }
+                            });
+
+                            urlDrawable.setDrawable(resource);
+                            urlDrawable.setBounds(0, 0, w, h);
+                            resource.start();
                             editText.invalidate();
+                            editText.requestLayout();
                         }
-                        @Override
-                        public void scheduleDrawable(@NonNull Drawable who, @NonNull Runnable what, long when) {
-                            editText.postDelayed(what, when - android.os.SystemClock.uptimeMillis());
-                        }
-                        @Override
-                        public void unscheduleDrawable(@NonNull Drawable who, @NonNull Runnable what) {
-                            editText.removeCallbacks(what);
-                        }
-                    });
 
-                    urlDrawable.setDrawable(resource);
-                    urlDrawable.setBounds(0, 0, w, h);
-                    resource.start();
-                    editText.invalidate();
-                    editText.requestLayout();
-                }
-
-                @Override
-                public void onLoadCleared(@Nullable Drawable placeholder) {
-                }
-            };
+                        @Override
+                        public void onLoadCleared(@Nullable Drawable placeholder) {}
+                    };
             activeTargets.add(target);
 
-            Glide.with(editText)
-                    .asGif()
-                    .load(source)
-                    .into(target);
+            Glide.with(editText).asGif().load(source).into(target);
         }
 
         private void loadBitmap(String source, URLDrawable urlDrawable) {
             CustomTarget<Bitmap> target = new CustomTarget<Bitmap>() {
                 @Override
-                public void onResourceReady(@NonNull Bitmap resource,
-                                            @Nullable Transition<? super Bitmap> transition) {
+                public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                     BitmapDrawable bd = new BitmapDrawable(editText.getResources(), resource);
                     int w = bd.getIntrinsicWidth();
                     int h = bd.getIntrinsicHeight();
@@ -200,15 +205,11 @@ public final class RichTextHelper {
                 }
 
                 @Override
-                public void onLoadCleared(@Nullable Drawable placeholder) {
-                }
+                public void onLoadCleared(@Nullable Drawable placeholder) {}
             };
             activeTargets.add(target);
 
-            Glide.with(editText)
-                    .asBitmap()
-                    .load(source)
-                    .into(target);
+            Glide.with(editText).asBitmap().load(source).into(target);
         }
 
         /**
@@ -244,18 +245,16 @@ public final class RichTextHelper {
         if (selStart == selEnd) {
             return !isCodeActive(editable, selStart);
         }
-        if (isRangeCovered(editable, selStart, selEnd, TypefaceSpan.class,
-                s -> "monospace".equals(s.getFamily()))) {
-            removeSpansInRange(editable, selStart, selEnd, TypefaceSpan.class,
-                    s -> "monospace".equals(s.getFamily()));
+        if (isRangeCovered(editable, selStart, selEnd, TypefaceSpan.class, s -> "monospace".equals(s.getFamily()))) {
+            removeSpansInRange(editable, selStart, selEnd, TypefaceSpan.class, s -> "monospace".equals(s.getFamily()));
             removeSpansInRange(editable, selStart, selEnd, BackgroundColorSpan.class, null);
             removeSpansInRange(editable, selStart, selEnd, CodeBlockSpan.class, null);
             return false;
         } else {
-            int[] merged = mergeRange(editable, selStart, selEnd, TypefaceSpan.class,
-                    s -> "monospace".equals(s.getFamily()));
-            removeSpansInRange(editable, merged[0], merged[1], TypefaceSpan.class,
-                    s -> "monospace".equals(s.getFamily()));
+            int[] merged =
+                    mergeRange(editable, selStart, selEnd, TypefaceSpan.class, s -> "monospace".equals(s.getFamily()));
+            removeSpansInRange(
+                    editable, merged[0], merged[1], TypefaceSpan.class, s -> "monospace".equals(s.getFamily()));
             removeSpansInRange(editable, merged[0], merged[1], BackgroundColorSpan.class, null);
             removeSpansInRange(editable, merged[0], merged[1], CodeBlockSpan.class, null);
             editable.setSpan(new TypefaceSpan("monospace"), merged[0], merged[1], SPAN_FLAGS);
@@ -270,18 +269,18 @@ public final class RichTextHelper {
         }
         // Check if already a code block
         CodeBlockSpan[] blocks = editable.getSpans(selStart, selEnd, CodeBlockSpan.class);
-        if (blocks.length > 0 && isRangeCovered(editable, selStart, selEnd, TypefaceSpan.class,
-                s -> "monospace".equals(s.getFamily()))) {
-            removeSpansInRange(editable, selStart, selEnd, TypefaceSpan.class,
-                    s -> "monospace".equals(s.getFamily()));
+        if (blocks.length > 0
+                && isRangeCovered(
+                        editable, selStart, selEnd, TypefaceSpan.class, s -> "monospace".equals(s.getFamily()))) {
+            removeSpansInRange(editable, selStart, selEnd, TypefaceSpan.class, s -> "monospace".equals(s.getFamily()));
             removeSpansInRange(editable, selStart, selEnd, BackgroundColorSpan.class, null);
             removeSpansInRange(editable, selStart, selEnd, CodeBlockSpan.class, null);
             return false;
         } else {
-            int[] merged = mergeRange(editable, selStart, selEnd, TypefaceSpan.class,
-                    s -> "monospace".equals(s.getFamily()));
-            removeSpansInRange(editable, merged[0], merged[1], TypefaceSpan.class,
-                    s -> "monospace".equals(s.getFamily()));
+            int[] merged =
+                    mergeRange(editable, selStart, selEnd, TypefaceSpan.class, s -> "monospace".equals(s.getFamily()));
+            removeSpansInRange(
+                    editable, merged[0], merged[1], TypefaceSpan.class, s -> "monospace".equals(s.getFamily()));
             removeSpansInRange(editable, merged[0], merged[1], BackgroundColorSpan.class, null);
             removeSpansInRange(editable, merged[0], merged[1], CodeBlockSpan.class, null);
             editable.setSpan(new TypefaceSpan("monospace"), merged[0], merged[1], SPAN_FLAGS);
@@ -481,8 +480,7 @@ public final class RichTextHelper {
      * Parse HTML into a Spanned, using the given EditableImageGetter for images.
      */
     public static Spanned fromHtml(@NonNull String html, @Nullable EditableImageGetter imageGetter) {
-        Spanned result = Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT,
-                imageGetter, new CodePreTagHandler());
+        Spanned result = Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT, imageGetter, new CodePreTagHandler());
         SpannableStringBuilder ssb = new SpannableStringBuilder(result);
 
         // Replace plain ImageSpan instances (created by Html.fromHtml) with RichImageSpan
@@ -495,8 +493,7 @@ public final class RichTextHelper {
             String src = imgSpan.getSource();
             if (src == null) src = "";
             ssb.removeSpan(imgSpan);
-            ssb.setSpan(new RichImageSpan(imgSpan.getDrawable(), src, null, null),
-                    start, end, flags);
+            ssb.setSpan(new RichImageSpan(imgSpan.getDrawable(), src, null, null), start, end, flags);
         }
 
         // Strip trailing newlines added by Html.fromHtml
@@ -575,8 +572,8 @@ public final class RichTextHelper {
      * @param imageGetter   Optional image getter for rendering images (may be null)
      * @return The new cursor position after insertion
      */
-    public static int insertHtmlAtCursor(@NonNull EditText editText, @NonNull String html,
-                                          @Nullable EditableImageGetter imageGetter) {
+    public static int insertHtmlAtCursor(
+            @NonNull EditText editText, @NonNull String html, @Nullable EditableImageGetter imageGetter) {
         Spanned spanned = fromHtml(html, imageGetter);
         int start = Math.max(editText.getSelectionStart(), 0);
         int end = Math.max(editText.getSelectionEnd(), 0);
@@ -595,7 +592,8 @@ public final class RichTextHelper {
      * @param endTag   The closing tag string
      * @return The new cursor position after wrapping
      */
-    public static int wrapSelectionLiteral(@NonNull EditText editText, @NonNull String startTag, @NonNull String endTag) {
+    public static int wrapSelectionLiteral(
+            @NonNull EditText editText, @NonNull String startTag, @NonNull String endTag) {
         int start = editText.getSelectionStart();
         int end = editText.getSelectionEnd();
         Editable editable = editText.getText();
@@ -625,7 +623,8 @@ public final class RichTextHelper {
      * @param endTag    The closing tag string
      * @return true if handled as a recognized format/link, false if caller should use literal fallback
      */
-    public static boolean applyWrapFormat(@NonNull EditText editText, @NonNull String startTag, @NonNull String endTag) {
+    public static boolean applyWrapFormat(
+            @NonNull EditText editText, @NonNull String startTag, @NonNull String endTag) {
         Editable editable = editText.getText();
         int selStart = editText.getSelectionStart();
         int selEnd = editText.getSelectionEnd();
@@ -636,10 +635,18 @@ public final class RichTextHelper {
                 int start = Math.min(selStart, selEnd);
                 int end = Math.max(selStart, selEnd);
                 switch (formatName) {
-                    case "bold": toggleBold(editable, start, end); break;
-                    case "italic": toggleItalic(editable, start, end); break;
-                    case "code": toggleCode(editable, start, end); break;
-                    case "codeblock": toggleCodeBlock(editable, start, end); break;
+                    case "bold":
+                        toggleBold(editable, start, end);
+                        break;
+                    case "italic":
+                        toggleItalic(editable, start, end);
+                        break;
+                    case "code":
+                        toggleCode(editable, start, end);
+                        break;
+                    case "codeblock":
+                        toggleCodeBlock(editable, start, end);
+                        break;
                 }
             }
             return true;
@@ -681,8 +688,7 @@ public final class RichTextHelper {
                 int spanStart = editable.getSpanStart(s);
                 int flags = editable.getSpanFlags(s);
                 editable.removeSpan(s);
-                editable.setSpan(new TypefaceSpan("monospace"), spanStart, cursor,
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                editable.setSpan(new TypefaceSpan("monospace"), spanStart, cursor, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 if (spanEnd > cursor) {
                     editable.setSpan(new TypefaceSpan("monospace"), cursor, spanEnd, flags);
                 }
@@ -696,8 +702,7 @@ public final class RichTextHelper {
                 int flags = editable.getSpanFlags(s);
                 int color = s.getBackgroundColor();
                 editable.removeSpan(s);
-                editable.setSpan(new BackgroundColorSpan(color), spanStart, cursor,
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                editable.setSpan(new BackgroundColorSpan(color), spanStart, cursor, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 if (spanEnd > cursor) {
                     editable.setSpan(new BackgroundColorSpan(color), cursor, spanEnd, flags);
                 }
@@ -716,8 +721,7 @@ public final class RichTextHelper {
                 int spanStart = editable.getSpanStart(s);
                 int flags = editable.getSpanFlags(s);
                 editable.removeSpan(s);
-                editable.setSpan(new StyleSpan(style), spanStart, cursor,
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                editable.setSpan(new StyleSpan(style), spanStart, cursor, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 // If the span extended beyond cursor, re-create the remainder with original flags
                 if (spanEnd > cursor) {
                     editable.setSpan(new StyleSpan(style), cursor, spanEnd, flags);
@@ -794,14 +798,14 @@ public final class RichTextHelper {
                 mergedEnd = Math.max(mergedEnd, editable.getSpanEnd(s));
             }
         }
-        return new int[]{mergedStart, mergedEnd};
+        return new int[] {mergedStart, mergedEnd};
     }
 
     /**
      * Generic range coverage check with an optional filter predicate.
      */
-    private static <T> boolean isRangeCovered(Editable editable, int start, int end,
-                                              Class<T> clazz, SpanFilter<T> filter) {
+    private static <T> boolean isRangeCovered(
+            Editable editable, int start, int end, Class<T> clazz, SpanFilter<T> filter) {
         for (int i = start; i < end; i++) {
             boolean covered = false;
             for (T s : editable.getSpans(i, i + 1, clazz)) {
@@ -815,8 +819,8 @@ public final class RichTextHelper {
         return true;
     }
 
-    private static <T> void removeSpansInRange(Editable editable, int start, int end,
-                                                Class<T> clazz, SpanFilter<T> filter) {
+    private static <T> void removeSpansInRange(
+            Editable editable, int start, int end, Class<T> clazz, SpanFilter<T> filter) {
         for (T s : editable.getSpans(start, end, clazz)) {
             if (filter != null && !filter.matches(s)) continue;
             int spanStart = editable.getSpanStart(s);
@@ -830,16 +834,24 @@ public final class RichTextHelper {
                 editable.setSpan(new TypefaceSpan(((TypefaceSpan) s).getFamily()), end, spanEnd, SPAN_FLAGS);
             }
             if (s instanceof BackgroundColorSpan && spanStart < start) {
-                editable.setSpan(new BackgroundColorSpan(((BackgroundColorSpan) s).getBackgroundColor()), spanStart, start, SPAN_FLAGS);
+                editable.setSpan(
+                        new BackgroundColorSpan(((BackgroundColorSpan) s).getBackgroundColor()),
+                        spanStart,
+                        start,
+                        SPAN_FLAGS);
             }
             if (s instanceof BackgroundColorSpan && spanEnd > end) {
-                editable.setSpan(new BackgroundColorSpan(((BackgroundColorSpan) s).getBackgroundColor()), end, spanEnd, SPAN_FLAGS);
+                editable.setSpan(
+                        new BackgroundColorSpan(((BackgroundColorSpan) s).getBackgroundColor()),
+                        end,
+                        spanEnd,
+                        SPAN_FLAGS);
             }
         }
     }
 
-    private static <T> int[] mergeRange(Editable editable, int selStart, int selEnd,
-                                         Class<T> clazz, SpanFilter<T> filter) {
+    private static <T> int[] mergeRange(
+            Editable editable, int selStart, int selEnd, Class<T> clazz, SpanFilter<T> filter) {
         int mergedStart = selStart;
         int mergedEnd = selEnd;
         for (T s : editable.getSpans(selStart, selEnd, clazz)) {
@@ -847,7 +859,7 @@ public final class RichTextHelper {
             mergedStart = Math.min(mergedStart, editable.getSpanStart(s));
             mergedEnd = Math.max(mergedEnd, editable.getSpanEnd(s));
         }
-        return new int[]{mergedStart, mergedEnd};
+        return new int[] {mergedStart, mergedEnd};
     }
 
     private interface SpanFilter<T> {
@@ -861,8 +873,8 @@ public final class RichTextHelper {
         final boolean isOpen;
         final String tag;
         final String attrs; // for open tags only
-        final Object span;  // the original span, for determining open-order
-        final int seq;      // creation order, used as a tiebreaker for identical ranges
+        final Object span; // the original span, for determining open-order
+        final int seq; // creation order, used as a tiebreaker for identical ranges
 
         SpanEvent(int position, boolean isOpen, String tag, String attrs, Object span, int seq) {
             this.position = position;
@@ -917,12 +929,22 @@ public final class RichTextHelper {
         for (int i = start; i < end; i++) {
             char c = text.charAt(i);
             switch (c) {
-                case '\uFFFC': break; // skip object replacement char (used by ImageSpan)
-                case '<': sb.append("&lt;"); break;
-                case '>': sb.append("&gt;"); break;
-                case '&': sb.append("&amp;"); break;
-                case '\n': sb.append("<br>"); break;
-                default: sb.append(c);
+                case '\uFFFC':
+                    break; // skip object replacement char (used by ImageSpan)
+                case '<':
+                    sb.append("&lt;");
+                    break;
+                case '>':
+                    sb.append("&gt;");
+                    break;
+                case '&':
+                    sb.append("&amp;");
+                    break;
+                case '\n':
+                    sb.append("<br>");
+                    break;
+                default:
+                    sb.append(c);
             }
         }
     }
@@ -940,14 +962,14 @@ public final class RichTextHelper {
     private static class CodePreTagHandler implements Html.TagHandler {
         // Marker class for tracking tag open positions
         private static class CodeMark {}
+
         private static class PreMark {}
 
         @Override
         public void handleTag(boolean opening, String tag, Editable output, XMLReader xmlReader) {
             if ("code".equalsIgnoreCase(tag)) {
                 if (opening) {
-                    output.setSpan(new CodeMark(), output.length(), output.length(),
-                            Spanned.SPAN_MARK_MARK);
+                    output.setSpan(new CodeMark(), output.length(), output.length(), Spanned.SPAN_MARK_MARK);
                 } else {
                     CodeMark mark = getLast(output, CodeMark.class);
                     if (mark != null) {
@@ -956,8 +978,7 @@ public final class RichTextHelper {
                         if (start < output.length()) {
                             // Check if this code is inside a <pre> block
                             PreMark preMark = getLast(output, PreMark.class);
-                            boolean isBlock = preMark != null &&
-                                    output.getSpanStart(preMark) <= start;
+                            boolean isBlock = preMark != null && output.getSpanStart(preMark) <= start;
 
                             output.setSpan(new TypefaceSpan("monospace"), start, output.length(), SPAN_FLAGS);
                             output.setSpan(new BackgroundColorSpan(CODE_BG_COLOR), start, output.length(), SPAN_FLAGS);
@@ -969,8 +990,7 @@ public final class RichTextHelper {
                 }
             } else if ("pre".equalsIgnoreCase(tag)) {
                 if (opening) {
-                    output.setSpan(new PreMark(), output.length(), output.length(),
-                            Spanned.SPAN_MARK_MARK);
+                    output.setSpan(new PreMark(), output.length(), output.length(), Spanned.SPAN_MARK_MARK);
                 } else {
                     PreMark mark = getLast(output, PreMark.class);
                     if (mark != null) {

@@ -7,20 +7,16 @@ import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.util.Log;
-
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.fastcomments.sdk.R;
-
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 /**
  * Observer role — runs on Emulator A.
@@ -90,7 +86,9 @@ public class LiveEventUserA_UITests extends UITestBase {
                         .check(matches(hasDescendant(withText(containsString(commentText)))));
                 found = true;
                 break;
-            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+            } catch (Exception | AssertionError e) {
+                Thread.sleep(250);
+            }
         }
         Log.d(TAG, "Phase 1 result: " + found);
         assertTrue("Live comment should appear via WebSocket", found);
@@ -114,7 +112,9 @@ public class LiveEventUserA_UITests extends UITestBase {
                 onView(withId(R.id.recyclerViewComments))
                         .check(matches(hasDescendant(withText(containsString("Vote target from A")))));
                 return true;
-            } catch (Exception | AssertionError e) { return false; }
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
         });
 
         // NOW signal UserB to vote (WS should be connected by now)
@@ -130,19 +130,32 @@ public class LiveEventUserA_UITests extends UITestBase {
                         .perform(androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem(
                                 hasDescendant(withText(containsString("Vote target from A"))),
                                 new androidx.test.espresso.ViewAction() {
-                                    @Override public org.hamcrest.Matcher<android.view.View> getConstraints() {
+                                    @Override
+                                    public org.hamcrest.Matcher<android.view.View> getConstraints() {
                                         return org.hamcrest.Matchers.any(android.view.View.class);
                                     }
-                                    @Override public String getDescription() { return "check vote count"; }
-                                    @Override public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
+
+                                    @Override
+                                    public String getDescription() {
+                                        return "check vote count";
+                                    }
+
+                                    @Override
+                                    public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
                                         android.widget.TextView voteCount = v.findViewById(R.id.upVoteCount);
-                                        if (voteCount != null && !"0".equals(voteCount.getText().toString())) {
+                                        if (voteCount != null
+                                                && !"0"
+                                                        .equals(voteCount
+                                                                .getText()
+                                                                .toString())) {
                                             voteChanged[0] = true;
                                         }
                                     }
                                 }));
                 if (voteChanged[0]) break;
-            } catch (Exception | AssertionError e) { /* retry */ }
+            } catch (Exception | AssertionError e) {
+                /* retry */
+            }
             Thread.sleep(250);
         }
         Log.d(TAG, "Phase 2 result: " + voteChanged[0]);
@@ -164,7 +177,9 @@ public class LiveEventUserA_UITests extends UITestBase {
                 onView(withId(R.id.recyclerViewComments))
                         .check(matches(hasDescendant(withText(containsString("Offline user C comment")))));
                 return true;
-            } catch (Exception | AssertionError e) { return false; }
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
         });
 
         // Signal UserB to join (UserA's WS should be connected by now)
@@ -180,19 +195,29 @@ public class LiveEventUserA_UITests extends UITestBase {
                         .perform(androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem(
                                 hasDescendant(withText(containsString(commentText))),
                                 new androidx.test.espresso.ViewAction() {
-                                    @Override public org.hamcrest.Matcher<android.view.View> getConstraints() {
+                                    @Override
+                                    public org.hamcrest.Matcher<android.view.View> getConstraints() {
                                         return org.hamcrest.Matchers.any(android.view.View.class);
                                     }
-                                    @Override public String getDescription() { return "check online indicator on UserB comment"; }
-                                    @Override public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
+
+                                    @Override
+                                    public String getDescription() {
+                                        return "check online indicator on UserB comment";
+                                    }
+
+                                    @Override
+                                    public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
                                         android.view.View indicator = v.findViewById(R.id.onlineIndicator);
-                                        if (indicator != null && indicator.getVisibility() == android.view.View.VISIBLE) {
+                                        if (indicator != null
+                                                && indicator.getVisibility() == android.view.View.VISIBLE) {
                                             userBOnline[0] = true;
                                         }
                                     }
                                 }));
                 if (userBOnline[0]) break;
-            } catch (Exception | AssertionError e) { /* retry */ }
+            } catch (Exception | AssertionError e) {
+                /* retry */
+            }
             Thread.sleep(250);
         }
         Log.d(TAG, "Phase 3 UserB online: " + userBOnline[0]);
@@ -204,13 +229,21 @@ public class LiveEventUserA_UITests extends UITestBase {
                 .perform(androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem(
                         hasDescendant(withText(containsString("Offline user C comment"))),
                         new androidx.test.espresso.ViewAction() {
-                            @Override public org.hamcrest.Matcher<android.view.View> getConstraints() {
+                            @Override
+                            public org.hamcrest.Matcher<android.view.View> getConstraints() {
                                 return org.hamcrest.Matchers.any(android.view.View.class);
                             }
-                            @Override public String getDescription() { return "check online indicator on UserC comment"; }
-                            @Override public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
+
+                            @Override
+                            public String getDescription() {
+                                return "check online indicator on UserC comment";
+                            }
+
+                            @Override
+                            public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
                                 android.view.View indicator = v.findViewById(R.id.onlineIndicator);
-                                userCIndicatorOff[0] = indicator == null || indicator.getVisibility() != android.view.View.VISIBLE;
+                                userCIndicatorOff[0] =
+                                        indicator == null || indicator.getVisibility() != android.view.View.VISIBLE;
                             }
                         }));
         Log.d(TAG, "Phase 3 UserC offline: " + userCIndicatorOff[0]);
@@ -234,7 +267,9 @@ public class LiveEventUserA_UITests extends UITestBase {
                         .check(matches(hasDescendant(withText(containsString(deleteText)))));
                 deleteVisible = true;
                 break;
-            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+            } catch (Exception | AssertionError e) {
+                Thread.sleep(250);
+            }
         }
         assertTrue("Comment to delete should be visible", deleteVisible);
 
@@ -272,7 +307,9 @@ public class LiveEventUserA_UITests extends UITestBase {
                 onView(withId(R.id.recyclerViewComments))
                         .check(matches(hasDescendant(withText(containsString("Pin target from A")))));
                 return true;
-            } catch (Exception | AssertionError e) { return false; }
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
         });
 
         JSONObject phase5Setup = new JSONObject();
@@ -290,9 +327,18 @@ public class LiveEventUserA_UITests extends UITestBase {
                         .perform(androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem(
                                 hasDescendant(withText(containsString("Pin target from A"))),
                                 new androidx.test.espresso.ViewAction() {
-                                    @Override public org.hamcrest.Matcher<android.view.View> getConstraints() { return org.hamcrest.Matchers.any(android.view.View.class); }
-                                    @Override public String getDescription() { return "check pin icon"; }
-                                    @Override public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
+                                    @Override
+                                    public org.hamcrest.Matcher<android.view.View> getConstraints() {
+                                        return org.hamcrest.Matchers.any(android.view.View.class);
+                                    }
+
+                                    @Override
+                                    public String getDescription() {
+                                        return "check pin icon";
+                                    }
+
+                                    @Override
+                                    public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
                                         android.view.View icon = v.findViewById(R.id.pinIcon);
                                         if (icon != null && icon.getVisibility() == android.view.View.VISIBLE) {
                                             pinVisible[0] = true;
@@ -300,7 +346,9 @@ public class LiveEventUserA_UITests extends UITestBase {
                                     }
                                 }));
                 if (pinVisible[0]) break;
-            } catch (Exception | AssertionError e) { /* retry */ }
+            } catch (Exception | AssertionError e) {
+                /* retry */
+            }
             Thread.sleep(250);
         }
         Log.d(TAG, "Phase 5 result: " + pinVisible[0]);
@@ -321,7 +369,9 @@ public class LiveEventUserA_UITests extends UITestBase {
                 onView(withId(R.id.recyclerViewComments))
                         .check(matches(hasDescendant(withText(containsString("Lock target from A")))));
                 return true;
-            } catch (Exception | AssertionError e) { return false; }
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
         });
 
         JSONObject phase6Setup = new JSONObject();
@@ -339,9 +389,18 @@ public class LiveEventUserA_UITests extends UITestBase {
                         .perform(androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem(
                                 hasDescendant(withText(containsString("Lock target from A"))),
                                 new androidx.test.espresso.ViewAction() {
-                                    @Override public org.hamcrest.Matcher<android.view.View> getConstraints() { return org.hamcrest.Matchers.any(android.view.View.class); }
-                                    @Override public String getDescription() { return "check lock icon"; }
-                                    @Override public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
+                                    @Override
+                                    public org.hamcrest.Matcher<android.view.View> getConstraints() {
+                                        return org.hamcrest.Matchers.any(android.view.View.class);
+                                    }
+
+                                    @Override
+                                    public String getDescription() {
+                                        return "check lock icon";
+                                    }
+
+                                    @Override
+                                    public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
                                         android.view.View icon = v.findViewById(R.id.lockIcon);
                                         if (icon != null && icon.getVisibility() == android.view.View.VISIBLE) {
                                             lockVisible[0] = true;
@@ -349,7 +408,9 @@ public class LiveEventUserA_UITests extends UITestBase {
                                     }
                                 }));
                 if (lockVisible[0]) break;
-            } catch (Exception | AssertionError e) { /* retry */ }
+            } catch (Exception | AssertionError e) {
+                /* retry */
+            }
             Thread.sleep(250);
         }
         Log.d(TAG, "Phase 6 result: " + lockVisible[0]);

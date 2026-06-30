@@ -11,11 +11,7 @@ import android.text.style.ImageSpan;
 import android.text.style.URLSpan;
 import android.view.View;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
-
-import org.xml.sax.XMLReader;
-
 import java.util.Locale;
 
 /**
@@ -31,13 +27,13 @@ public class HtmlLinkHandler {
      * @return Spanned content with clickable links
      */
     public static Spanned parseHtml(Context context, String html, TextView textView) {
-        Spanned spanned = Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY, 
-            new CustomImageGetter(context, textView), null);
-        
+        Spanned spanned =
+                Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY, new CustomImageGetter(context, textView), null);
+
         // Process the spanned text to make links clickable
         return makeLinkClickable(context, spanned);
     }
-    
+
     /**
      * Makes links in text clickable and opens them in external browser
      * @param context Context for opening links
@@ -46,7 +42,7 @@ public class HtmlLinkHandler {
      */
     private static Spanned makeLinkClickable(final Context context, Spanned spanned) {
         Editable editableText = Editable.Factory.getInstance().newEditable(spanned);
-        
+
         // Find all URLSpans in the text
         URLSpan[] urlSpans = editableText.getSpans(0, editableText.length(), URLSpan.class);
         for (final URLSpan span : urlSpans) {
@@ -72,8 +68,8 @@ public class HtmlLinkHandler {
                     String url = span.getURL();
 
                     // Ensure URL has proper scheme
-                    if (!url.toLowerCase(Locale.US).startsWith("http://") &&
-                            !url.toLowerCase(Locale.US).startsWith("https://")) {
+                    if (!url.toLowerCase(Locale.US).startsWith("http://")
+                            && !url.toLowerCase(Locale.US).startsWith("https://")) {
                         url = "https://" + url;
                     }
 

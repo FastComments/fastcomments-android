@@ -10,7 +10,6 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ImageSpan;
 import android.text.style.URLSpan;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -39,8 +38,7 @@ public class HtmlLinkHandlerTest {
         text.setSpan(image, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         text.setSpan(link, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        assertEquals("https://example.com/full.jpg",
-                HtmlLinkHandler.findWrappedImageUrl(text, link));
+        assertEquals("https://example.com/full.jpg", HtmlLinkHandler.findWrappedImageUrl(text, link));
     }
 
     @Test
@@ -52,8 +50,7 @@ public class HtmlLinkHandlerTest {
         text.setSpan(image, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         text.setSpan(link, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        assertEquals("https://example.com/thumb.jpg",
-                HtmlLinkHandler.findWrappedImageUrl(text, link));
+        assertEquals("https://example.com/thumb.jpg", HtmlLinkHandler.findWrappedImageUrl(text, link));
     }
 
     @Test

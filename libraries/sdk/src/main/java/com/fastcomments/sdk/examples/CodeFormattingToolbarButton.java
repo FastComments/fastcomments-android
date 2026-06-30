@@ -1,7 +1,6 @@
 package com.fastcomments.sdk.examples;
 
 import android.view.View;
-
 import com.fastcomments.sdk.BottomCommentInputView;
 import com.fastcomments.sdk.CustomToolbarButton;
 import com.fastcomments.sdk.R;

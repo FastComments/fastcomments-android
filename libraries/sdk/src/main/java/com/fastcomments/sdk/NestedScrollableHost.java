@@ -6,7 +6,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.FrameLayout;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.viewpager2.widget.ViewPager2;
@@ -15,13 +14,13 @@ import androidx.viewpager2.widget.ViewPager2;
  * Layout that prevents horizontal touch event conflicts when nesting a horizontal ViewPager2
  * inside another horizontal ViewPager2. This specifically handles the case where image galleries
  * need to work properly when the feed is embedded in a parent ViewPager2.
- * 
+ *
  * Key behaviors:
  * - Only handles horizontal scroll conflicts (preserves vertical scrolling)
  * - Allows child ViewPager2 to consume horizontal swipes when it can scroll
  * - Delegates to parent when child reaches horizontal bounds
  * - Never interferes with vertical scrolling of the feed
- * 
+ *
  * Based on Google's NestedScrollableHost but optimized for horizontal-only conflicts.
  */
 public class NestedScrollableHost extends FrameLayout {
@@ -65,12 +64,12 @@ public class NestedScrollableHost extends FrameLayout {
             case MotionEvent.ACTION_MOVE:
                 float deltaX = Math.abs(ev.getX() - initialX);
                 float deltaY = Math.abs(ev.getY() - initialY);
-                
+
                 // Only handle horizontal scroll conflicts when parent is horizontal ViewPager2
                 if (isParentHorizontalViewPager() && deltaX > touchSlop && deltaX > deltaY) {
                     // This is primarily a horizontal swipe
                     boolean swipeLeft = (ev.getX() - initialX) < 0;
-                    
+
                     // Check if our child ViewPager2 can scroll in the swipe direction
                     if (canChildScrollHorizontally(swipeLeft)) {
                         // Child can handle this horizontal scroll, block parent
@@ -85,7 +84,7 @@ public class NestedScrollableHost extends FrameLayout {
                     getParent().requestDisallowInterceptTouchEvent(false);
                 }
                 break;
-                
+
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 // Reset state

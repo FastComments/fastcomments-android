@@ -8,37 +8,28 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.RelativeLayout;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.Button;
-
-import com.fastcomments.core.CommentWidgetConfig;
-import com.fastcomments.core.VoteStyle;
-import com.fastcomments.model.APIEmptyResponse;
-import com.fastcomments.model.BlockSuccess;
-import com.fastcomments.model.UnblockSuccess;
-import com.fastcomments.model.FComment;
-import com.fastcomments.model.SetCommentTextResult;
-import com.fastcomments.model.PublicComment;
-import com.fastcomments.model.SortDirections;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
+import com.fastcomments.core.CommentWidgetConfig;
+import com.fastcomments.core.VoteStyle;
+import com.fastcomments.model.APIEmptyResponse;
 import com.fastcomments.model.APIError;
+import com.fastcomments.model.BlockSuccess;
 import com.fastcomments.model.GetCommentsResponseWithPresencePublicComment;
-import com.fastcomments.model.VoteResponse;
+import com.fastcomments.model.PublicComment;
+import com.fastcomments.model.SetCommentTextResult;
+import com.fastcomments.model.SortDirections;
+import com.fastcomments.model.UnblockSuccess;
 import com.fastcomments.model.VoteDeleteResponse;
-
+import com.fastcomments.model.VoteResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -83,17 +74,17 @@ public class LiveChatView extends FrameLayout {
          * @param comment The posted comment
          */
         void onCommentPosted(com.fastcomments.model.PublicComment comment);
-        
+
         /**
          * Called when a comment is deleted
          * @param commentId The ID of the deleted comment
          */
         void onCommentDeleted(String commentId);
     }
-    
+
     private CommentActionListener commentActionListener;
     private OnUserClickListener userClickListener;
-    
+
     /**
      * Set a listener to be notified of comment actions
      * @param listener The listener to set
@@ -101,7 +92,7 @@ public class LiveChatView extends FrameLayout {
     public void setCommentActionListener(CommentActionListener listener) {
         this.commentActionListener = listener;
     }
-    
+
     /**
      * Set a listener to be notified when a user (name or avatar) is clicked
      * @param listener The listener to set
@@ -192,7 +183,7 @@ public class LiveChatView extends FrameLayout {
                     // Check if we have text in either input method
                     boolean hasText = false;
                     RenderableComment parentComment = null;
-                    
+
                     if (bottomCommentInput != null) {
                         hasText = !bottomCommentInput.isTextEmpty();
                         parentComment = bottomCommentInput.getParentComment();
@@ -200,11 +191,11 @@ public class LiveChatView extends FrameLayout {
                         hasText = !commentForm.isTextEmpty();
                         parentComment = commentForm.getParentComment();
                     }
-                    
+
                     if (hasText) {
                         // Show confirmation dialog - different message for reply vs new comment
                         String title, message;
-                        
+
                         if (parentComment != null) {
                             title = getContext().getString(R.string.cancel_reply_title);
                             message = getContext().getString(R.string.cancel_reply_confirm);
@@ -212,21 +203,21 @@ public class LiveChatView extends FrameLayout {
                             title = getContext().getString(R.string.cancel_comment_title);
                             message = getContext().getString(R.string.cancel_comment_confirm);
                         }
-                        
+
                         new android.app.AlertDialog.Builder(getContext())
-                            .setTitle(title)
-                            .setMessage(message)
-                            .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                                // Proceed with cancellation
-                                if (bottomCommentInput != null) {
-                                    bottomCommentInput.clearText();
-                                    bottomCommentInput.clearReplyState();
-                                } else if (commentForm != null) {
-                                    commentForm.resetReplyState();
-                                }
-                            })
-                            .setNegativeButton(android.R.string.no, null)
-                            .show();
+                                .setTitle(title)
+                                .setMessage(message)
+                                .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                                    // Proceed with cancellation
+                                    if (bottomCommentInput != null) {
+                                        bottomCommentInput.clearText();
+                                        bottomCommentInput.clearReplyState();
+                                    } else if (commentForm != null) {
+                                        commentForm.resetReplyState();
+                                    }
+                                })
+                                .setNegativeButton(android.R.string.no, null)
+                                .show();
                     } else {
                         // Text is empty, check if we're in a reply state
                         boolean wasInReplyState = false;
@@ -237,7 +228,7 @@ public class LiveChatView extends FrameLayout {
                             wasInReplyState = commentForm.getParentComment() != null;
                             commentForm.resetReplyState();
                         }
-                        
+
                         // If we weren't in a reply state, allow normal back navigation
                         if (!wasInReplyState) {
                             backPressedCallback.setEnabled(false);
@@ -252,7 +243,9 @@ public class LiveChatView extends FrameLayout {
             activity.getOnBackPressedDispatcher().addCallback(backPressedCallback);
         } else if (context instanceof Activity) {
             // Log a warning that back press won't be handled
-            Log.w("LiveChatView", "Context is an Activity but not AppCompatActivity. Back button handling not supported.");
+            Log.w(
+                    "LiveChatView",
+                    "Context is an Activity but not AppCompatActivity. Back button handling not supported.");
         }
 
         // Create a LinearLayoutManager for bottom-up layout
@@ -276,10 +269,10 @@ public class LiveChatView extends FrameLayout {
                 }
             }
         });
-        
+
         // Store the SDK reference
         this.sdk = sdk;
-        
+
         // If SDK is not provided, postpone adapter initialization
         // It will be initialized when setSDK is called
         if (sdk != null) {
@@ -293,10 +286,10 @@ public class LiveChatView extends FrameLayout {
         config.maxReplyDepth = 0;
         config.disableVoting = true;
     }
-    
+
     /**
      * Set the SDK instance to use with this view (for use when inflating from XML)
-     * 
+     *
      * @param sdk The FastCommentsSDK instance
      */
     public void setSDK(FastCommentsSDK sdk) {
@@ -304,7 +297,7 @@ public class LiveChatView extends FrameLayout {
         if (this.sdk == sdk) {
             return;
         }
-        
+
         this.sdk = sdk;
         if (sdk != null) {
             setupLiveChatConfig(sdk.getConfig());
@@ -312,7 +305,7 @@ public class LiveChatView extends FrameLayout {
             setupDemoBanner();
         }
     }
-    
+
     /**
      * Initialize the adapter and other SDK-dependent functionality
      */
@@ -367,8 +360,8 @@ public class LiveChatView extends FrameLayout {
         sdk.setPresenceUpdateListener(subscriberCount -> {
             if (userCountText != null) {
                 userCountText.setVisibility(View.VISIBLE);
-                userCountText.setText(getResources().getQuantityString(
-                        R.plurals.live_chat_users_online, subscriberCount, subscriberCount));
+                userCountText.setText(getResources()
+                        .getQuantityString(R.plurals.live_chat_users_online, subscriberCount, subscriberCount));
             }
         });
 
@@ -383,11 +376,9 @@ public class LiveChatView extends FrameLayout {
             dot.setShape(android.graphics.drawable.GradientDrawable.OVAL);
             dot.setColor(dotColor);
             connectionDot.setBackground(dot);
-            connectionStatusText.setText(isConnected
-                    ? R.string.live_chat_live
-                    : R.string.live_chat_connecting);
+            connectionStatusText.setText(isConnected ? R.string.live_chat_live : R.string.live_chat_connecting);
         });
-        
+
         // Set up infinite scrolling (in reverse) for chat mode
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -408,11 +399,11 @@ public class LiveChatView extends FrameLayout {
             // Setup bottom comment input for live chat
             bottomCommentInput.setCurrentUser(sdk.getCurrentUser());
             bottomCommentInput.setSDK(sdk);
-            
+
             bottomCommentInput.setOnCommentSubmitListener((commentText, parentId) -> {
                 postComment(commentText, parentId);
             });
-            
+
             bottomCommentInput.setOnReplyStateChangeListener((isReplying, parentComment) -> {
                 // Handle reply state changes if needed
             });
@@ -428,14 +419,14 @@ public class LiveChatView extends FrameLayout {
                 if (parentComment != null && !commentForm.isTextEmpty()) {
                     // Show confirmation dialog
                     new android.app.AlertDialog.Builder(getContext())
-                        .setTitle(R.string.cancel_reply_title)
-                        .setMessage(R.string.cancel_reply_confirm)
-                        .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                            // Proceed with cancellation
-                            commentForm.resetReplyState();
-                        })
-                        .setNegativeButton(android.R.string.no, null)
-                        .show();
+                            .setTitle(R.string.cancel_reply_title)
+                            .setMessage(R.string.cancel_reply_confirm)
+                            .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                                // Proceed with cancellation
+                                commentForm.resetReplyState();
+                            })
+                            .setNegativeButton(android.R.string.no, null)
+                            .show();
                 } else {
                     // Just reset the form if there's no text
                     commentForm.resetReplyState();
@@ -462,7 +453,7 @@ public class LiveChatView extends FrameLayout {
             } else if (commentForm != null) {
                 commentForm.setReplyingTo(commentToReplyTo);
             }
-            
+
             // Scroll to the comment being replied to
             int pos = adapter.getPositionForComment(commentToReplyTo);
             if (pos >= 0) {
@@ -472,20 +463,20 @@ public class LiveChatView extends FrameLayout {
 
         // Set up all the vote handlers similar to FastCommentsView
         setupVoteHandlers();
-        
+
         // Set up comment menu listener
         setupCommentMenuListener();
-        
+
         // Handle user click events
         adapter.setUserClickListener(userClickListener);
-        
+
         // The SDK supports loading child comments, but we don't need to show
         // them in the chat view as they appear as top-level messages
         adapter.setGetChildrenProducer((request, sendResults) -> {
             // Simply return an empty list since we don't show threaded replies
             sendResults.call(new ArrayList<>());
         });
-        
+
         // Set SDK on the appropriate input method for mentions functionality
         if (commentForm != null) {
             commentForm.setSDK(sdk);
@@ -534,8 +525,8 @@ public class LiveChatView extends FrameLayout {
                 // User hasn't upvoted, so add the vote
                 commentToVote.getComment().setIsVotedUp(true);
                 // Also remove downvote if exists
-                if (commentToVote.getComment().getIsVotedDown() != null &&
-                        commentToVote.getComment().getIsVotedDown()) {
+                if (commentToVote.getComment().getIsVotedDown() != null
+                        && commentToVote.getComment().getIsVotedDown()) {
                     commentToVote.getComment().setIsVotedDown(false);
                     // Update downvote count
                     Integer votesDown = commentToVote.getComment().getVotesDown();
@@ -584,10 +575,8 @@ public class LiveChatView extends FrameLayout {
                     // Show error message
                     getHandler().post(() -> {
                         android.widget.Toast.makeText(
-                                getContext(),
-                                R.string.error_voting,
-                                android.widget.Toast.LENGTH_SHORT
-                        ).show();
+                                        getContext(), R.string.error_voting, android.widget.Toast.LENGTH_SHORT)
+                                .show();
 
                         // Update the UI
                         adapter.notifyDataSetChanged();
@@ -598,45 +587,66 @@ public class LiveChatView extends FrameLayout {
             };
 
             // Check if user is logged in or if anonymous votes are allowed
-            boolean userIsLoggedIn = sdk.getCurrentUser() != null &&
-                    sdk.getCurrentUser().getAuthorized() != null &&
-                    sdk.getCurrentUser().getAuthorized();
-            boolean allowAnonVotes = sdk.getConfig() != null &&
-                    Boolean.TRUE.equals(sdk.getConfig().allowAnonVotes);
+            boolean userIsLoggedIn = sdk.getCurrentUser() != null
+                    && sdk.getCurrentUser().getAuthorized() != null
+                    && sdk.getCurrentUser().getAuthorized();
+            boolean allowAnonVotes = sdk.getConfig() != null && Boolean.TRUE.equals(sdk.getConfig().allowAnonVotes);
 
             // Special handling if the user is not logged in
             if (!userIsLoggedIn) {
                 if (!allowAnonVotes) {
                     final boolean needToDeleteFinal = needToDelete;
                     // Show dialog to collect user info for votes that need verification
-                    UserLoginDialog.show(getContext(), sdk.getConfig(), "vote", new UserLoginDialog.OnUserCredentialsListener() {
-                        @Override
-                        public void onUserCredentialsEntered(String username, String email) {
-                            // Proceed with vote using provided credentials
-                            processUpvote(commentToVote, needToDeleteFinal, originalIsVotedUp, originalVoteId,
-                                    upvoteErrorHandler, username, email, finalToastMessage);
-                        }
+                    UserLoginDialog.show(
+                            getContext(), sdk.getConfig(), "vote", new UserLoginDialog.OnUserCredentialsListener() {
+                                @Override
+                                public void onUserCredentialsEntered(String username, String email) {
+                                    // Proceed with vote using provided credentials
+                                    processUpvote(
+                                            commentToVote,
+                                            needToDeleteFinal,
+                                            originalIsVotedUp,
+                                            originalVoteId,
+                                            upvoteErrorHandler,
+                                            username,
+                                            email,
+                                            finalToastMessage);
+                                }
 
-                        @Override
-                        public void onCancel() {
-                            // User canceled, revert UI state
-                            commentToVote.getComment().setIsVotedUp(originalIsVotedUp);
-                            commentToVote.getComment().setIsVotedDown(originalIsVotedDown);
-                            commentToVote.getComment().setVotesUp(originalVotesUp);
-                            commentToVote.getComment().setVotesDown(originalVotesDown);
-                            adapter.notifyDataSetChanged();
-                        }
-                    });
+                                @Override
+                                public void onCancel() {
+                                    // User canceled, revert UI state
+                                    commentToVote.getComment().setIsVotedUp(originalIsVotedUp);
+                                    commentToVote.getComment().setIsVotedDown(originalIsVotedDown);
+                                    commentToVote.getComment().setVotesUp(originalVotesUp);
+                                    commentToVote.getComment().setVotesDown(originalVotesDown);
+                                    adapter.notifyDataSetChanged();
+                                }
+                            });
                 } else {
                     // Anonymous votes allowed, proceed directly without dialog
                     final boolean needToDeleteFinal = needToDelete;
-                    processUpvote(commentToVote, needToDeleteFinal, originalIsVotedUp, originalVoteId,
-                            upvoteErrorHandler, null, null, finalToastMessage);
+                    processUpvote(
+                            commentToVote,
+                            needToDeleteFinal,
+                            originalIsVotedUp,
+                            originalVoteId,
+                            upvoteErrorHandler,
+                            null,
+                            null,
+                            finalToastMessage);
                 }
             } else {
                 // User is logged in, proceed with vote
-                processUpvote(commentToVote, needToDelete, originalIsVotedUp, originalVoteId,
-                        upvoteErrorHandler, null, null, finalToastMessage);
+                processUpvote(
+                        commentToVote,
+                        needToDelete,
+                        originalIsVotedUp,
+                        originalVoteId,
+                        upvoteErrorHandler,
+                        null,
+                        null,
+                        finalToastMessage);
             }
         });
 
@@ -646,11 +656,11 @@ public class LiveChatView extends FrameLayout {
             // For brevity, just calling the appropriate method
             handleDownVote(commentToVote);
         });
-        
+
         // Set up heart click handler (using same logic as upvote)
-//        adapter.setHeartClickListener = adapter.setUpVoteClickListener;
+        //        adapter.setHeartClickListener = adapter.setUpVoteClickListener;
     }
-    
+
     private void handleDownVote(RenderableComment commentToVote) {
         // Get commenter name for the toast message
         String commenterName = commentToVote.getComment().getCommenterName();
@@ -683,8 +693,8 @@ public class LiveChatView extends FrameLayout {
             // User hasn't downvoted, so add the vote
             commentToVote.getComment().setIsVotedDown(true);
             // Also remove upvote if exists
-            if (commentToVote.getComment().getIsVotedUp() != null &&
-                    commentToVote.getComment().getIsVotedUp()) {
+            if (commentToVote.getComment().getIsVotedUp() != null
+                    && commentToVote.getComment().getIsVotedUp()) {
                 commentToVote.getComment().setIsVotedUp(false);
                 // Update upvote count
                 Integer votesUp = commentToVote.getComment().getVotesUp();
@@ -729,10 +739,8 @@ public class LiveChatView extends FrameLayout {
                 // Show error message
                 getHandler().post(() -> {
                     android.widget.Toast.makeText(
-                            getContext(),
-                            R.string.error_voting,
-                            android.widget.Toast.LENGTH_SHORT
-                    ).show();
+                                    getContext(), R.string.error_voting, android.widget.Toast.LENGTH_SHORT)
+                            .show();
 
                     // Update the UI
                     adapter.notifyDataSetChanged();
@@ -743,45 +751,66 @@ public class LiveChatView extends FrameLayout {
         };
 
         // Check if user is logged in or if anonymous votes are allowed
-        boolean userIsLoggedIn = sdk.getCurrentUser() != null &&
-                sdk.getCurrentUser().getAuthorized() != null &&
-                sdk.getCurrentUser().getAuthorized();
-        boolean allowAnonVotes = sdk.getConfig() != null &&
-                Boolean.TRUE.equals(sdk.getConfig().allowAnonVotes);
+        boolean userIsLoggedIn = sdk.getCurrentUser() != null
+                && sdk.getCurrentUser().getAuthorized() != null
+                && sdk.getCurrentUser().getAuthorized();
+        boolean allowAnonVotes = sdk.getConfig() != null && Boolean.TRUE.equals(sdk.getConfig().allowAnonVotes);
 
         // Special handling if the user is not logged in
         if (!userIsLoggedIn) {
             if (!allowAnonVotes) {
                 final boolean needToDeleteFinal = needToDelete;
                 // Show dialog to collect user info for votes that need verification
-                UserLoginDialog.show(getContext(), sdk.getConfig(), "vote", new UserLoginDialog.OnUserCredentialsListener() {
-                    @Override
-                    public void onUserCredentialsEntered(String username, String email) {
-                        // Proceed with vote using provided credentials
-                        processDownvote(commentToVote, needToDeleteFinal, originalIsVotedDown, originalVoteId,
-                                downvoteErrorHandler, username, email, finalToastMessage);
-                    }
+                UserLoginDialog.show(
+                        getContext(), sdk.getConfig(), "vote", new UserLoginDialog.OnUserCredentialsListener() {
+                            @Override
+                            public void onUserCredentialsEntered(String username, String email) {
+                                // Proceed with vote using provided credentials
+                                processDownvote(
+                                        commentToVote,
+                                        needToDeleteFinal,
+                                        originalIsVotedDown,
+                                        originalVoteId,
+                                        downvoteErrorHandler,
+                                        username,
+                                        email,
+                                        finalToastMessage);
+                            }
 
-                    @Override
-                    public void onCancel() {
-                        // User canceled, revert UI state
-                        commentToVote.getComment().setIsVotedUp(originalIsVotedUp);
-                        commentToVote.getComment().setIsVotedDown(originalIsVotedDown);
-                        commentToVote.getComment().setVotesUp(originalVotesUp);
-                        commentToVote.getComment().setVotesDown(originalVotesDown);
-                        adapter.notifyDataSetChanged();
-                    }
-                });
+                            @Override
+                            public void onCancel() {
+                                // User canceled, revert UI state
+                                commentToVote.getComment().setIsVotedUp(originalIsVotedUp);
+                                commentToVote.getComment().setIsVotedDown(originalIsVotedDown);
+                                commentToVote.getComment().setVotesUp(originalVotesUp);
+                                commentToVote.getComment().setVotesDown(originalVotesDown);
+                                adapter.notifyDataSetChanged();
+                            }
+                        });
             } else {
                 // Anonymous votes allowed, proceed directly without dialog
                 final boolean needToDeleteFinal = needToDelete;
-                processDownvote(commentToVote, needToDeleteFinal, originalIsVotedDown, originalVoteId,
-                        downvoteErrorHandler, null, null, finalToastMessage);
+                processDownvote(
+                        commentToVote,
+                        needToDeleteFinal,
+                        originalIsVotedDown,
+                        originalVoteId,
+                        downvoteErrorHandler,
+                        null,
+                        null,
+                        finalToastMessage);
             }
         } else {
             // User is logged in, proceed with vote
-            processDownvote(commentToVote, needToDelete, originalIsVotedDown, originalVoteId,
-                    downvoteErrorHandler, null, null, finalToastMessage);
+            processDownvote(
+                    commentToVote,
+                    needToDelete,
+                    originalIsVotedDown,
+                    originalVoteId,
+                    downvoteErrorHandler,
+                    null,
+                    null,
+                    finalToastMessage);
         }
     }
 
@@ -793,53 +822,57 @@ public class LiveChatView extends FrameLayout {
                 // Show edit dialog
                 CommentEditDialog dialog = new CommentEditDialog(getContext(), sdk);
                 dialog.setOnSaveCallback(newText -> {
-                    // Call API to edit the comment
-                    sdk.editComment(commentId, newText, new FCCallback<SetCommentTextResult>() {
-                        @Override
-                        public boolean onFailure(APIError error) {
-                            // Show error message
-                            getHandler().post(() -> {
-                                String errorMessage;
-                                if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
-                                    errorMessage = error.getTranslatedError();
-                                } else if (error.getReason() != null && !error.getReason().isEmpty()) {
-                                    errorMessage = error.getReason();
-                                } else {
-                                    errorMessage = getContext().getString(R.string.error_editing_comment);
+                            // Call API to edit the comment
+                            sdk.editComment(commentId, newText, new FCCallback<SetCommentTextResult>() {
+                                @Override
+                                public boolean onFailure(APIError error) {
+                                    // Show error message
+                                    getHandler().post(() -> {
+                                        String errorMessage;
+                                        if (error.getTranslatedError() != null
+                                                && !error.getTranslatedError().isEmpty()) {
+                                            errorMessage = error.getTranslatedError();
+                                        } else if (error.getReason() != null
+                                                && !error.getReason().isEmpty()) {
+                                            errorMessage = error.getReason();
+                                        } else {
+                                            errorMessage = getContext().getString(R.string.error_editing_comment);
+                                        }
+
+                                        android.widget.Toast.makeText(
+                                                        getContext(), errorMessage, android.widget.Toast.LENGTH_SHORT)
+                                                .show();
+                                    });
+                                    return CONSUME;
                                 }
 
-                                android.widget.Toast.makeText(
-                                        getContext(),
-                                        errorMessage,
-                                        android.widget.Toast.LENGTH_SHORT
-                                ).show();
-                            });
-                            return CONSUME;
-                        }
+                                @Override
+                                public boolean onSuccess(SetCommentTextResult updatedComment) {
+                                    // Show success message
+                                    getHandler().post(() -> {
+                                        android.widget.Toast.makeText(
+                                                        getContext(),
+                                                        R.string.comment_edited_successfully,
+                                                        android.widget.Toast.LENGTH_SHORT)
+                                                .show();
 
-                        @Override
-                        public boolean onSuccess(SetCommentTextResult updatedComment) {
-                            // Show success message
-                            getHandler().post(() -> {
-                                android.widget.Toast.makeText(
-                                        getContext(),
-                                        R.string.comment_edited_successfully,
-                                        android.widget.Toast.LENGTH_SHORT
-                                ).show();
-
-                                // Update the comment HTML in the existing comment object
-                                RenderableComment renderableComment = sdk.commentsTree.commentsById.get(commentId);
-                                if (renderableComment != null) {
-                                    renderableComment.getComment().setCommentHTML(updatedComment.getCommentHTML());
-                                    adapter.notifyDataSetChanged();
+                                        // Update the comment HTML in the existing comment object
+                                        RenderableComment renderableComment =
+                                                sdk.commentsTree.commentsById.get(commentId);
+                                        if (renderableComment != null) {
+                                            renderableComment
+                                                    .getComment()
+                                                    .setCommentHTML(updatedComment.getCommentHTML());
+                                            adapter.notifyDataSetChanged();
+                                        }
+                                    });
+                                    return CONSUME;
                                 }
                             });
-                            return CONSUME;
-                        }
-                    });
-                }).show(commentText);
+                        })
+                        .show(commentText);
             }
-            
+
             @Override
             public void onDelete(String commentId) {
                 // Confirm before deleting
@@ -854,19 +887,19 @@ public class LiveChatView extends FrameLayout {
                                     // Show error message
                                     getHandler().post(() -> {
                                         String errorMessage;
-                                        if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                                        if (error.getTranslatedError() != null
+                                                && !error.getTranslatedError().isEmpty()) {
                                             errorMessage = error.getTranslatedError();
-                                        } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                                        } else if (error.getReason() != null
+                                                && !error.getReason().isEmpty()) {
                                             errorMessage = error.getReason();
                                         } else {
                                             errorMessage = getContext().getString(R.string.error_deleting_comment);
                                         }
 
                                         android.widget.Toast.makeText(
-                                                getContext(),
-                                                errorMessage,
-                                                android.widget.Toast.LENGTH_SHORT
-                                        ).show();
+                                                        getContext(), errorMessage, android.widget.Toast.LENGTH_SHORT)
+                                                .show();
                                     });
                                     return CONSUME;
                                 }
@@ -876,11 +909,11 @@ public class LiveChatView extends FrameLayout {
                                     // Show success message
                                     getHandler().post(() -> {
                                         android.widget.Toast.makeText(
-                                                getContext(),
-                                                R.string.comment_deleted_successfully,
-                                                android.widget.Toast.LENGTH_SHORT
-                                        ).show();
-                                        
+                                                        getContext(),
+                                                        R.string.comment_deleted_successfully,
+                                                        android.widget.Toast.LENGTH_SHORT)
+                                                .show();
+
                                         // Notify listener if set
                                         if (commentActionListener != null) {
                                             commentActionListener.onCommentDeleted(commentId);
@@ -905,19 +938,18 @@ public class LiveChatView extends FrameLayout {
                         // Show error message
                         getHandler().post(() -> {
                             String errorMessage;
-                            if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                            if (error.getTranslatedError() != null
+                                    && !error.getTranslatedError().isEmpty()) {
                                 errorMessage = error.getTranslatedError();
-                            } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                            } else if (error.getReason() != null
+                                    && !error.getReason().isEmpty()) {
                                 errorMessage = error.getReason();
                             } else {
                                 errorMessage = getContext().getString(R.string.error_flagging_comment);
                             }
 
-                            android.widget.Toast.makeText(
-                                    getContext(),
-                                    errorMessage,
-                                    android.widget.Toast.LENGTH_SHORT
-                            ).show();
+                            android.widget.Toast.makeText(getContext(), errorMessage, android.widget.Toast.LENGTH_SHORT)
+                                    .show();
                         });
                         return CONSUME;
                     }
@@ -927,10 +959,10 @@ public class LiveChatView extends FrameLayout {
                         // Show success message
                         getHandler().post(() -> {
                             android.widget.Toast.makeText(
-                                    getContext(),
-                                    R.string.comment_flagged_successfully,
-                                    android.widget.Toast.LENGTH_SHORT
-                            ).show();
+                                            getContext(),
+                                            R.string.comment_flagged_successfully,
+                                            android.widget.Toast.LENGTH_SHORT)
+                                    .show();
                         });
                         return CONSUME;
                     }
@@ -952,19 +984,19 @@ public class LiveChatView extends FrameLayout {
                                     // Show error message
                                     getHandler().post(() -> {
                                         String errorMessage;
-                                        if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                                        if (error.getTranslatedError() != null
+                                                && !error.getTranslatedError().isEmpty()) {
                                             errorMessage = error.getTranslatedError();
-                                        } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                                        } else if (error.getReason() != null
+                                                && !error.getReason().isEmpty()) {
                                             errorMessage = error.getReason();
                                         } else {
                                             errorMessage = getContext().getString(R.string.error_blocking_user);
                                         }
 
                                         android.widget.Toast.makeText(
-                                                getContext(),
-                                                errorMessage,
-                                                android.widget.Toast.LENGTH_SHORT
-                                        ).show();
+                                                        getContext(), errorMessage, android.widget.Toast.LENGTH_SHORT)
+                                                .show();
                                     });
                                     return CONSUME;
                                 }
@@ -973,10 +1005,10 @@ public class LiveChatView extends FrameLayout {
                                 public boolean onSuccess(BlockSuccess success) {
                                     getHandler().post(() -> {
                                         android.widget.Toast.makeText(
-                                                getContext(),
-                                                R.string.user_blocked_successfully,
-                                                android.widget.Toast.LENGTH_SHORT
-                                        ).show();
+                                                        getContext(),
+                                                        R.string.user_blocked_successfully,
+                                                        android.widget.Toast.LENGTH_SHORT)
+                                                .show();
 
                                         // Update blocked statuses in-place from the API response
                                         sdk.commentsTree.updateBlockedStatuses(success.getCommentStatuses());
@@ -996,7 +1028,12 @@ public class LiveChatView extends FrameLayout {
                 // Confirm before unblocking
                 android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
                 builder.setTitle(R.string.unblock_user_title)
-                        .setMessage(getContext().getString(R.string.unblock_user_confirm, userName != null ? userName : getContext().getString(R.string.blocked_user_placeholder)))
+                        .setMessage(getContext()
+                                .getString(
+                                        R.string.unblock_user_confirm,
+                                        userName != null
+                                                ? userName
+                                                : getContext().getString(R.string.blocked_user_placeholder)))
                         .setPositiveButton(R.string.unblock, (dialog, which) -> {
                             // Snapshot comment IDs on the main thread before the async call
                             List<String> commentIds = new ArrayList<>(sdk.commentsTree.commentsById.keySet());
@@ -1005,19 +1042,19 @@ public class LiveChatView extends FrameLayout {
                                 public boolean onFailure(APIError error) {
                                     getHandler().post(() -> {
                                         String errorMessage;
-                                        if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                                        if (error.getTranslatedError() != null
+                                                && !error.getTranslatedError().isEmpty()) {
                                             errorMessage = error.getTranslatedError();
-                                        } else if (error.getReason() != null && !error.getReason().isEmpty()) {
+                                        } else if (error.getReason() != null
+                                                && !error.getReason().isEmpty()) {
                                             errorMessage = error.getReason();
                                         } else {
                                             errorMessage = getContext().getString(R.string.error_unblocking_user);
                                         }
 
                                         android.widget.Toast.makeText(
-                                                getContext(),
-                                                errorMessage,
-                                                android.widget.Toast.LENGTH_SHORT
-                                        ).show();
+                                                        getContext(), errorMessage, android.widget.Toast.LENGTH_SHORT)
+                                                .show();
                                     });
                                     return CONSUME;
                                 }
@@ -1026,10 +1063,10 @@ public class LiveChatView extends FrameLayout {
                                 public boolean onSuccess(UnblockSuccess success) {
                                     getHandler().post(() -> {
                                         android.widget.Toast.makeText(
-                                                getContext(),
-                                                R.string.user_unblocked_successfully,
-                                                android.widget.Toast.LENGTH_SHORT
-                                        ).show();
+                                                        getContext(),
+                                                        R.string.user_unblocked_successfully,
+                                                        android.widget.Toast.LENGTH_SHORT)
+                                                .show();
 
                                         // Update blocked statuses in-place from the API response
                                         sdk.commentsTree.updateBlockedStatuses(success.getCommentStatuses());
@@ -1051,7 +1088,7 @@ public class LiveChatView extends FrameLayout {
             Log.e("LiveChatView", "Cannot load comments: SDK not set. Call setSDK() first.");
             return;
         }
-        
+
         showLoading(true);
 
         sdk.load(new FCCallback<GetCommentsResponseWithPresencePublicComment>() {
@@ -1092,13 +1129,13 @@ public class LiveChatView extends FrameLayout {
 
                         // Start the date update timer
                         startDateUpdateTimer();
-                        
+
                         // For chat view, always scroll to bottom after loading
                         if (autoScrollToBottom) {
                             scrollToBottom();
                         }
                     }
-                    
+
                     // Initialize the input with current user info
                     if (bottomCommentInput != null) {
                         bottomCommentInput.setCurrentUser(sdk.getCurrentUser());
@@ -1146,10 +1183,11 @@ public class LiveChatView extends FrameLayout {
                     } else if (commentForm != null) {
                         commentForm.setSubmitting(false);
                     }
-                    
+
                     // Check for translated error message
                     String errorMessage;
-                    if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                    if (error.getTranslatedError() != null
+                            && !error.getTranslatedError().isEmpty()) {
                         errorMessage = error.getTranslatedError();
                     } else if (error.getReason() != null && !error.getReason().isEmpty()) {
                         errorMessage = error.getReason();
@@ -1183,20 +1221,20 @@ public class LiveChatView extends FrameLayout {
 
                     // Show a toast message to confirm successful posting
                     android.widget.Toast.makeText(
-                            getContext(),
-                            R.string.comment_posted_successfully,
-                            android.widget.Toast.LENGTH_SHORT
-                    ).show();
+                                    getContext(),
+                                    R.string.comment_posted_successfully,
+                                    android.widget.Toast.LENGTH_SHORT)
+                            .show();
 
                     // Add the comment to the tree, display immediately
                     // Note: For LiveChatView, comments will be added at the bottom because
                     // we've set the sort direction to OLDEST_FIRST in setSDK()
                     sdk.addComment(comment, true);
-                    
+
                     // Re-enable auto-scroll and scroll to the bottom to show the new comment
                     autoScrollToBottom = true;
                     scrollToBottom();
-                    
+
                     // Notify listener if set
                     if (commentActionListener != null) {
                         commentActionListener.onCommentPosted(comment);
@@ -1263,12 +1301,9 @@ public class LiveChatView extends FrameLayout {
     private void applyHeaderTheme() {
         if (liveChatHeader == null || sdk == null) return;
         FastCommentsTheme theme = sdk.getTheme();
-        liveChatHeader.setBackgroundColor(
-                ThemeColorResolver.getLiveChatHeaderBackgroundColor(getContext(), theme));
-        connectionStatusText.setTextColor(
-                ThemeColorResolver.getLiveChatHeaderTextColor(getContext(), theme));
-        userCountText.setTextColor(
-                ThemeColorResolver.getLiveChatUserCountTextColor(getContext(), theme));
+        liveChatHeader.setBackgroundColor(ThemeColorResolver.getLiveChatHeaderBackgroundColor(getContext(), theme));
+        connectionStatusText.setTextColor(ThemeColorResolver.getLiveChatHeaderTextColor(getContext(), theme));
+        userCountText.setTextColor(ThemeColorResolver.getLiveChatUserCountTextColor(getContext(), theme));
 
         // Apply disconnected dot color as initial state
         int dotColor = ThemeColorResolver.getLiveChatDisconnectedDotColor(getContext(), theme);
@@ -1298,7 +1333,7 @@ public class LiveChatView extends FrameLayout {
                 getHandler().post(() -> {
                     // Hide loading indicator
                     paginationProgressBar.setVisibility(View.GONE);
-                    
+
                     // Restore buttons
                     btnNextComments.setVisibility(View.VISIBLE);
                     if (sdk.shouldShowLoadAll()) {
@@ -1307,10 +1342,8 @@ public class LiveChatView extends FrameLayout {
 
                     // Show error toast
                     android.widget.Toast.makeText(
-                            getContext(),
-                            R.string.error_loading_comments,
-                            android.widget.Toast.LENGTH_SHORT
-                    ).show();
+                                    getContext(), R.string.error_loading_comments, android.widget.Toast.LENGTH_SHORT)
+                            .show();
                 });
                 return CONSUME;
             }
@@ -1320,7 +1353,7 @@ public class LiveChatView extends FrameLayout {
                 getHandler().post(() -> {
                     // Hide loading indicator
                     paginationProgressBar.setVisibility(View.GONE);
-                    
+
                     // Update pagination controls
                     updatePaginationControls();
                 });
@@ -1352,10 +1385,8 @@ public class LiveChatView extends FrameLayout {
 
                     // Show error toast
                     android.widget.Toast.makeText(
-                            getContext(),
-                            R.string.error_loading_comments,
-                            android.widget.Toast.LENGTH_SHORT
-                    ).show();
+                                    getContext(), R.string.error_loading_comments, android.widget.Toast.LENGTH_SHORT)
+                            .show();
                 });
                 return CONSUME;
             }
@@ -1366,7 +1397,7 @@ public class LiveChatView extends FrameLayout {
                     // Hide loading indicator
                     paginationProgressBar.setVisibility(View.GONE);
                     paginationControls.setVisibility(View.GONE);
-                    
+
                     // Re-enable auto-scroll and scroll to bottom
                     autoScrollToBottom = true;
                     scrollToBottom();
@@ -1379,12 +1410,22 @@ public class LiveChatView extends FrameLayout {
     /**
      * Helper method for processing upvotes with or without anonymous credentials
      */
-    private void processUpvote(RenderableComment commentToVote, boolean needToDelete,
-                               Boolean originalIsVotedUp, String originalVoteId,
-                               FCCallback<APIError> errorHandler, String username, String email, String toastMessage) {
+    private void processUpvote(
+            RenderableComment commentToVote,
+            boolean needToDelete,
+            Boolean originalIsVotedUp,
+            String originalVoteId,
+            FCCallback<APIError> errorHandler,
+            String username,
+            String email,
+            String toastMessage) {
         if (needToDelete && originalVoteId != null) {
             // Delete the existing vote first
-            sdk.deleteCommentVote(commentToVote.getComment().getId(), originalVoteId, username, email,
+            sdk.deleteCommentVote(
+                    commentToVote.getComment().getId(),
+                    originalVoteId,
+                    username,
+                    email,
                     new FCCallback<VoteDeleteResponse>() {
                         @Override
                         public boolean onFailure(APIError error) {
@@ -1401,16 +1442,18 @@ public class LiveChatView extends FrameLayout {
                                 // Show success toast message for removing vote
                                 getHandler().post(() -> {
                                     android.widget.Toast.makeText(
-                                            getContext(),
-                                            toastMessage,
-                                            android.widget.Toast.LENGTH_SHORT
-                                    ).show();
+                                                    getContext(), toastMessage, android.widget.Toast.LENGTH_SHORT)
+                                            .show();
                                 });
                                 return CONSUME;
                             }
 
                             // Otherwise, we need to add a new upvote
-                            sdk.voteComment(commentToVote.getComment().getId(), true, username, email,
+                            sdk.voteComment(
+                                    commentToVote.getComment().getId(),
+                                    true,
+                                    username,
+                                    email,
                                     new FCCallback<VoteResponse>() {
                                         @Override
                                         public boolean onFailure(APIError error) {
@@ -1425,10 +1468,10 @@ public class LiveChatView extends FrameLayout {
                                             // Show success toast message
                                             getHandler().post(() -> {
                                                 android.widget.Toast.makeText(
-                                                        getContext(),
-                                                        toastMessage,
-                                                        android.widget.Toast.LENGTH_SHORT
-                                                ).show();
+                                                                getContext(),
+                                                                toastMessage,
+                                                                android.widget.Toast.LENGTH_SHORT)
+                                                        .show();
                                             });
 
                                             return CONSUME;
@@ -1441,42 +1484,48 @@ public class LiveChatView extends FrameLayout {
         } else if (originalIsVotedUp == null || !originalIsVotedUp) {
             // No existing vote to delete or it's a downvote being converted to upvote
             // Just add a new upvote
-            sdk.voteComment(commentToVote.getComment().getId(), true, username, email,
-                    new FCCallback<VoteResponse>() {
-                        @Override
-                        public boolean onFailure(APIError error) {
-                            return errorHandler.onSuccess(error);
-                        }
+            sdk.voteComment(commentToVote.getComment().getId(), true, username, email, new FCCallback<VoteResponse>() {
+                @Override
+                public boolean onFailure(APIError error) {
+                    return errorHandler.onSuccess(error);
+                }
 
-                        @Override
-                        public boolean onSuccess(VoteResponse response) {
-                            // Store new vote ID
-                            commentToVote.getComment().setMyVoteId(response.getVoteId());
+                @Override
+                public boolean onSuccess(VoteResponse response) {
+                    // Store new vote ID
+                    commentToVote.getComment().setMyVoteId(response.getVoteId());
 
-                            // Show success toast message
-                            getHandler().post(() -> {
-                                android.widget.Toast.makeText(
-                                        getContext(),
-                                        toastMessage,
-                                        android.widget.Toast.LENGTH_SHORT
-                                ).show();
-                            });
-
-                            return CONSUME;
-                        }
+                    // Show success toast message
+                    getHandler().post(() -> {
+                        android.widget.Toast.makeText(getContext(), toastMessage, android.widget.Toast.LENGTH_SHORT)
+                                .show();
                     });
+
+                    return CONSUME;
+                }
+            });
         }
     }
 
     /**
      * Helper method for processing downvotes with or without anonymous credentials
      */
-    private void processDownvote(RenderableComment commentToVote, boolean needToDelete,
-                                 Boolean originalIsVotedDown, String originalVoteId,
-                                 FCCallback<APIError> errorHandler, String username, String email, String toastMessage) {
+    private void processDownvote(
+            RenderableComment commentToVote,
+            boolean needToDelete,
+            Boolean originalIsVotedDown,
+            String originalVoteId,
+            FCCallback<APIError> errorHandler,
+            String username,
+            String email,
+            String toastMessage) {
         if (needToDelete && originalVoteId != null) {
             // Delete the existing vote first
-            sdk.deleteCommentVote(commentToVote.getComment().getId(), originalVoteId, username, email,
+            sdk.deleteCommentVote(
+                    commentToVote.getComment().getId(),
+                    originalVoteId,
+                    username,
+                    email,
                     new FCCallback<VoteDeleteResponse>() {
                         @Override
                         public boolean onFailure(APIError error) {
@@ -1493,16 +1542,18 @@ public class LiveChatView extends FrameLayout {
                                 // Show success toast message for removing vote
                                 getHandler().post(() -> {
                                     android.widget.Toast.makeText(
-                                            getContext(),
-                                            toastMessage,
-                                            android.widget.Toast.LENGTH_SHORT
-                                    ).show();
+                                                    getContext(), toastMessage, android.widget.Toast.LENGTH_SHORT)
+                                            .show();
                                 });
                                 return CONSUME;
                             }
 
                             // Otherwise, we need to add a new downvote
-                            sdk.voteComment(commentToVote.getComment().getId(), false, username, email,
+                            sdk.voteComment(
+                                    commentToVote.getComment().getId(),
+                                    false,
+                                    username,
+                                    email,
                                     new FCCallback<VoteResponse>() {
                                         @Override
                                         public boolean onFailure(APIError error) {
@@ -1517,10 +1568,10 @@ public class LiveChatView extends FrameLayout {
                                             // Show success toast message
                                             getHandler().post(() -> {
                                                 android.widget.Toast.makeText(
-                                                        getContext(),
-                                                        toastMessage,
-                                                        android.widget.Toast.LENGTH_SHORT
-                                                ).show();
+                                                                getContext(),
+                                                                toastMessage,
+                                                                android.widget.Toast.LENGTH_SHORT)
+                                                        .show();
                                             });
 
                                             return CONSUME;
@@ -1533,30 +1584,26 @@ public class LiveChatView extends FrameLayout {
         } else if (originalIsVotedDown == null || !originalIsVotedDown) {
             // No existing vote to delete or it's an upvote being converted to downvote
             // Just add a new downvote
-            sdk.voteComment(commentToVote.getComment().getId(), false, username, email,
-                    new FCCallback<VoteResponse>() {
-                        @Override
-                        public boolean onFailure(APIError error) {
-                            return errorHandler.onSuccess(error);
-                        }
+            sdk.voteComment(commentToVote.getComment().getId(), false, username, email, new FCCallback<VoteResponse>() {
+                @Override
+                public boolean onFailure(APIError error) {
+                    return errorHandler.onSuccess(error);
+                }
 
-                        @Override
-                        public boolean onSuccess(VoteResponse response) {
-                            // Store new vote ID
-                            commentToVote.getComment().setMyVoteId(response.getVoteId());
+                @Override
+                public boolean onSuccess(VoteResponse response) {
+                    // Store new vote ID
+                    commentToVote.getComment().setMyVoteId(response.getVoteId());
 
-                            // Show success toast message
-                            getHandler().post(() -> {
-                                android.widget.Toast.makeText(
-                                        getContext(),
-                                        toastMessage,
-                                        android.widget.Toast.LENGTH_SHORT
-                                ).show();
-                            });
-
-                            return CONSUME;
-                        }
+                    // Show success toast message
+                    getHandler().post(() -> {
+                        android.widget.Toast.makeText(getContext(), toastMessage, android.widget.Toast.LENGTH_SHORT)
+                                .show();
                     });
+
+                    return CONSUME;
+                }
+            });
         }
     }
 
@@ -1584,7 +1631,7 @@ public class LiveChatView extends FrameLayout {
 
     /**
      * Get the UI handler for posting to the main thread
-     * 
+     *
      * @return Handler for UI updates
      */
     public Handler getHandler() {
@@ -1602,7 +1649,7 @@ public class LiveChatView extends FrameLayout {
         if (sdk == null || (sdk.getConfig().absoluteDates != null && sdk.getConfig().absoluteDates)) {
             return;
         }
-        
+
         // Get visible position range
         if (layoutManager != null) {
             int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
@@ -1624,47 +1671,47 @@ public class LiveChatView extends FrameLayout {
         // Clean up all resources including backpress callback
         cleanup();
     }
-    
+
     /**
      * Enable or disable auto-scrolling to bottom when new messages arrive
-     * 
+     *
      * @param enable Whether to enable auto-scrolling
      */
     public void setAutoScrollToBottom(boolean enable) {
         this.autoScrollToBottom = enable;
     }
-    
+
     /**
      * Check if auto-scrolling to bottom is enabled
-     * 
+     *
      * @return true if auto-scrolling is enabled
      */
     public boolean isAutoScrollToBottom() {
         return autoScrollToBottom;
     }
-    
+
     /**
      * Cleanup method to properly release resources and callbacks.
      * Should be called when the view is no longer needed, especially when used in fragments.
      */
     public void cleanup() {
         stopDateUpdateTimer();
-        
+
         if (dateUpdateHandler != null) {
             dateUpdateHandler.removeCallbacksAndMessages(null);
             dateUpdateHandler = null;
         }
         dateUpdateRunnable = null;
-        
+
         if (backPressedCallback != null) {
             backPressedCallback.setEnabled(false);
             backPressedCallback = null;
         }
-        
+
         if (recyclerView != null) {
             recyclerView.clearOnScrollListeners();
         }
-        
+
         if (adapter != null) {
             adapter.setRequestingReplyListener(null);
             adapter.setUpVoteListener(null);
@@ -1674,7 +1721,7 @@ public class LiveChatView extends FrameLayout {
             adapter.setGetChildrenProducer(null);
             adapter = null;
         }
-        
+
         if (bottomCommentInput != null) {
             bottomCommentInput.setOnCommentSubmitListener(null);
             bottomCommentInput.setOnReplyStateChangeListener(null);
@@ -1683,17 +1730,17 @@ public class LiveChatView extends FrameLayout {
             commentForm.setOnCommentSubmitListener(null);
             commentForm.setOnCancelReplyListener(null);
         }
-        
+
         if (btnNextComments != null) {
             btnNextComments.setOnClickListener(null);
         }
         if (btnLoadAll != null) {
             btnLoadAll.setOnClickListener(null);
         }
-        
+
         commentActionListener = null;
         userClickListener = null;
-        
+
         if (sdk != null) {
             sdk.setPresenceUpdateListener(null);
             sdk.setConnectionStatusListener(null);
@@ -1701,11 +1748,11 @@ public class LiveChatView extends FrameLayout {
             sdk = null;
         }
     }
-    
+
     /**
      * Enable or disable back press handling.
      * Useful for fragment lifecycle management.
-     * 
+     *
      * @param enabled Whether back press handling should be active
      */
     public void setBackPressHandlingEnabled(boolean enabled) {
@@ -1713,7 +1760,7 @@ public class LiveChatView extends FrameLayout {
             backPressedCallback.setEnabled(enabled);
         }
     }
-    
+
     /**
      * Lifecycle method to call when the view/fragment is paused.
      * Stops timers and disables back press handling to prevent memory leaks.
@@ -1722,7 +1769,7 @@ public class LiveChatView extends FrameLayout {
         stopDateUpdateTimer();
         setBackPressHandlingEnabled(false);
     }
-    
+
     /**
      * Lifecycle method to call when the view/fragment is resumed.
      * Restarts timers and enables back press handling.
@@ -1731,7 +1778,7 @@ public class LiveChatView extends FrameLayout {
         setBackPressHandlingEnabled(true);
         startDateUpdateTimer();
     }
-    
+
     /**
      * Sets up the demo banner if tenant ID is "demo"
      */

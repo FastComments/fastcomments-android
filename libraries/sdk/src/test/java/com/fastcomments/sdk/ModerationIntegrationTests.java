@@ -1,16 +1,14 @@
 package com.fastcomments.sdk;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.PublicComment;
-
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Integration tests for admin moderation operations (pin, lock, flag, block).
@@ -72,8 +70,7 @@ public class ModerationIntegrationTests extends IntegrationTestBase {
         loadSync(sdk3);
         PublicComment reloaded2 = sdk3.commentsTree.getPublicComment(comment.getId());
         assertNotNull(reloaded2);
-        assertTrue("Comment should not be pinned",
-                reloaded2.getIsPinned() == null || !reloaded2.getIsPinned());
+        assertTrue("Comment should not be pinned", reloaded2.getIsPinned() == null || !reloaded2.getIsPinned());
     }
 
     @Test
@@ -103,8 +100,7 @@ public class ModerationIntegrationTests extends IntegrationTestBase {
         loadSync(sdk3);
         PublicComment reloaded2 = sdk3.commentsTree.getPublicComment(comment.getId());
         assertNotNull(reloaded2);
-        assertTrue("Comment should not be locked",
-                reloaded2.getIsLocked() == null || !reloaded2.getIsLocked());
+        assertTrue("Comment should not be locked", reloaded2.getIsLocked() == null || !reloaded2.getIsLocked());
     }
 
     @Test

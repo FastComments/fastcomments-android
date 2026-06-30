@@ -63,9 +63,7 @@ public interface FollowStateProvider {
      * @param resultCallback   invoked with the actual state after the change
      */
     void onFollowStateChangeRequested(
-            @NonNull UserInfo user,
-            boolean desiredFollowing,
-            @NonNull FollowStateCallback resultCallback);
+            @NonNull UserInfo user, boolean desiredFollowing, @NonNull FollowStateCallback resultCallback);
 
     /**
      * Result callback used to confirm a follow-state change (or revert it).
