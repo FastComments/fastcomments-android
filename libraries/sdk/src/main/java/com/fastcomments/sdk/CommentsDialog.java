@@ -7,6 +7,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -98,9 +99,14 @@ public class CommentsDialog extends Dialog {
         
         // Make dialog fill most of the screen
         if (getWindow() != null) {
-            getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, 
+            getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT);
             getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            // Resize the dialog window when the soft keyboard appears so the bottom-anchored
+            // comment/reply input stays visible above the keyboard instead of behind it.
+            // A child Dialog does not inherit the host activity's windowSoftInputMode, so we
+            // set it explicitly here.
+            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         }
         
         // Set up close button

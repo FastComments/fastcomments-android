@@ -31,6 +31,8 @@ import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -157,7 +159,21 @@ public class FastCommentsView extends FrameLayout {
         progressBar = findViewById(R.id.commentsProgressBar);
         emptyStateView = findViewById(R.id.emptyStateView);
         bottomCommentInput = findViewById(R.id.bottomCommentInput);
-        
+
+        // On edge-to-edge displays (enforced for targetSdk 35 on Android 15+), the system
+        // navigation bar and the soft keyboard draw over the window. Pad the bottom input bar so
+        // it always sits above whichever of the two is currently visible, instead of being hidden
+        // behind the navigation buttons or the keyboard.
+        final int baseInputPaddingBottom = bottomCommentInput.getPaddingBottom();
+        ViewCompat.setOnApplyWindowInsetsListener(bottomCommentInput, (v, insets) -> {
+            int navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            int ime = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(),
+                    baseInputPaddingBottom + Math.max(navBars, ime));
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(bottomCommentInput);
+
         // Initialize demo banner
         setupDemoBanner();
 
