@@ -363,6 +363,10 @@ public final class RichTextHelper {
         // Collect span events
         List<SpanEvent> events = new ArrayList<>();
 
+        // Monotonic sequence assigned per span, used as a tiebreaker so that spans sharing the
+        // exact same range still nest validly (the later-opened span must close first).
+        int seqCounter = 0;
+
         // StyleSpan (bold/italic)
         for (StyleSpan span : editable.getSpans(0, editable.length(), StyleSpan.class)) {
             int start = editable.getSpanStart(span);
@@ -376,8 +380,9 @@ public final class RichTextHelper {
             } else {
                 continue;
             }
-            events.add(new SpanEvent(start, true, tag, null, span));
-            events.add(new SpanEvent(end, false, tag, null, span));
+            int seq = seqCounter++;
+            events.add(new SpanEvent(start, true, tag, null, span, seq));
+            events.add(new SpanEvent(end, false, tag, null, span, seq));
         }
 
         // Code spans (TypefaceSpan monospace) — distinguish inline vs block
@@ -398,16 +403,17 @@ public final class RichTextHelper {
                 }
             }
 
+            int seq = seqCounter++;
             if (isBlock) {
                 // Emit as <pre><code>...</code></pre>
                 // Use a synthetic compound tag — open order: pre then code, close order: code then pre
-                events.add(new SpanEvent(start, true, "pre", null, span));
-                events.add(new SpanEvent(start, true, "code", null, span));
-                events.add(new SpanEvent(end, false, "code", null, span));
-                events.add(new SpanEvent(end, false, "pre", null, span));
+                events.add(new SpanEvent(start, true, "pre", null, span, seq));
+                events.add(new SpanEvent(start, true, "code", null, span, seq));
+                events.add(new SpanEvent(end, false, "code", null, span, seq));
+                events.add(new SpanEvent(end, false, "pre", null, span, seq));
             } else {
-                events.add(new SpanEvent(start, true, "code", null, span));
-                events.add(new SpanEvent(end, false, "code", null, span));
+                events.add(new SpanEvent(start, true, "code", null, span, seq));
+                events.add(new SpanEvent(end, false, "code", null, span, seq));
             }
         }
 
@@ -417,8 +423,9 @@ public final class RichTextHelper {
             int end = editable.getSpanEnd(span);
             if (start == end) continue;
             String attrs = " href=\"" + escapeAttr(span.getURL()) + "\"";
-            events.add(new SpanEvent(start, true, "a", attrs, span));
-            events.add(new SpanEvent(end, false, "a", null, span));
+            int seq = seqCounter++;
+            events.add(new SpanEvent(start, true, "a", attrs, span, seq));
+            events.add(new SpanEvent(end, false, "a", null, span, seq));
         }
 
         // RichImageSpan — self-closing, emitted at span start
@@ -431,7 +438,7 @@ public final class RichTextHelper {
             if (span.getStyle() != null) {
                 attrs.append(" style=\"").append(escapeAttr(span.getStyle())).append("\"");
             }
-            events.add(new SpanEvent(start, true, "img", attrs.toString(), span));
+            events.add(new SpanEvent(start, true, "img", attrs.toString(), span, seqCounter++));
         }
 
         // Sort: by position, then closes before opens at same position,
@@ -855,13 +862,15 @@ public final class RichTextHelper {
         final String tag;
         final String attrs; // for open tags only
         final Object span;  // the original span, for determining open-order
+        final int seq;      // creation order, used as a tiebreaker for identical ranges
 
-        SpanEvent(int position, boolean isOpen, String tag, String attrs, Object span) {
+        SpanEvent(int position, boolean isOpen, String tag, String attrs, Object span, int seq) {
             this.position = position;
             this.isOpen = isOpen;
             this.tag = tag;
             this.attrs = attrs;
             this.span = span;
+            this.seq = seq;
         }
     }
 
@@ -885,12 +894,22 @@ public final class RichTextHelper {
                 // Both closing at same position: LIFO — the one that opened later closes first
                 int aStart = editable.getSpanStart(a.span);
                 int bStart = editable.getSpanStart(b.span);
-                return Integer.compare(bStart, aStart); // later open → earlier close
+                if (aStart != bStart) {
+                    return Integer.compare(bStart, aStart); // later open → earlier close
+                }
+                // Identical start (and same close position ⇒ identical range): the span created
+                // later opened last, so it must close first to keep tags validly nested.
+                return Integer.compare(b.seq, a.seq);
             }
             // Both opening at same position: the one with the wider range opens first
             int aEnd = editable.getSpanEnd(a.span);
             int bEnd = editable.getSpanEnd(b.span);
-            return Integer.compare(bEnd, aEnd); // wider range opens first (closes later)
+            if (aEnd != bEnd) {
+                return Integer.compare(bEnd, aEnd); // wider range opens first (closes later)
+            }
+            // Identical end (and same open position ⇒ identical range): open in creation order so
+            // the matching close (reverse creation order above) produces valid LIFO nesting.
+            return Integer.compare(a.seq, b.seq);
         }
     }
 

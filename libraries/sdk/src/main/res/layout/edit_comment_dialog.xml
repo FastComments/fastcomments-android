@@ -38,7 +38,7 @@
             android:layout_height="wrap_content"
             android:text="@string/cancel_edit"
             android:layout_marginEnd="8dp"
-            style="@style/Widget.MaterialComponents.Button.TextButton" />
+            style="@style/Widget.AppCompat.Button.Borderless.Colored" />
 
         <Button
             android:id="@+id/saveEditButton"
