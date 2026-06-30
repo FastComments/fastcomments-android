@@ -18,7 +18,7 @@ import java.util.List;
 
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.FeedPost;
-import com.fastcomments.model.GetFeedPostsStats200Response;
+import com.fastcomments.model.FeedPostsStatsResponse;
 import com.fastcomments.model.PublicComment;
 
 /**
@@ -143,7 +143,7 @@ public class CommentsDialog extends Dialog {
             if (post.getId() != null) {
                 List<String> postIds = new ArrayList<>(1);
                 postIds.add(post.getId());
-                feedSDK.getFeedPostsStats(postIds, new FCCallback<GetFeedPostsStats200Response>() {
+                feedSDK.getFeedPostsStats(postIds, new FCCallback<FeedPostsStatsResponse>() {
                     @Override
                     public boolean onFailure(APIError error) {
                         // Silently fail - not critical
@@ -151,7 +151,7 @@ public class CommentsDialog extends Dialog {
                     }
                     
                     @Override
-                    public boolean onSuccess(GetFeedPostsStats200Response response) {
+                    public boolean onSuccess(FeedPostsStatsResponse response) {
                         // Stats updated in the SDK's cache
                         
                         // Notify the listener that a comment was added
