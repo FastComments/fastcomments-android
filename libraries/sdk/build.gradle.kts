@@ -23,12 +23,17 @@ android {
         }
     }
 
+    lint {
+        // Snapshot of pre-existing issues so CI only fails on newly introduced ones.
+        baseline = file("lint-baseline.xml")
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -117,9 +122,9 @@ publishing {
         maven {
             name = "repsy"
             val releasesRepoUrl = "https://repo.repsy.io/mvn/winrid/fastcomments"
-            val snapshotsRepoUrl = "https://repo.repsy.io/mvn/winrid/fastcomments" 
+            val snapshotsRepoUrl = "https://repo.repsy.io/mvn/winrid/fastcomments"
             url = uri(if (releaseVersion.endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
-            
+
             credentials {
                 username = findProperty("repsyUsername") as String? ?: System.getenv("REPSY_USERNAME")
                 password = findProperty("repsyPassword") as String? ?: System.getenv("REPSY_PASSWORD")
