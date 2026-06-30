@@ -1493,7 +1493,7 @@ public class FastCommentsSDK {
 
                         @Override
                         public void onSuccess(APIEmptyResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
-                                                            callback.onSuccess(result.getAPIEmptyResponse());
+                                                            callback.onSuccess(result);
                             
                         }
 
@@ -1586,7 +1586,7 @@ public class FastCommentsSDK {
 
                         @Override
                         public void onSuccess(APIEmptyResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
-                                                            callback.onSuccess(result.getAPIEmptyResponse());
+                                                            callback.onSuccess(result);
                             
                         }
 
@@ -1718,7 +1718,7 @@ public class FastCommentsSDK {
 
                         @Override
                         public void onSuccess(APIEmptyResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
-                                                            callback.onSuccess(result.getAPIEmptyResponse());
+                                                            callback.onSuccess(result);
                             
                         }
 
@@ -1762,7 +1762,7 @@ public class FastCommentsSDK {
 
                         @Override
                         public void onSuccess(APIEmptyResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
-                                                            callback.onSuccess(result.getAPIEmptyResponse());
+                                                            callback.onSuccess(result);
                             
                         }
 
