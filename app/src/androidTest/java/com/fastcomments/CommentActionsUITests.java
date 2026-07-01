@@ -12,10 +12,7 @@ import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.fastcomments.sdk.R;
-
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -210,8 +207,9 @@ public class CommentActionsUITests extends UITestBase {
         pollUntil(10000, () -> {
             try {
                 onView(withId(R.id.recyclerViewComments))
-                        .check(matches(hasDescendant(withText(containsString(
-                                InstrumentationRegistry.getInstrumentation().getTargetContext()
+                        .check(matches(
+                                hasDescendant(withText(containsString(InstrumentationRegistry.getInstrumentation()
+                                        .getTargetContext()
                                         .getString(R.string.you_blocked_this_user))))));
                 return true;
             } catch (Exception | AssertionError e) {
@@ -221,14 +219,14 @@ public class CommentActionsUITests extends UITestBase {
 
         // Verify the blocked user placeholder name is shown
         onView(withId(R.id.recyclerViewComments))
-                .check(matches(hasDescendant(withText(containsString(
-                        InstrumentationRegistry.getInstrumentation().getTargetContext()
-                                .getString(R.string.blocked_user_placeholder))))));
+                .check(matches(hasDescendant(withText(containsString(InstrumentationRegistry.getInstrumentation()
+                        .getTargetContext()
+                        .getString(R.string.blocked_user_placeholder))))));
 
         // Verify the original comment text is no longer visible
         onView(withId(R.id.recyclerViewComments))
-                .check(matches(org.hamcrest.Matchers.not(
-                        hasDescendant(withText(containsString("Block this comment"))))));
+                .check(matches(
+                        org.hamcrest.Matchers.not(hasDescendant(withText(containsString("Block this comment"))))));
     }
 
     @Test
@@ -263,8 +261,9 @@ public class CommentActionsUITests extends UITestBase {
         pollUntil(10000, () -> {
             try {
                 onView(withId(R.id.recyclerViewComments))
-                        .check(matches(hasDescendant(withText(containsString(
-                                InstrumentationRegistry.getInstrumentation().getTargetContext()
+                        .check(matches(
+                                hasDescendant(withText(containsString(InstrumentationRegistry.getInstrumentation()
+                                        .getTargetContext()
                                         .getString(R.string.you_blocked_this_user))))));
                 return true;
             } catch (Exception | AssertionError e) {
@@ -293,8 +292,8 @@ public class CommentActionsUITests extends UITestBase {
         // Verify blocked placeholder text is gone
         onView(withId(R.id.recyclerViewComments))
                 .check(matches(org.hamcrest.Matchers.not(
-                        hasDescendant(withText(containsString(
-                                InstrumentationRegistry.getInstrumentation().getTargetContext()
-                                        .getString(R.string.you_blocked_this_user)))))));
+                        hasDescendant(withText(containsString(InstrumentationRegistry.getInstrumentation()
+                                .getTargetContext()
+                                .getString(R.string.you_blocked_this_user)))))));
     }
 }

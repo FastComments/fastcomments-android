@@ -1,34 +1,29 @@
 package com.fastcomments;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Intent;
 import android.os.Bundle;
-
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.fastcomments.core.sso.FastCommentsSSO;
 import com.fastcomments.core.sso.SecureSSOUserData;
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.CreateFeedPostParams;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.sdk.FCCallback;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import okhttp3.Cookie;
 import okhttp3.CookieJar;
 import okhttp3.FormBody;
@@ -38,10 +33,10 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
 
 /**
  * Base class for UI tests.
@@ -132,8 +127,7 @@ public class UITestBase {
 
         // 2. Get tenant ID via e2e test API
         Request tenantRequest = new Request.Builder()
-                .url(HOST + "/test-e2e/api/tenant/by-email/" + testTenantEmail
-                        + "?API_KEY=" + e2eApiKey)
+                .url(HOST + "/test-e2e/api/tenant/by-email/" + testTenantEmail + "?API_KEY=" + e2eApiKey)
                 .get()
                 .build();
 
@@ -177,14 +171,14 @@ public class UITestBase {
         if (testTenantEmail != null && e2eApiKey != null && !e2eApiKey.isEmpty()) {
             try {
                 Request deleteRequest = new Request.Builder()
-                        .url(HOST + "/test-e2e/api/tenant/by-email/" + testTenantEmail
-                                + "?API_KEY=" + e2eApiKey)
+                        .url(HOST + "/test-e2e/api/tenant/by-email/" + testTenantEmail + "?API_KEY=" + e2eApiKey)
                         .delete()
                         .build();
                 try (Response ignored = httpClient.newCall(deleteRequest).execute()) {
                     // Best effort
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -199,7 +193,8 @@ public class UITestBase {
             try (Response ignored = httpClient.newCall(request).execute()) {
                 // Best effort — tenant may not exist yet
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     // ---- SSO ----
@@ -214,8 +209,7 @@ public class UITestBase {
                     userId,
                     "tester-" + userId.substring(0, Math.min(8, userId.length())) + "@fctest.com",
                     "Tester " + userId.substring(0, Math.min(6, userId.length())),
-                    ""
-            );
+                    "");
             if (isAdmin) {
                 userData.isAdmin = true;
             }
@@ -232,10 +226,7 @@ public class UITestBase {
         if (scenario != null) {
             scenario.close();
         }
-        Intent intent = new Intent(
-                InstrumentationRegistry.getInstrumentation().getTargetContext(),
-                TestActivity.class
-        );
+        Intent intent = new Intent(InstrumentationRegistry.getInstrumentation().getTargetContext(), TestActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("tenantId", testTenantId);
         intent.putExtra("urlId", urlId);
@@ -247,10 +238,8 @@ public class UITestBase {
         if (liveChatScenario != null) {
             liveChatScenario.close();
         }
-        Intent intent = new Intent(
-                InstrumentationRegistry.getInstrumentation().getTargetContext(),
-                TestLiveChatActivity.class
-        );
+        Intent intent =
+                new Intent(InstrumentationRegistry.getInstrumentation().getTargetContext(), TestLiveChatActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("tenantId", testTenantId);
         intent.putExtra("urlId", urlId);
@@ -262,10 +251,8 @@ public class UITestBase {
         if (feedScenario != null) {
             feedScenario.close();
         }
-        Intent intent = new Intent(
-                InstrumentationRegistry.getInstrumentation().getTargetContext(),
-                TestFeedActivity.class
-        );
+        Intent intent =
+                new Intent(InstrumentationRegistry.getInstrumentation().getTargetContext(), TestFeedActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("tenantId", testTenantId);
         intent.putExtra("urlId", urlId);
@@ -376,8 +363,7 @@ public class UITestBase {
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
                 Request request = new Request.Builder()
-                        .url(HOST + "/api/v1/comments?tenantId=" + testTenantId
-                                + "&urlId=" + urlId + "&limit=1")
+                        .url(HOST + "/api/v1/comments?tenantId=" + testTenantId + "&urlId=" + urlId + "&limit=1")
                         .addHeader("x-api-key", testTenantApiKey)
                         .get()
                         .build();
@@ -399,7 +385,10 @@ public class UITestBase {
             }
 
             if (attempt < 3) {
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ignored) {
+                }
             }
         }
         return null;
@@ -420,7 +409,8 @@ public class UITestBase {
             try (Response response = httpClient.newCall(request).execute()) {
                 if (!response.isSuccessful()) {
                     String body = response.body() != null ? response.body().string() : "";
-                    fail("adminUpdateComment failed: status=" + response.code() + " body=" + body.substring(0, Math.min(200, body.length())));
+                    fail("adminUpdateComment failed: status=" + response.code() + " body="
+                            + body.substring(0, Math.min(200, body.length())));
                     return false;
                 }
             }
@@ -437,16 +427,20 @@ public class UITestBase {
             String broadcastId = UUID.randomUUID().toString();
             String encodedSso = java.net.URLEncoder.encode(adminSsoToken, "UTF-8");
             Request request = new Request.Builder()
-                    .url(HOST + "/comments/" + testTenantId + "/" + commentId + "/pin"
-                            + "?broadcastId=" + broadcastId + "&sso=" + encodedSso)
+                    .url(HOST + "/comments/" + testTenantId + "/" + commentId + "/pin" + "?broadcastId=" + broadcastId
+                            + "&sso=" + encodedSso)
                     .post(RequestBody.create("", null))
                     .build();
 
             try (Response response = httpClient.newCall(request).execute()) {
                 String body = response.body() != null ? response.body().string() : "";
-                android.util.Log.d("UITestBase", "pinComment response: " + response.code() + " body=" + body.substring(0, Math.min(200, body.length())));
+                android.util.Log.d(
+                        "UITestBase",
+                        "pinComment response: " + response.code() + " body="
+                                + body.substring(0, Math.min(200, body.length())));
                 if (!response.isSuccessful()) {
-                    fail("pinComment failed: status=" + response.code() + " body=" + body.substring(0, Math.min(200, body.length())));
+                    fail("pinComment failed: status=" + response.code() + " body="
+                            + body.substring(0, Math.min(200, body.length())));
                 }
             }
         } catch (Exception e) {
@@ -460,15 +454,16 @@ public class UITestBase {
             String broadcastId = UUID.randomUUID().toString();
             String encodedSso = java.net.URLEncoder.encode(adminSsoToken, "UTF-8");
             Request request = new Request.Builder()
-                    .url(HOST + "/comments/" + testTenantId + "/" + commentId + "/lock"
-                            + "?broadcastId=" + broadcastId + "&sso=" + encodedSso)
+                    .url(HOST + "/comments/" + testTenantId + "/" + commentId + "/lock" + "?broadcastId=" + broadcastId
+                            + "&sso=" + encodedSso)
                     .post(RequestBody.create("", null))
                     .build();
 
             try (Response response = httpClient.newCall(request).execute()) {
                 if (!response.isSuccessful()) {
                     String body = response.body() != null ? response.body().string() : "";
-                    fail("lockComment failed: status=" + response.code() + " body=" + body.substring(0, Math.min(200, body.length())));
+                    fail("lockComment failed: status=" + response.code() + " body="
+                            + body.substring(0, Math.min(200, body.length())));
                 }
             }
         } catch (Exception e) {
@@ -492,7 +487,10 @@ public class UITestBase {
             if (System.currentTimeMillis() > deadline) {
                 return;
             }
-            try { Thread.sleep(50); } catch (InterruptedException ignored) {}
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException ignored) {
+            }
         }
     }
 

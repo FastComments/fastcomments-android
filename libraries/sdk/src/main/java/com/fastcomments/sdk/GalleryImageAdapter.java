@@ -4,15 +4,12 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
 import com.fastcomments.model.FeedPostMediaItem;
 import com.fastcomments.model.FeedPostMediaItemAsset;
 import com.github.chrisbanes.photoview.PhotoView;
-
 import java.util.List;
 
 /**
@@ -54,7 +51,9 @@ public class GalleryImageAdapter extends RecyclerView.Adapter<GalleryImageAdapte
      * @return The URL of the highest quality image, or null if not available
      */
     private String getBestQualityImageUrl(FeedPostMediaItem mediaItem) {
-        if (mediaItem == null || mediaItem.getSizes() == null || mediaItem.getSizes().isEmpty()) {
+        if (mediaItem == null
+                || mediaItem.getSizes() == null
+                || mediaItem.getSizes().isEmpty()) {
             return null;
         }
 
@@ -85,7 +84,7 @@ public class GalleryImageAdapter extends RecyclerView.Adapter<GalleryImageAdapte
 
         void bind(FeedPostMediaItem mediaItem) {
             String imageUrl = getBestQualityImageUrl(mediaItem);
-            
+
             if (imageUrl != null && !imageUrl.isEmpty()) {
                 Glide.with(context)
                         .load(imageUrl)

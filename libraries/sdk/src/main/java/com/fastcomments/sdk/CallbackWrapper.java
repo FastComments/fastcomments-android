@@ -2,12 +2,10 @@ package com.fastcomments.sdk;
 
 import android.os.Handler;
 import android.util.Log;
-
 import com.fastcomments.invoker.ApiCallback;
 import com.fastcomments.invoker.ApiException;
 import com.fastcomments.model.APIError;
 import com.google.gson.Gson;
-
 import java.util.List;
 import java.util.Map;
 

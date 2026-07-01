@@ -13,14 +13,12 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertTrue;
 
 import android.util.Log;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.fastcomments.sdk.R;
-
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 /**
  * Observer role for feed — runs on Emulator A.
@@ -94,7 +92,9 @@ public class FeedUserA_UITests extends UITestBase {
                 onView(withId(R.id.newPostsBanner)).check(matches(isDisplayed()));
                 bannerVisible = true;
                 break;
-            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+            } catch (Exception | AssertionError e) {
+                Thread.sleep(250);
+            }
         }
         Log.d(TAG, "Banner visible: " + bannerVisible);
         assertTrue("New posts banner should appear when UserB posts", bannerVisible);
@@ -109,11 +109,12 @@ public class FeedUserA_UITests extends UITestBase {
         deadline = System.currentTimeMillis() + 15000;
         while (System.currentTimeMillis() < deadline) {
             try {
-                onView(withId(R.id.recyclerViewFeed))
-                        .check(matches(hasDescendant(withText(containsString(postText)))));
+                onView(withId(R.id.recyclerViewFeed)).check(matches(hasDescendant(withText(containsString(postText)))));
                 found = true;
                 break;
-            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+            } catch (Exception | AssertionError e) {
+                Thread.sleep(250);
+            }
         }
         Log.d(TAG, "Phase 1 result: " + found);
         assertTrue("UserB's post should appear after tapping new posts banner", found);
@@ -122,8 +123,7 @@ public class FeedUserA_UITests extends UITestBase {
         // --- Phase 2: UserA posts via UI, UserB sees it ---
         Log.d(TAG, "=== Phase 2: Create post for UserB ===");
         String myPostText = "Feed post from A " + System.currentTimeMillis();
-        onView(withId(R.id.postContentEditText))
-                .perform(click(), typeText(myPostText), closeSoftKeyboard());
+        onView(withId(R.id.postContentEditText)).perform(click(), typeText(myPostText), closeSoftKeyboard());
         onView(withId(R.id.submitPostButton)).perform(click());
         Log.d(TAG, "Submitted post via UI");
 

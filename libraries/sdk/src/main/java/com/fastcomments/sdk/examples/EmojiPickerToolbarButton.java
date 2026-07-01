@@ -5,9 +5,8 @@ import android.content.Context;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.GridLayout;
-import android.widget.TextView;
 import android.widget.ScrollView;
-
+import android.widget.TextView;
 import com.fastcomments.sdk.BottomCommentInputView;
 import com.fastcomments.sdk.CustomToolbarButton;
 import com.fastcomments.sdk.R;

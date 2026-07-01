@@ -13,15 +13,13 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertTrue;
 
 import android.util.Log;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.fastcomments.sdk.R;
-
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 /**
  * Actor role for feed — runs on Emulator B.
@@ -79,8 +77,7 @@ public class FeedUserB_UITests extends UITestBase {
         });
 
         String postText = "Feed post from B " + System.currentTimeMillis();
-        onView(withId(R.id.postContentEditText))
-                .perform(click(), typeText(postText), closeSoftKeyboard());
+        onView(withId(R.id.postContentEditText)).perform(click(), typeText(postText), closeSoftKeyboard());
         onView(withId(R.id.submitPostButton)).perform(click());
         Log.d(TAG, "Submitted post via UI");
 
@@ -107,7 +104,9 @@ public class FeedUserB_UITests extends UITestBase {
                 onView(withId(R.id.newPostsBanner)).check(matches(isDisplayed()));
                 bannerVisible = true;
                 break;
-            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+            } catch (Exception | AssertionError e) {
+                Thread.sleep(250);
+            }
         }
         Log.d(TAG, "Banner visible: " + bannerVisible);
         assertTrue("New posts banner should appear when UserA posts", bannerVisible);
@@ -126,7 +125,9 @@ public class FeedUserB_UITests extends UITestBase {
                         .check(matches(hasDescendant(withText(containsString(userAPostText)))));
                 found = true;
                 break;
-            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+            } catch (Exception | AssertionError e) {
+                Thread.sleep(250);
+            }
         }
         Log.d(TAG, "Phase 2 result: " + found);
         assertTrue("UserA's post should appear in UserB's feed", found);

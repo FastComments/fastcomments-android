@@ -1,14 +1,15 @@
 package com.fastcomments;
 
+import static org.junit.Assert.*;
+
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import okhttp3.*;
-import static org.junit.Assert.*;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test whether concurrent HTTP API calls kill the WebSocket connection.
@@ -20,8 +21,10 @@ public class WebSocketConcurrentTest {
 
     @Test
     public void testWsSurvivesConcurrentHttpCalls() throws Exception {
-        String wsUrl = "wss://ws.fastcomments.com/sub?urlId=demo%3Ahttps%3A%2F%2Ffastcomments.com%2F&userIdWS=conctest&tenantIdWS=demo";
-        String apiUrl = "https://fastcomments.com/comments/demo/?urlId=https%3A%2F%2Ffastcomments.com%2F&direction=NF&count=5";
+        String wsUrl =
+                "wss://ws.fastcomments.com/sub?urlId=demo%3Ahttps%3A%2F%2Ffastcomments.com%2F&userIdWS=conctest&tenantIdWS=demo";
+        String apiUrl =
+                "https://fastcomments.com/comments/demo/?urlId=https%3A%2F%2Ffastcomments.com%2F&direction=NF&count=5";
 
         // WS client with its own dispatcher and pool (same as SDK's LiveEventSubscriber)
         OkHttpClient wsClient = new OkHttpClient.Builder()
@@ -45,13 +48,17 @@ public class WebSocketConcurrentTest {
             public void onOpen(WebSocket ws, Response r) {
                 Log.d(TAG, "WS OPEN");
             }
+
             public void onMessage(WebSocket ws, String t) {
                 double elapsed = (System.currentTimeMillis() - start) / 1000.0;
                 Log.d(TAG, String.format("[%.1fs] WS MSG: %s", elapsed, t.substring(0, Math.min(60, t.length()))));
             }
+
             public void onFailure(WebSocket ws, Throwable t, Response r) {
                 diedAt[0] = System.currentTimeMillis() - start;
-                Log.d(TAG, "WS DIED after " + diedAt[0] + "ms: " + t.getClass().getSimpleName() + ": " + t.getMessage());
+                Log.d(
+                        TAG,
+                        "WS DIED after " + diedAt[0] + "ms: " + t.getClass().getSimpleName() + ": " + t.getMessage());
                 latch.countDown();
             }
         });

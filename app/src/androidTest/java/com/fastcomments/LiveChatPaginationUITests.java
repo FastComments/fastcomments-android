@@ -13,14 +13,11 @@ import static org.junit.Assert.assertTrue;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.espresso.UiController;
 import androidx.test.espresso.ViewAction;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import com.fastcomments.sdk.R;
-
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,23 +67,33 @@ public class LiveChatPaginationUITests extends UITestBase {
                 onView(withId(R.id.recyclerViewComments))
                         .check(matches(hasDescendant(withText(containsString("msg-" + TOTAL_MESSAGES)))));
                 return true;
-            } catch (Exception | AssertionError e) { return false; }
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
         });
         Log.d(TAG, "Latest message visible");
 
         // Check that not all messages loaded — pagination should be needed
         final int[] adapterCount = {0};
         onView(withId(R.id.recyclerViewComments)).perform(new ViewAction() {
-            @Override public Matcher<View> getConstraints() { return org.hamcrest.Matchers.any(View.class); }
-            @Override public String getDescription() { return "read adapter count"; }
-            @Override public void perform(UiController uc, View v) {
+            @Override
+            public Matcher<View> getConstraints() {
+                return org.hamcrest.Matchers.any(View.class);
+            }
+
+            @Override
+            public String getDescription() {
+                return "read adapter count";
+            }
+
+            @Override
+            public void perform(UiController uc, View v) {
                 RecyclerView rv = (RecyclerView) v;
                 adapterCount[0] = rv.getAdapter() != null ? rv.getAdapter().getItemCount() : 0;
             }
         });
         Log.d(TAG, "Initial adapter count: " + adapterCount[0]);
-        assertTrue("Should have fewer items than total seeded (pagination needed)",
-                adapterCount[0] < TOTAL_MESSAGES);
+        assertTrue("Should have fewer items than total seeded (pagination needed)", adapterCount[0] < TOTAL_MESSAGES);
 
         int countBefore = adapterCount[0];
 
@@ -95,12 +102,9 @@ public class LiveChatPaginationUITests extends UITestBase {
         Log.d(TAG, "Pagination buttons correctly hidden");
 
         // Scroll to the top to trigger infinite scroll loading of older messages
-        onView(withId(R.id.recyclerViewComments)).perform(
-                androidx.test.espresso.action.ViewActions.swipeDown());
-        onView(withId(R.id.recyclerViewComments)).perform(
-                androidx.test.espresso.action.ViewActions.swipeDown());
-        onView(withId(R.id.recyclerViewComments)).perform(
-                androidx.test.espresso.action.ViewActions.swipeDown());
+        onView(withId(R.id.recyclerViewComments)).perform(androidx.test.espresso.action.ViewActions.swipeDown());
+        onView(withId(R.id.recyclerViewComments)).perform(androidx.test.espresso.action.ViewActions.swipeDown());
+        onView(withId(R.id.recyclerViewComments)).perform(androidx.test.espresso.action.ViewActions.swipeDown());
         Log.d(TAG, "Swiped up to trigger infinite scroll");
 
         // Poll for adapter count to increase
@@ -109,9 +113,18 @@ public class LiveChatPaginationUITests extends UITestBase {
         long deadline = System.currentTimeMillis() + 15000;
         while (System.currentTimeMillis() < deadline) {
             onView(withId(R.id.recyclerViewComments)).perform(new ViewAction() {
-                @Override public Matcher<View> getConstraints() { return org.hamcrest.Matchers.any(View.class); }
-                @Override public String getDescription() { return "read adapter count after scroll"; }
-                @Override public void perform(UiController uc, View v) {
+                @Override
+                public Matcher<View> getConstraints() {
+                    return org.hamcrest.Matchers.any(View.class);
+                }
+
+                @Override
+                public String getDescription() {
+                    return "read adapter count after scroll";
+                }
+
+                @Override
+                public void perform(UiController uc, View v) {
                     RecyclerView rv = (RecyclerView) v;
                     countAfter[0] = rv.getAdapter() != null ? rv.getAdapter().getItemCount() : 0;
                 }
@@ -146,7 +159,9 @@ public class LiveChatPaginationUITests extends UITestBase {
                 onView(withId(R.id.recyclerViewComments))
                         .check(matches(hasDescendant(withText(containsString("message")))));
                 return true;
-            } catch (Exception | AssertionError e) { return false; }
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
         });
 
         // In live chat (oldest-first), position 0 should be the oldest message.
@@ -155,9 +170,18 @@ public class LiveChatPaginationUITests extends UITestBase {
         final String[] firstCommentText = {""};
         final String[] lastCommentText = {""};
         onView(withId(R.id.recyclerViewComments)).perform(new ViewAction() {
-            @Override public Matcher<View> getConstraints() { return org.hamcrest.Matchers.any(View.class); }
-            @Override public String getDescription() { return "Read first and last comment text"; }
-            @Override public void perform(UiController uiController, View view) {
+            @Override
+            public Matcher<View> getConstraints() {
+                return org.hamcrest.Matchers.any(View.class);
+            }
+
+            @Override
+            public String getDescription() {
+                return "Read first and last comment text";
+            }
+
+            @Override
+            public void perform(UiController uiController, View view) {
                 RecyclerView rv = (RecyclerView) view;
                 int count = rv.getAdapter() != null ? rv.getAdapter().getItemCount() : 0;
                 // Find first comment
@@ -186,9 +210,11 @@ public class LiveChatPaginationUITests extends UITestBase {
         });
         Log.d(TAG, "First comment: " + firstCommentText[0] + ", Last comment: " + lastCommentText[0]);
 
-        assertTrue("First comment should be 'First message' (oldest-first chat order)",
+        assertTrue(
+                "First comment should be 'First message' (oldest-first chat order)",
                 firstCommentText[0].contains("First message"));
-        assertTrue("Last comment should be 'Third message' (oldest-first chat order)",
+        assertTrue(
+                "Last comment should be 'Third message' (oldest-first chat order)",
                 lastCommentText[0].contains("Third message"));
     }
 }

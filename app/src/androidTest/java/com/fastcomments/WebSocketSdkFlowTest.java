@@ -1,25 +1,21 @@
 package com.fastcomments;
 
+import static org.junit.Assert.*;
+
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.pubsub.LiveEventSubscriber;
 import com.fastcomments.pubsub.SubscribeToChangesResult;
-
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
-import static org.junit.Assert.*;
 
 /**
  * Uses the actual LiveEventSubscriber.createTesting() and subscribeToChanges()
@@ -91,8 +87,7 @@ public class WebSocketSdkFlowTest extends UITestBase {
                 event -> {
                     double elapsed = (System.currentTimeMillis() - start) / 1000.0;
                     Log.d(TAG, String.format("[%.1fs] Event: type=%s", elapsed, event.getType()));
-                }
-        );
+                });
 
         assertNotNull("subscribeToChanges should return a result", result);
         Log.d(TAG, "subscribeToChanges returned, waiting 30s...");

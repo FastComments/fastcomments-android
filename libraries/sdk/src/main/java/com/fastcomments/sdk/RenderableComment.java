@@ -1,7 +1,6 @@
 package com.fastcomments.sdk;
 
 import com.fastcomments.model.PublicComment;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,10 +12,10 @@ public class RenderableComment extends RenderableNode {
 
     private final PublicComment comment;
     public boolean isRepliesShown = false;
-    
+
     // Online status flag
     public boolean isOnline = false;
-    
+
     // Pagination state for child comments
     public int childSkip = 0;
     public int childPage = 0;
@@ -52,7 +51,7 @@ public class RenderableComment extends RenderableNode {
         }
         return 1 + parent.determineNestingLevel(commentMap);
     }
-    
+
     /**
      * Reset child pagination state, typically called when hiding replies
      */
@@ -61,7 +60,7 @@ public class RenderableComment extends RenderableNode {
         this.childPage = 0;
         this.isLoadingChildren = false;
     }
-    
+
     /**
      * Get the remaining child count that can be loaded in the next page
      *
@@ -72,19 +71,19 @@ public class RenderableComment extends RenderableNode {
         if (childCount == null) {
             return 0;
         }
-        
+
         int loadedCount = 0;
         if (getComment().getChildren() != null) {
             loadedCount = getComment().getChildren().size();
         }
-        
+
         int remaining = childCount - loadedCount;
         return Math.min(Math.max(remaining, 0), childPageSize);
     }
-    
+
     /**
      * Add a new child comment that hasn't been shown yet
-     * 
+     *
      * @param childComment The new child comment
      */
     public void addNewChildComment(PublicComment childComment) {
@@ -93,26 +92,26 @@ public class RenderableComment extends RenderableNode {
         }
         newChildComments.add(childComment);
     }
-    
+
     /**
      * Get the count of new child comments that haven't been shown yet
-     * 
+     *
      * @return The count of new child comments
      */
     public int getNewChildCommentsCount() {
         return newChildComments == null ? 0 : newChildComments.size();
     }
-    
+
     /**
      * Get the list of new child comments and clear the buffer
-     * 
+     *
      * @return The list of new child comments, or null if none
      */
     public List<PublicComment> getAndClearNewChildComments() {
         if (newChildComments == null || newChildComments.isEmpty()) {
             return null;
         }
-        
+
         List<PublicComment> result = newChildComments;
         newChildComments = null;
         return result;

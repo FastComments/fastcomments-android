@@ -1,16 +1,14 @@
 package com.fastcomments.sdk;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.fastcomments.model.PublicComment;
 import com.fastcomments.model.VoteResponse;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Integration tests for comment voting operations.
@@ -107,8 +105,7 @@ public class VoteIntegrationTests extends IntegrationTestBase {
         PublicComment reloaded = sdk2.commentsTree.getPublicComment(comment.getId());
         assertNotNull(reloaded);
         // Net votes should be positive after upvote
-        assertTrue("Votes should be >= 1 after upvote",
-                reloaded.getVotes() != null && reloaded.getVotes() >= 1);
+        assertTrue("Votes should be >= 1 after upvote", reloaded.getVotes() != null && reloaded.getVotes() >= 1);
     }
 
     @Test

@@ -1,7 +1,6 @@
 package com.fastcomments.sdk.examples;
 
 import android.content.Context;
-
 import com.fastcomments.sdk.BottomCommentInputView;
 import com.fastcomments.sdk.FastCommentsSDK;
 

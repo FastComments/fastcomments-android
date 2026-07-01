@@ -2,9 +2,7 @@ package com.fastcomments;
 
 import android.os.Bundle;
 import android.util.Log;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.sdk.FastCommentsFeedSDK;

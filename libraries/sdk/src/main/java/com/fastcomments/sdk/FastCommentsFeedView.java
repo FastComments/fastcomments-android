@@ -12,51 +12,55 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-
 import com.fastcomments.model.APIEmptyResponse;
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.FeedPostMediaItem;
-import com.fastcomments.model.GetFeedPostsResponse;
 import com.fastcomments.model.FeedPostsStatsResponse;
 import com.fastcomments.model.PublicFeedPostsResponse;
-
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * FastCommentsFeedView displays a feed of posts from FastComments with infinite scrolling
  * Includes support for scroll position retention and state restoration
  */
 public class FastCommentsFeedView extends FrameLayout {
-    
+
     /**
      * Class to store view state information
      */
     public static class ViewState implements Serializable {
         private static final long serialVersionUID = 1L;
-        
+
         private int scrollPosition;
         private FastCommentsFeedSDK.FeedState feedState;
-        
+
         public ViewState() {
             // Default constructor
         }
-        
-        public int getScrollPosition() { return scrollPosition; }
-        public void setScrollPosition(int position) { this.scrollPosition = position; }
-        
-        public FastCommentsFeedSDK.FeedState getFeedState() { return feedState; }
-        public void setFeedState(FastCommentsFeedSDK.FeedState state) { this.feedState = state; }
+
+        public int getScrollPosition() {
+            return scrollPosition;
+        }
+
+        public void setScrollPosition(int position) {
+            this.scrollPosition = position;
+        }
+
+        public FastCommentsFeedSDK.FeedState getFeedState() {
+            return feedState;
+        }
+
+        public void setFeedState(FastCommentsFeedSDK.FeedState state) {
+            this.feedState = state;
+        }
     }
 
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -66,14 +70,14 @@ public class FastCommentsFeedView extends FrameLayout {
     private TextView emptyStateView;
     private TextView errorStateView;
     private TextView newPostsBanner;
-    
+
     private FeedPostsAdapter adapter;
     private FastCommentsFeedSDK sdk;
     private Handler handler;
     private List<FeedPost> feedPosts = new ArrayList<>();
     private OnFeedViewInteractionListener listener;
     private OnUserClickListener userClickListener;
-    
+
     // Polling for post stats
     private static final long POLLING_INTERVAL_MS = 30 * 1000; // 30 seconds
     private boolean isPollingEnabled = true;
@@ -84,11 +88,13 @@ public class FastCommentsFeedView extends FrameLayout {
      */
     public interface OnFeedViewInteractionListener {
         void onFeedLoaded(List<FeedPost> posts);
+
         void onFeedError(String errorMessage);
+
         void onPostSelected(FeedPost post);
         /**
          * Called when the user wants to view or add comments for a post
-         * 
+         *
          * @param post The post to show comments for
          */
         void onCommentsRequested(FeedPost post);
@@ -121,7 +127,8 @@ public class FastCommentsFeedView extends FrameLayout {
         init(context, attrs, sdk);
     }
 
-    public FastCommentsFeedView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr, FastCommentsFeedSDK sdk) {
+    public FastCommentsFeedView(
+            @NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr, FastCommentsFeedSDK sdk) {
         super(context, attrs, defStyleAttr);
         init(context, attrs, sdk);
     }
@@ -140,24 +147,24 @@ public class FastCommentsFeedView extends FrameLayout {
         emptyStateView = findViewById(R.id.emptyStateView);
         errorStateView = findViewById(R.id.errorStateView);
         newPostsBanner = findViewById(R.id.newPostsBanner);
-        
+
         // Initialize demo banner
         setupDemoBanner();
 
         // Set up RecyclerView
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         recyclerView.setLayoutManager(layoutManager);
-        
+
         // Disable item animations to prevent flicker when clicking items
         recyclerView.setItemAnimator(null);
-        
+
         // Skip initializing the adapter if SDK is not provided yet
         // It will be initialized when setSDK is called
         if (sdk != null) {
             initAdapter(context);
         }
     }
-    
+
     /**
      * Initialize the adapter with the SDK
      */
@@ -166,13 +173,13 @@ public class FastCommentsFeedView extends FrameLayout {
         recyclerView.setItemViewCacheSize(20); // Cache more items
         recyclerView.setDrawingCacheEnabled(true);
         recyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
-        
+
         // Set larger prefetch to load images ahead of time
         LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
         if (layoutManager != null) {
             layoutManager.setInitialPrefetchItemCount(5); // Prefetch 5 items
         }
-        
+
         // Initialize adapter
         adapter = new FeedPostsAdapter(context, feedPosts, sdk, new FeedPostsAdapter.OnFeedPostInteractionListener() {
             @Override
@@ -216,7 +223,7 @@ public class FastCommentsFeedView extends FrameLayout {
                     openUrl(mediaItem.getLinkUrl());
                 }
             }
-            
+
             @Override
             public void onDeletePost(FeedPost post) {
                 // Confirm before deleting
@@ -232,7 +239,7 @@ public class FastCommentsFeedView extends FrameLayout {
                         })
                         .show();
             }
-            
+
             @Override
             public void onUserClick(FeedPost post, UserInfo userInfo, UserClickSource source) {
                 // Notify the user click listener if set
@@ -242,7 +249,7 @@ public class FastCommentsFeedView extends FrameLayout {
                 }
             }
         });
-        
+
         recyclerView.setAdapter(adapter);
 
         // Set up scroll-to-top listener for when new posts are added
@@ -257,11 +264,11 @@ public class FastCommentsFeedView extends FrameLayout {
 
         // Set up pull-to-refresh
         swipeRefreshLayout.setOnRefreshListener(this::refresh);
-        
+
         // Set up infinite scrolling
         setupInfiniteScrolling();
     }
-    
+
     /**
      * Set up infinite scrolling for the RecyclerView
      */
@@ -291,10 +298,10 @@ public class FastCommentsFeedView extends FrameLayout {
             }
         });
     }
-    
+
     /**
      * Set the SDK instance to use with this view (for use when inflating from XML)
-     * 
+     *
      * @param sdk The FastCommentsFeedSDK instance
      */
     public void setSDK(FastCommentsFeedSDK sdk) {
@@ -313,8 +320,7 @@ public class FastCommentsFeedView extends FrameLayout {
             // Show "Show X New Posts" banner when new posts arrive via WebSocket
             sdk.setNewPostsAvailableListener(count -> {
                 if (newPostsBanner != null) {
-                    newPostsBanner.setText(getResources().getQuantityString(
-                            R.plurals.show_new_posts, count, count));
+                    newPostsBanner.setText(getResources().getQuantityString(R.plurals.show_new_posts, count, count));
                     newPostsBanner.setVisibility(View.VISIBLE);
                 }
             });
@@ -356,32 +362,32 @@ public class FastCommentsFeedView extends FrameLayout {
                 }
             });
         }
-        
+
         // Setup demo banner
         setupDemoBanner();
     }
-    
+
     /**
      * Save the complete view state including scroll position and feed data
      * @return A ViewState object containing all state information
      */
     public ViewState saveViewState() {
         ViewState state = new ViewState();
-        
+
         // Save scroll position
         LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
         if (layoutManager != null) {
             state.setScrollPosition(layoutManager.findFirstVisibleItemPosition());
         }
-        
+
         // Save SDK state
         if (sdk != null) {
             state.setFeedState(sdk.savePaginationState());
         }
-        
+
         return state;
     }
-    
+
     /**
      * Restore the complete view state
      * @param state The ViewState object to restore from
@@ -390,11 +396,11 @@ public class FastCommentsFeedView extends FrameLayout {
         if (state == null) {
             return;
         }
-        
+
         // Restore SDK state first
         if (sdk != null && state.getFeedState() != null) {
             sdk.restorePaginationState(state.getFeedState());
-            
+
             // Update adapter with restored posts
             if (adapter != null && sdk != null) {
                 List<FeedPost> posts = sdk.getFeedPosts();
@@ -403,7 +409,7 @@ public class FastCommentsFeedView extends FrameLayout {
                 }
             }
         }
-        
+
         // Restore scroll position
         final int position = state.getScrollPosition();
         if (position >= 0 && recyclerView != null) {
@@ -411,7 +417,7 @@ public class FastCommentsFeedView extends FrameLayout {
             recyclerView.post(() -> recyclerView.scrollToPosition(position));
         }
     }
-    
+
     /**
      * Save just the scroll position (use saveViewState for complete state)
      * @return The first visible item position
@@ -423,7 +429,7 @@ public class FastCommentsFeedView extends FrameLayout {
         }
         return 0;
     }
-    
+
     /**
      * Restore just the scroll position (use restoreViewState for complete state)
      * @param position The position to scroll to
@@ -436,22 +442,22 @@ public class FastCommentsFeedView extends FrameLayout {
 
     /**
      * Set a listener for feed interactions
-     * 
+     *
      * @param listener The listener to set
      */
     public void setFeedViewInteractionListener(OnFeedViewInteractionListener listener) {
         this.listener = listener;
     }
-    
+
     /**
      * Set a listener to be notified when a user (name or avatar) is clicked
-     * 
+     *
      * @param listener The listener to set
      */
     public void setOnUserClickListener(OnUserClickListener listener) {
         this.userClickListener = listener;
     }
-    
+
     /**
      * Set a TagSupplier to provide tags for filtering feed posts.
      * The tags returned by the supplier will be used when fetching posts from the API.
@@ -491,12 +497,16 @@ public class FastCommentsFeedView extends FrameLayout {
                     } else if (error != null && error.getReason() != null) {
                         errorMessage = error.getReason();
                     }
-                    
+
                     // Log the error for debugging
                     Log.e("FastCommentsFeedView", "Feed loading error: " + errorMessage);
-                    if (error != null && error.getReason() != null && error.getReason().contains("JsonSyntax")) {
-                        Log.e("FastCommentsFeedView", "JsonSyntaxException detected in API response", 
-                            new Exception("JSON parsing error occurred in API response"));
+                    if (error != null
+                            && error.getReason() != null
+                            && error.getReason().contains("JsonSyntax")) {
+                        Log.e(
+                                "FastCommentsFeedView",
+                                "JsonSyntaxException detected in API response",
+                                new Exception("JSON parsing error occurred in API response"));
                     }
 
                     showError(errorMessage);
@@ -519,18 +529,19 @@ public class FastCommentsFeedView extends FrameLayout {
                         return;
                     }
                     List<FeedPost> posts = sdk.getFeedPosts();
-                    
+
                     if (posts.isEmpty()) {
                         showEmptyState(true);
                     } else {
                         showEmptyState(false);
                         int firstVisiblePosition = -1;
                         if (recyclerView != null && recyclerView.getLayoutManager() != null) {
-                            firstVisiblePosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+                            firstVisiblePosition = ((LinearLayoutManager) recyclerView.getLayoutManager())
+                                    .findFirstVisibleItemPosition();
                         }
-                        
+
                         adapter.updatePosts(posts);
-                        
+
                         // Restore position if we had one
                         if (firstVisiblePosition >= 0 && firstVisiblePosition < posts.size()) {
                             recyclerView.scrollToPosition(firstVisiblePosition);
@@ -540,7 +551,7 @@ public class FastCommentsFeedView extends FrameLayout {
                     if (listener != null) {
                         listener.onFeedLoaded(posts);
                     }
-                    
+
                     // Start polling for stats updates
                     startPolling();
                 });
@@ -554,7 +565,7 @@ public class FastCommentsFeedView extends FrameLayout {
      */
     public void refresh() {
         hideError();
-        
+
         sdk.refresh(new FCCallback<PublicFeedPostsResponse>() {
             @Override
             public boolean onFailure(APIError error) {
@@ -569,12 +580,16 @@ public class FastCommentsFeedView extends FrameLayout {
                     } else if (error != null && error.getReason() != null) {
                         errorMessage = error.getReason();
                     }
-                    
+
                     // Log the error for debugging
                     Log.e("FastCommentsFeedView", "Feed refresh error: " + errorMessage);
-                    if (error != null && error.getReason() != null && error.getReason().contains("JsonSyntax")) {
-                        Log.e("FastCommentsFeedView", "JsonSyntaxException detected in API response during refresh", 
-                            new Exception("JSON parsing error occurred in API response"));
+                    if (error != null
+                            && error.getReason() != null
+                            && error.getReason().contains("JsonSyntax")) {
+                        Log.e(
+                                "FastCommentsFeedView",
+                                "JsonSyntaxException detected in API response during refresh",
+                                new Exception("JSON parsing error occurred in API response"));
                     }
 
                     showError(errorMessage);
@@ -596,23 +611,24 @@ public class FastCommentsFeedView extends FrameLayout {
                         return;
                     }
                     List<FeedPost> posts = sdk.getFeedPosts();
-                    
+
                     if (posts.isEmpty()) {
                         showEmptyState(true);
                     } else {
                         showEmptyState(false);
                         int firstVisiblePosition = -1;
                         if (recyclerView != null && recyclerView.getLayoutManager() != null) {
-                            firstVisiblePosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+                            firstVisiblePosition = ((LinearLayoutManager) recyclerView.getLayoutManager())
+                                    .findFirstVisibleItemPosition();
                         }
-                        
+
                         adapter.updatePosts(posts, true);
                     }
 
                     if (listener != null) {
                         listener.onFeedLoaded(posts);
                     }
-                    
+
                     // Start polling for stats updates
                     startPolling();
                 });
@@ -645,12 +661,16 @@ public class FastCommentsFeedView extends FrameLayout {
                     } else if (error != null && error.getReason() != null) {
                         errorMessage = error.getReason();
                     }
-                    
+
                     // Log the error for debugging
                     Log.e("FastCommentsFeedView", "Error loading more posts: " + errorMessage);
-                    if (error != null && error.getReason() != null && error.getReason().contains("JsonSyntax")) {
-                        Log.e("FastCommentsFeedView", "JsonSyntaxException detected when loading more posts", 
-                            new Exception("JSON parsing error occurred in API response"));
+                    if (error != null
+                            && error.getReason() != null
+                            && error.getReason().contains("JsonSyntax")) {
+                        Log.e(
+                                "FastCommentsFeedView",
+                                "JsonSyntaxException detected when loading more posts",
+                                new Exception("JSON parsing error occurred in API response"));
                     }
 
                     // Notify listener of error (if set)
@@ -676,7 +696,7 @@ public class FastCommentsFeedView extends FrameLayout {
 
     /**
      * Toggle like status for a post
-     * 
+     *
      * @param post The post to like/unlike
      * @param position The position of the post in the adapter
      */
@@ -684,14 +704,15 @@ public class FastCommentsFeedView extends FrameLayout {
         if (sdk == null || post == null || post.getId() == null) {
             return;
         }
-        
+
         // Call the SDK to toggle the like status
         sdk.likePost(post.getId(), new FCCallback<FeedPost>() {
             @Override
             public boolean onFailure(APIError error) {
                 handler.post(() -> {
                     String errorMessage;
-                    if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                    if (error.getTranslatedError() != null
+                            && !error.getTranslatedError().isEmpty()) {
                         errorMessage = error.getTranslatedError();
                     } else if (error.getReason() != null && !error.getReason().isEmpty()) {
                         errorMessage = error.getReason();
@@ -699,11 +720,8 @@ public class FastCommentsFeedView extends FrameLayout {
                         errorMessage = getContext().getString(R.string.error_liking_post);
                     }
 
-                    android.widget.Toast.makeText(
-                            getContext(),
-                            errorMessage,
-                            android.widget.Toast.LENGTH_SHORT
-                    ).show();
+                    android.widget.Toast.makeText(getContext(), errorMessage, android.widget.Toast.LENGTH_SHORT)
+                            .show();
                 });
                 return CONSUME;
             }
@@ -721,44 +739,46 @@ public class FastCommentsFeedView extends FrameLayout {
 
     /**
      * Share a post
-     * 
+     *
      * @param post The post to share
      */
     private void sharePost(FeedPost post) {
         // Create a share intent
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
-        
+
         // Create a share message with the content and link to the post
         StringBuilder shareMessage = new StringBuilder();
-        
+
         // Add post content if available
         if (post.getContentHTML() != null) {
             // Strip HTML tags for sharing
-            String plainText = android.text.Html.fromHtml(post.getContentHTML(), 
-                    android.text.Html.FROM_HTML_MODE_COMPACT).toString();
+            String plainText = android.text.Html.fromHtml(
+                            post.getContentHTML(), android.text.Html.FROM_HTML_MODE_COMPACT)
+                    .toString();
             shareMessage.append(plainText);
         }
-        
+
         // Get the first link if available
-        if (post.getLinks() != null && !post.getLinks().isEmpty() 
+        if (post.getLinks() != null
+                && !post.getLinks().isEmpty()
                 && post.getLinks().get(0).getUrl() != null) {
             if (shareMessage.length() > 0) {
                 shareMessage.append("\n\n");
             }
             shareMessage.append(post.getLinks().get(0).getUrl());
         }
-        
+
         shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage.toString());
-        
+
         // Start the share activity
-        getContext().startActivity(Intent.createChooser(shareIntent, 
-                getContext().getString(R.string.share)));
+        getContext()
+                .startActivity(Intent.createChooser(shareIntent, getContext().getString(R.string.share)));
     }
 
     /**
      * Open a URL in the browser
-     * 
+     *
      * @param url The URL to open
      */
     private void openUrl(String url) {
@@ -770,12 +790,12 @@ public class FastCommentsFeedView extends FrameLayout {
 
     /**
      * Show or hide the loading indicator
-     * 
+     *
      * @param isLoading Whether loading is in progress
      */
     private void showLoading(boolean isLoading) {
         feedProgressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-        
+
         if (isLoading) {
             recyclerView.setVisibility(View.GONE);
             emptyStateView.setVisibility(View.GONE);
@@ -786,7 +806,7 @@ public class FastCommentsFeedView extends FrameLayout {
 
     /**
      * Show or hide the empty state view
-     * 
+     *
      * @param isEmpty Whether the feed is empty
      */
     private void showEmptyState(boolean isEmpty) {
@@ -796,13 +816,13 @@ public class FastCommentsFeedView extends FrameLayout {
 
     /**
      * Show an error message
-     * 
+     *
      * @param errorMessage The error message to display
      */
     private void showError(String errorMessage) {
         errorStateView.setText(errorMessage);
         errorStateView.setVisibility(View.VISIBLE);
-        
+
         // Log the error to help with debugging
         Log.e("FastCommentsFeedView", "Displaying error: " + errorMessage);
     }
@@ -827,21 +847,21 @@ public class FastCommentsFeedView extends FrameLayout {
 
         // Create a FastCommentsSDK instance for this post's comments
         FastCommentsSDK commentsSDK = sdk.createCommentsSDKForPost(post);
-        
+
         // Create and return a FastCommentsView with the new SDK
         return new FastCommentsView(getContext(), commentsSDK);
     }
 
     /**
      * Refreshes a specific post in the feed after comment is added
-     * 
+     *
      * @param postId The ID of the post to refresh
      */
     public void refreshPost(String postId) {
         if (sdk == null || postId == null || adapter == null) {
             return;
         }
-        
+
         // Get the updated posts list from SDK
         if (sdk == null) {
             return;
@@ -850,11 +870,11 @@ public class FastCommentsFeedView extends FrameLayout {
         if (posts == null || posts.isEmpty()) {
             return;
         }
-        
+
         // Find the post in the posts list
         int position = -1;
         FeedPost updatedPost = null;
-        
+
         for (int i = 0; i < posts.size(); i++) {
             FeedPost post = posts.get(i);
             if (post != null && postId.equals(post.getId())) {
@@ -863,13 +883,13 @@ public class FastCommentsFeedView extends FrameLayout {
                 break;
             }
         }
-        
+
         // If post is found, update it in the adapter with the refreshed data
         if (position >= 0 && updatedPost != null) {
             adapter.updatePost(position, updatedPost);
         }
     }
-    
+
     /**
      * Initialize polling for post stats
      */
@@ -880,7 +900,7 @@ public class FastCommentsFeedView extends FrameLayout {
                 if (isPollingEnabled && sdk != null && !feedPosts.isEmpty()) {
                     refreshVisiblePostStats();
                 }
-                
+
                 // Schedule next run
                 if (isPollingEnabled) {
                     handler.postDelayed(this, POLLING_INTERVAL_MS);
@@ -888,7 +908,7 @@ public class FastCommentsFeedView extends FrameLayout {
             }
         };
     }
-    
+
     /**
      * Start polling for post stats
      */
@@ -896,14 +916,14 @@ public class FastCommentsFeedView extends FrameLayout {
         if (pollStatsRunnable == null) {
             initPolling();
         }
-        
+
         isPollingEnabled = true;
         // Remove any existing callbacks to prevent duplicates
         handler.removeCallbacks(pollStatsRunnable);
         // Start polling
         handler.postDelayed(pollStatsRunnable, POLLING_INTERVAL_MS);
     }
-    
+
     /**
      * Stop polling for post stats
      */
@@ -913,7 +933,7 @@ public class FastCommentsFeedView extends FrameLayout {
             handler.removeCallbacks(pollStatsRunnable);
         }
     }
-    
+
     /**
      * Refresh stats for currently visible posts
      */
@@ -921,29 +941,29 @@ public class FastCommentsFeedView extends FrameLayout {
         if (sdk == null || feedPosts.isEmpty() || recyclerView == null) {
             return;
         }
-        
+
         // Get visible post IDs
         LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
         if (layoutManager == null) {
             return;
         }
-        
+
         // Find visible items range
         int firstVisible = layoutManager.findFirstVisibleItemPosition();
         int lastVisible = layoutManager.findLastVisibleItemPosition();
-        
+
         // Safety check
         if (firstVisible < 0 || lastVisible < 0 || firstVisible > lastVisible) {
             return;
         }
-        
+
         // Get post IDs for visible posts
         List<String> visiblePostIds = new ArrayList<>();
-        
+
         // Limit the range to valid indices
         firstVisible = Math.max(0, firstVisible);
         lastVisible = Math.min(feedPosts.size() - 1, lastVisible);
-        
+
         // Get post IDs for visible posts
         for (int i = firstVisible; i <= lastVisible; i++) {
             if (i < feedPosts.size()) {
@@ -953,12 +973,12 @@ public class FastCommentsFeedView extends FrameLayout {
                 }
             }
         }
-        
+
         // If no visible posts with IDs, return
         if (visiblePostIds.isEmpty()) {
             return;
         }
-        
+
         // Fetch stats for visible posts
         final List<String> finalVisiblePostIds = visiblePostIds;
         sdk.getFeedPostsStats(visiblePostIds, new FCCallback<FeedPostsStatsResponse>() {
@@ -967,7 +987,7 @@ public class FastCommentsFeedView extends FrameLayout {
                 // Silent failure - we'll try again next time
                 return CONSUME;
             }
-            
+
             @Override
             public boolean onSuccess(FeedPostsStatsResponse response) {
                 // The SDK has already updated the post objects with new stats
@@ -989,49 +1009,45 @@ public class FastCommentsFeedView extends FrameLayout {
             }
         });
     }
-    
+
     /**
      * Delete a feed post
-     * 
+     *
      * @param post The post to delete
      */
     private void deletePost(FeedPost post) {
         if (sdk == null || post == null || post.getId() == null) {
             return;
         }
-        
+
         sdk.deleteFeedPost(post.getId(), new FCCallback<APIEmptyResponse>() {
             @Override
             public boolean onFailure(APIError error) {
                 handler.post(() -> {
                     String errorMessage;
-                    if (error.getTranslatedError() != null && !error.getTranslatedError().isEmpty()) {
+                    if (error.getTranslatedError() != null
+                            && !error.getTranslatedError().isEmpty()) {
                         errorMessage = error.getTranslatedError();
                     } else if (error.getReason() != null && !error.getReason().isEmpty()) {
                         errorMessage = error.getReason();
                     } else {
                         errorMessage = getContext().getString(R.string.error_deleting_post);
                     }
-                    
-                    android.widget.Toast.makeText(
-                            getContext(),
-                            errorMessage,
-                            android.widget.Toast.LENGTH_SHORT
-                    ).show();
+
+                    android.widget.Toast.makeText(getContext(), errorMessage, android.widget.Toast.LENGTH_SHORT)
+                            .show();
                 });
                 return CONSUME;
             }
-            
+
             @Override
             public boolean onSuccess(APIEmptyResponse response) {
                 handler.post(() -> {
                     // Success message
                     android.widget.Toast.makeText(
-                            getContext(),
-                            R.string.post_deleted_successfully,
-                            android.widget.Toast.LENGTH_SHORT
-                    ).show();
-                    
+                                    getContext(), R.string.post_deleted_successfully, android.widget.Toast.LENGTH_SHORT)
+                            .show();
+
                     // Update adapter with the current list from SDK
                     // This ensures the adapter's internal list matches the SDK's list
                     if (sdk != null) {
@@ -1045,7 +1061,7 @@ public class FastCommentsFeedView extends FrameLayout {
             }
         });
     }
-    
+
     /**
      * Clean up resources when the view is detached
      */
@@ -1054,43 +1070,43 @@ public class FastCommentsFeedView extends FrameLayout {
         super.onDetachedFromWindow();
         cleanup();
     }
-    
+
     /**
      * Clean up all resources to prevent memory leaks.
      * Call this method when the view will no longer be used.
      */
     public void cleanup() {
         stopPolling();
-        
+
         // Clear adapter data
         if (adapter != null) {
             adapter.updatePosts(new ArrayList<>());
         }
-        
+
         // Clear SDK listener reference
         if (sdk != null) {
             sdk.setOnPostDeletedListener(null);
             sdk.cleanup();
             sdk = null;
         }
-        
+
         // Clear local references
         listener = null;
-        
+
         // Clear collections
         if (feedPosts != null) {
             feedPosts.clear();
         }
-        
+
         // Clear handler callbacks
         if (handler != null && pollStatsRunnable != null) {
             handler.removeCallbacks(pollStatsRunnable);
         }
-        
+
         // Clear polling runnable
         pollStatsRunnable = null;
     }
-    
+
     /**
      * Returns the RecyclerView adapter used by this view.
      *
@@ -1099,7 +1115,7 @@ public class FastCommentsFeedView extends FrameLayout {
     public FeedPostsAdapter getAdapter() {
         return adapter;
     }
-    
+
     /**
      * Clears the feed posts from the adapter.
      * Use this method when switching fragments to avoid memory leaks.
@@ -1109,7 +1125,7 @@ public class FastCommentsFeedView extends FrameLayout {
             adapter.updatePosts(new ArrayList<>());
         }
     }
-    
+
     /**
      * Sets up the demo banner if tenant ID is "demo"
      */

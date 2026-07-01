@@ -22,14 +22,14 @@ class SimpleSSOExampleActivity : AppCompatActivity() {
             "ssotest",
             "https://fastcomments.com/demo",
             "fastcomments.com",
-            "Demo"
+            "Demo",
         )
 
         // Optional configuration
 //         config.voteStyle = VoteStyle.Heart
 //         config.enableInfiniteScrolling = true
 
-        val userData = SimpleSSOUserData("Example User", "user@example.com", "https://staticm.fastcomments.com/1639362726066-DSC_0841.JPG");
+        val userData = SimpleSSOUserData("Example User", "user@example.com", "https://staticm.fastcomments.com/1639362726066-DSC_0841.JPG")
         val sso = FastCommentsSSO(userData)
         config.sso = sso.prepareToSend()
         val sdk = FastCommentsSDK(config)

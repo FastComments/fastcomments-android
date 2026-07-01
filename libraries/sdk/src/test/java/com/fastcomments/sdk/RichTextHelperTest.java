@@ -1,20 +1,18 @@
 package com.fastcomments.sdk;
 
+import static org.junit.Assert.*;
+
 import android.graphics.Typeface;
-import android.text.Editable;
+import android.graphics.drawable.Drawable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
-import android.graphics.drawable.Drawable;
 import android.text.style.URLSpan;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-
-import static org.junit.Assert.*;
 
 @RunWith(RobolectricTestRunner.class)
 public class RichTextHelperTest {
@@ -188,8 +186,7 @@ public class RichTextHelperTest {
     @Test
     public void fromHtml_preCode_appliesCodeBlockSpan() {
         Spanned result = RichTextHelper.fromHtml("<pre><code>int x = 1;</code></pre>");
-        RichTextHelper.CodeBlockSpan[] blocks = result.getSpans(0, result.length(),
-                RichTextHelper.CodeBlockSpan.class);
+        RichTextHelper.CodeBlockSpan[] blocks = result.getSpans(0, result.length(), RichTextHelper.CodeBlockSpan.class);
         assertTrue("Should have CodeBlockSpan for <pre><code>", blocks.length > 0);
     }
 
@@ -303,8 +300,7 @@ public class RichTextHelperTest {
 
     @Test
     public void extractHref_validAnchor() {
-        assertEquals("https://example.com",
-                RichTextHelper.extractHref("<a href=\"https://example.com\">"));
+        assertEquals("https://example.com", RichTextHelper.extractHref("<a href=\"https://example.com\">"));
     }
 
     @Test
@@ -320,9 +316,11 @@ public class RichTextHelperTest {
         SpannableStringBuilder ssb = new SpannableStringBuilder("before\uFFFCafter");
         Drawable dummyDrawable = new android.graphics.drawable.ColorDrawable(0xFF000000);
         dummyDrawable.setBounds(0, 0, 100, 100);
-        ssb.setSpan(new RichTextHelper.RichImageSpan(dummyDrawable,
-                        "https://example.com/img.png", "alt text", null),
-                6, 7, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(
+                new RichTextHelper.RichImageSpan(dummyDrawable, "https://example.com/img.png", "alt text", null),
+                6,
+                7,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         String html = RichTextHelper.toHtml(ssb);
         assertTrue("Should contain img tag", html.contains("<img"));
         assertTrue("Should contain src", html.contains("src=\"https://example.com/img.png\""));
@@ -337,9 +335,11 @@ public class RichTextHelperTest {
         SpannableStringBuilder ssb = new SpannableStringBuilder("\uFFFC");
         Drawable dummyDrawable = new android.graphics.drawable.ColorDrawable(0xFF000000);
         dummyDrawable.setBounds(0, 0, 100, 100);
-        ssb.setSpan(new RichTextHelper.RichImageSpan(dummyDrawable,
-                        "https://example.com/test.gif", null, null),
-                0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(
+                new RichTextHelper.RichImageSpan(dummyDrawable, "https://example.com/test.gif", null, null),
+                0,
+                1,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         String html = RichTextHelper.toHtml(ssb);
         assertFalse("Should not contain replacement char", html.contains("\uFFFC"));
         assertTrue("Should be just the img tag", html.contains("<img"));

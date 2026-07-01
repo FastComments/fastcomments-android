@@ -1,7 +1,6 @@
 package com.fastcomments.sdk;
 
 import com.fastcomments.model.UserSessionInfo;
-
 import java.util.List;
 
 /**
@@ -14,7 +13,7 @@ public interface TagSupplier {
     /**
      * Get the list of tags to use for filtering feed posts.
      * This method is called when loading the feed and when creating new posts.
-     * 
+     *
      * @param currentUser The current authenticated user, or null if not authenticated
      * @return List of tags to filter by, or null/empty list for no filtering
      */

@@ -16,7 +16,7 @@ public class GetChildrenRequest {
     public GetChildrenRequest(String parentId, Button toggleButton) {
         this(parentId, toggleButton, null, null, false);
     }
-    
+
     public GetChildrenRequest(String parentId, Button toggleButton, Integer skip, Integer limit, boolean isLoadMore) {
         this.parentId = parentId;
         this.toggleButton = toggleButton;
@@ -32,15 +32,15 @@ public class GetChildrenRequest {
     public Button getToggleButton() {
         return toggleButton;
     }
-    
+
     public Integer getSkip() {
         return skip;
     }
-    
+
     public Integer getLimit() {
         return limit;
     }
-    
+
     public boolean isLoadMore() {
         return isLoadMore;
     }

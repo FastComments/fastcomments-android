@@ -7,26 +7,20 @@ import static androidx.test.espresso.action.ViewActions.typeText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.RootMatchers.isDialog;
 import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
-import static androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
-import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertTrue;
 
 import android.util.Log;
-
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.fastcomments.sdk.R;
-
-
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 /**
  * Actor role — runs on Emulator B.
@@ -76,12 +70,13 @@ public class LiveEventUserB_UITests extends UITestBase {
             try {
                 onView(withId(R.id.commentInput)).check(matches(isDisplayed()));
                 return true;
-            } catch (Exception | AssertionError e) { return false; }
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
         });
 
         String commentText = "Live from B " + System.currentTimeMillis();
-        onView(withId(R.id.commentInput))
-                .perform(click(), typeText(commentText), closeSoftKeyboard());
+        onView(withId(R.id.commentInput)).perform(click(), typeText(commentText), closeSoftKeyboard());
         onView(withId(R.id.sendButton)).perform(click());
 
         boolean ownCommentAppeared = false;
@@ -92,7 +87,9 @@ public class LiveEventUserB_UITests extends UITestBase {
                         .check(matches(hasDescendant(withText(containsString(commentText)))));
                 ownCommentAppeared = true;
                 break;
-            } catch (Exception | AssertionError e) { Thread.sleep(250); }
+            } catch (Exception | AssertionError e) {
+                Thread.sleep(250);
+            }
         }
         assertTrue("Own comment should appear after posting", ownCommentAppeared);
 
@@ -114,7 +111,9 @@ public class LiveEventUserB_UITests extends UITestBase {
                 onView(withId(R.id.recyclerViewComments))
                         .check(matches(hasDescendant(withText(containsString("Vote target from A")))));
                 return true;
-            } catch (Exception | AssertionError e) { return false; }
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
         });
 
         // Click the upvote button within the "Vote target" item using RecyclerViewActions
@@ -122,11 +121,18 @@ public class LiveEventUserB_UITests extends UITestBase {
                 .perform(androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem(
                         hasDescendant(withText(containsString("Vote target from A"))),
                         new androidx.test.espresso.ViewAction() {
-                            @Override public org.hamcrest.Matcher<android.view.View> getConstraints() {
+                            @Override
+                            public org.hamcrest.Matcher<android.view.View> getConstraints() {
                                 return org.hamcrest.Matchers.any(android.view.View.class);
                             }
-                            @Override public String getDescription() { return "click upVoteButton in item"; }
-                            @Override public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
+
+                            @Override
+                            public String getDescription() {
+                                return "click upVoteButton in item";
+                            }
+
+                            @Override
+                            public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
                                 v.findViewById(R.id.upVoteButton).performClick();
                             }
                         }));
@@ -142,7 +148,9 @@ public class LiveEventUserB_UITests extends UITestBase {
             try {
                 onView(withId(R.id.commentInput)).check(matches(isDisplayed()));
                 return true;
-            } catch (Exception | AssertionError e) { return false; }
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
         });
 
         sync.signalReady("phase3");
@@ -170,26 +178,34 @@ public class LiveEventUserB_UITests extends UITestBase {
                 onView(withId(R.id.recyclerViewComments))
                         .check(matches(hasDescendant(withText(containsString(deleteText)))));
                 return true;
-            } catch (Exception | AssertionError e) { return false; }
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
         });
 
         // Click menu on the specific comment using RecyclerViewActions
         onView(withId(R.id.recyclerViewComments))
                 .perform(androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem(
-                        hasDescendant(withText(containsString(deleteText))),
-                        new androidx.test.espresso.ViewAction() {
-                            @Override public org.hamcrest.Matcher<android.view.View> getConstraints() { return org.hamcrest.Matchers.any(android.view.View.class); }
-                            @Override public String getDescription() { return "click menu in item"; }
-                            @Override public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
+                        hasDescendant(withText(containsString(deleteText))), new androidx.test.espresso.ViewAction() {
+                            @Override
+                            public org.hamcrest.Matcher<android.view.View> getConstraints() {
+                                return org.hamcrest.Matchers.any(android.view.View.class);
+                            }
+
+                            @Override
+                            public String getDescription() {
+                                return "click menu in item";
+                            }
+
+                            @Override
+                            public void perform(androidx.test.espresso.UiController uc, android.view.View v) {
                                 v.findViewById(R.id.commentMenuButton).performClick();
                             }
                         }));
         onView(withText(R.string.delete_comment)).perform(click());
 
         // Confirm in AlertDialog
-        onView(withText(R.string.delete))
-                .inRoot(isDialog())
-                .perform(click());
+        onView(withText(R.string.delete)).inRoot(isDialog()).perform(click());
 
         // Wait for comment to disappear from UserB's own view
         pollUntil(10000, () -> {
@@ -217,7 +233,9 @@ public class LiveEventUserB_UITests extends UITestBase {
             try {
                 onView(withId(R.id.recyclerViewComments)).check(matches(isDisplayed()));
                 return true;
-            } catch (Exception | AssertionError e) { return false; }
+            } catch (Exception | AssertionError e) {
+                return false;
+            }
         });
 
         pinComment(pinCommentId, ssoTokenBAdmin);

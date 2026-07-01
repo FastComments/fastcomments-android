@@ -15,14 +15,14 @@ import android.content.Context;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.UserSessionInfo;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,10 +31,6 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Unit tests for the follow / unfollow button wiring inside
@@ -94,8 +90,8 @@ public class FeedPostsAdapterFollowButtonTest {
     private FeedPostsAdapter.FeedPostViewHolder createAndBind(FeedPost post) {
         posts.clear();
         posts.add(post);
-        FeedPostsAdapter.FeedPostViewHolder holder = adapter.onCreateViewHolder(
-                parent, FeedPostType.TEXT_ONLY.ordinal());
+        FeedPostsAdapter.FeedPostViewHolder holder =
+                adapter.onCreateViewHolder(parent, FeedPostType.TEXT_ONLY.ordinal());
         adapter.onBindViewHolder(holder, 0);
         return holder;
     }
@@ -134,8 +130,7 @@ public class FeedPostsAdapterFollowButtonTest {
     public void bindFollowButton_selfPost_hidesButton() {
         when(sdk.getFollowStateProvider()).thenReturn(new StubProvider(false));
 
-        FeedPostsAdapter.FeedPostViewHolder holder =
-                createAndBind(makePost("viewer-1", "Me"));
+        FeedPostsAdapter.FeedPostViewHolder holder = createAndBind(makePost("viewer-1", "Me"));
 
         assertEquals(View.GONE, followButton(holder).getVisibility());
     }
@@ -235,8 +230,7 @@ public class FeedPostsAdapterFollowButtonTest {
         when(sdk.getFollowStateProvider()).thenReturn(provider);
 
         // Bind holder to Alice
-        FeedPostsAdapter.FeedPostViewHolder holder =
-                createAndBind(makePost("u-alice", "Alice"));
+        FeedPostsAdapter.FeedPostViewHolder holder = createAndBind(makePost("u-alice", "Alice"));
         TextView btn = followButton(holder);
 
         assertEquals("Follow", btn.getText().toString());
@@ -279,8 +273,7 @@ public class FeedPostsAdapterFollowButtonTest {
         RecordingProvider provider = new RecordingProvider();
         when(sdk.getFollowStateProvider()).thenReturn(provider);
 
-        FeedPostsAdapter.FeedPostViewHolder holder =
-                createAndBind(makePost("u-alice", "Alice"));
+        FeedPostsAdapter.FeedPostViewHolder holder = createAndBind(makePost("u-alice", "Alice"));
 
         followButton(holder).performClick();
         // Provider hasn't called back yet → nothing broadcast either coarse
@@ -303,8 +296,7 @@ public class FeedPostsAdapterFollowButtonTest {
         RecordingProvider provider = new RecordingProvider();
         when(sdk.getFollowStateProvider()).thenReturn(provider);
 
-        FeedPostsAdapter.FeedPostViewHolder holder =
-                createAndBind(makePost("u-alice", "Alice"));
+        FeedPostsAdapter.FeedPostViewHolder holder = createAndBind(makePost("u-alice", "Alice"));
 
         followButton(holder).performClick();
         assertNotNull(provider.lastCallback);
@@ -337,8 +329,7 @@ public class FeedPostsAdapterFollowButtonTest {
         RecordingProvider provider = new RecordingProvider();
         when(sdk.getFollowStateProvider()).thenReturn(provider);
 
-        FeedPostsAdapter.FeedPostViewHolder holder =
-                createAndBind(makePost("u-alice", "Alice"));
+        FeedPostsAdapter.FeedPostViewHolder holder = createAndBind(makePost("u-alice", "Alice"));
         TextView btn = followButton(holder);
 
         assertEquals("Follow", btn.getText().toString());
@@ -347,8 +338,7 @@ public class FeedPostsAdapterFollowButtonTest {
         // another row). A payload-only rebind should pick that up without a
         // full rebind of the rest of the row.
         provider.backingState = true;
-        adapter.onBindViewHolder(holder, 0,
-                Collections.singletonList(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+        adapter.onBindViewHolder(holder, 0, Collections.singletonList(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
 
         assertEquals("Following", btn.getText().toString());
         assertTrue(btn.isEnabled());
@@ -396,8 +386,7 @@ public class FeedPostsAdapterFollowButtonTest {
 
         captor.getValue().onFollowStateInvalidated(null);
 
-        verify(observer).onItemRangeChanged(eq(0), eq(3),
-                eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+        verify(observer).onItemRangeChanged(eq(0), eq(3), eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
     }
 
     /**
@@ -414,11 +403,11 @@ public class FeedPostsAdapterFollowButtonTest {
         verify(sdk).addFollowStateInvalidationListener(captor.capture());
 
         posts.clear();
-        posts.add(makePost("u-alice", "Alice"));      // 0
-        posts.add(makePost("u-bob", "Bob"));          // 1
-        posts.add(makePost("u-alice", "Alice"));      // 2
-        posts.add(makePost("u-bob", "Bob"));          // 3
-        posts.add(makePost("u-alice", "Alice"));      // 4
+        posts.add(makePost("u-alice", "Alice")); // 0
+        posts.add(makePost("u-bob", "Bob")); // 1
+        posts.add(makePost("u-alice", "Alice")); // 2
+        posts.add(makePost("u-bob", "Bob")); // 3
+        posts.add(makePost("u-alice", "Alice")); // 4
 
         RecyclerView.AdapterDataObserver observer = mock(RecyclerView.AdapterDataObserver.class);
         adapter.registerAdapterDataObserver(observer);
@@ -426,17 +415,12 @@ public class FeedPostsAdapterFollowButtonTest {
         captor.getValue().onFollowStateInvalidated("u-alice");
 
         // Only the three Alice rows should be invalidated.
-        verify(observer).onItemRangeChanged(eq(0), eq(1),
-                eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
-        verify(observer).onItemRangeChanged(eq(2), eq(1),
-                eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
-        verify(observer).onItemRangeChanged(eq(4), eq(1),
-                eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+        verify(observer).onItemRangeChanged(eq(0), eq(1), eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+        verify(observer).onItemRangeChanged(eq(2), eq(1), eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+        verify(observer).onItemRangeChanged(eq(4), eq(1), eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
         // And none of the Bob rows.
-        verify(observer, never()).onItemRangeChanged(eq(1), eq(1),
-                eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
-        verify(observer, never()).onItemRangeChanged(eq(3), eq(1),
-                eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+        verify(observer, never()).onItemRangeChanged(eq(1), eq(1), eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
+        verify(observer, never()).onItemRangeChanged(eq(3), eq(1), eq(FeedPostsAdapter.UpdateType.FOLLOW_STATE_UPDATE));
     }
 
     /**
@@ -448,8 +432,7 @@ public class FeedPostsAdapterFollowButtonTest {
         RecordingProvider provider = new RecordingProvider();
         when(sdk.getFollowStateProvider()).thenReturn(provider);
 
-        FeedPostsAdapter.FeedPostViewHolder holder =
-                createAndBind(makePost("u-alice", "Alice"));
+        FeedPostsAdapter.FeedPostViewHolder holder = createAndBind(makePost("u-alice", "Alice"));
 
         followButton(holder).performClick();
         provider.backingState = true;
@@ -475,8 +458,8 @@ public class FeedPostsAdapterFollowButtonTest {
         }
 
         @Override
-        public void onFollowStateChangeRequested(@NonNull UserInfo user, boolean desiredFollowing,
-                                                 @NonNull FollowStateCallback resultCallback) {
+        public void onFollowStateChangeRequested(
+                @NonNull UserInfo user, boolean desiredFollowing, @NonNull FollowStateCallback resultCallback) {
             // No-op. Tests using this stub never tap the button.
         }
     }
@@ -494,8 +477,8 @@ public class FeedPostsAdapterFollowButtonTest {
         }
 
         @Override
-        public void onFollowStateChangeRequested(@NonNull UserInfo user, boolean desiredFollowing,
-                                                 @NonNull FollowStateCallback resultCallback) {
+        public void onFollowStateChangeRequested(
+                @NonNull UserInfo user, boolean desiredFollowing, @NonNull FollowStateCallback resultCallback) {
             lastUser = user;
             lastDesired = desiredFollowing;
             lastCallback = resultCallback;

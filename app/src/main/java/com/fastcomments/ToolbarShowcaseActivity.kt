@@ -36,7 +36,7 @@ class ToolbarShowcaseActivity : AppCompatActivity() {
             "toolbar-showcase", // Different URL slug to avoid comment conflicts
             "https://fastcomments.com/toolbar-demo",
             "fastcomments.com",
-            "Toolbar Demo"
+            "Toolbar Demo",
         )
 
         // Optional: Configure vote style
@@ -46,7 +46,7 @@ class ToolbarShowcaseActivity : AppCompatActivity() {
         val userData = SimpleSSOUserData(
             "Toolbar Demo User",
             "toolbar-demo@example.com",
-            "https://staticm.fastcomments.com/1639362726066-DSC_0841.JPG"
+            "https://staticm.fastcomments.com/1639362726066-DSC_0841.JPG",
         )
         val sso = FastCommentsSSO(userData)
         config.sso = sso.prepareToSend()
@@ -118,7 +118,7 @@ class ToolbarShowcaseActivity : AppCompatActivity() {
             // Or hide the toolbar entirely for this instance
             inputView.setToolbarVisible(false)
         }
-        */
+         */
     }
 
     companion object {

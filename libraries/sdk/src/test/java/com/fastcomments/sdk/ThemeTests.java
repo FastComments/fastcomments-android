@@ -1,9 +1,9 @@
 package com.fastcomments.sdk;
 
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+
+import org.junit.Test;
 
 /**
  * Unit tests for FastCommentsTheme builder and getters.
@@ -27,21 +27,18 @@ public class ThemeTests {
         // Android's ThemeColorResolver does NOT auto-fallback to primary.
         // Setting primary alone doesn't affect actionButtonColor getter.
         int red = 0xFFFF0000;
-        FastCommentsTheme theme = new FastCommentsTheme.Builder()
-                .setPrimaryColor(red)
-                .build();
+        FastCommentsTheme theme =
+                new FastCommentsTheme.Builder().setPrimaryColor(red).build();
 
         assertEquals(Integer.valueOf(red), theme.getPrimaryColor());
-        assertNull("actionButtonColor should be null when only primary is set",
-                theme.getActionButtonColor());
+        assertNull("actionButtonColor should be null when only primary is set", theme.getActionButtonColor());
     }
 
     @Test
     public void testSpecificColorOverride() {
         int green = 0xFF00FF00;
-        FastCommentsTheme theme = new FastCommentsTheme.Builder()
-                .setActionButtonColor(green)
-                .build();
+        FastCommentsTheme theme =
+                new FastCommentsTheme.Builder().setActionButtonColor(green).build();
 
         assertEquals(Integer.valueOf(green), theme.getActionButtonColor());
     }
@@ -49,9 +46,8 @@ public class ThemeTests {
     @Test
     public void testAllPrimary() {
         int purple = 0xFF800080;
-        FastCommentsTheme theme = new FastCommentsTheme.Builder()
-                .setAllPrimaryColors(purple)
-                .build();
+        FastCommentsTheme theme =
+                new FastCommentsTheme.Builder().setAllPrimaryColors(purple).build();
 
         assertEquals(Integer.valueOf(purple), theme.getPrimaryColor());
         assertEquals(Integer.valueOf(purple), theme.getActionButtonColor());
@@ -100,9 +96,8 @@ public class ThemeTests {
         // When theme is null, ThemeColorResolver.getColor() returns the resource color.
         // We can't test with a real context here, but we verify that the ColorGetter
         // functional interface works correctly with a non-null theme.
-        FastCommentsTheme theme = new FastCommentsTheme.Builder()
-                .setActionButtonColor(0xFFABCDEF)
-                .build();
+        FastCommentsTheme theme =
+                new FastCommentsTheme.Builder().setActionButtonColor(0xFFABCDEF).build();
 
         ThemeColorResolver.ColorGetter getter = FastCommentsTheme::getActionButtonColor;
         assertEquals(Integer.valueOf(0xFFABCDEF), getter.getColor(theme));

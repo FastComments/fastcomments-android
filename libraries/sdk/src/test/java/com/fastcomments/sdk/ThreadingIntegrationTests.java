@@ -1,16 +1,15 @@
 package com.fastcomments.sdk;
 
-import com.fastcomments.model.PublicComment;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import com.fastcomments.model.PublicComment;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 /**
  * Integration tests for comment threading/nesting operations.
@@ -36,7 +35,8 @@ public class ThreadingIntegrationTests extends IntegrationTestBase {
         // Verify the child chain via the reloaded tree
         PublicComment reloadedRoot = sdk2.commentsTree.getPublicComment(root.getId());
         assertNotNull(reloadedRoot);
-        assertTrue("Root should have childCount >= 1",
+        assertTrue(
+                "Root should have childCount >= 1",
                 reloadedRoot.getChildCount() != null && reloadedRoot.getChildCount() >= 1);
 
         assertEquals(root.getId(), child.getParentId());
@@ -80,7 +80,8 @@ public class ThreadingIntegrationTests extends IntegrationTestBase {
 
         PublicComment reloaded = sdk2.commentsTree.getPublicComment(parent.getId());
         assertNotNull(reloaded);
-        assertTrue("Parent should have childCount >= 2",
+        assertTrue(
+                "Parent should have childCount >= 2",
                 reloaded.getChildCount() != null && reloaded.getChildCount() >= 2);
     }
 
@@ -158,7 +159,6 @@ public class ThreadingIntegrationTests extends IntegrationTestBase {
 
         PublicComment reloaded = sdk2.commentsTree.getPublicComment(parent.getId());
         assertNotNull(reloaded);
-        assertTrue("Should have childCount > 0",
-                reloaded.getChildCount() != null && reloaded.getChildCount() > 0);
+        assertTrue("Should have childCount > 0", reloaded.getChildCount() != null && reloaded.getChildCount() > 0);
     }
 }

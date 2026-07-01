@@ -1,11 +1,10 @@
 package com.fastcomments.sdk;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 /**
  * Unit tests for RenderableNode/RenderableComment nesting level calculations.

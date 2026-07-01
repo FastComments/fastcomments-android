@@ -2,7 +2,6 @@ package com.fastcomments.sdk.examples;
 
 import android.view.View;
 import android.widget.Toast;
-
 import com.fastcomments.sdk.BottomCommentInputView;
 import com.fastcomments.sdk.CustomToolbarButton;
 import com.fastcomments.sdk.R;
@@ -16,9 +15,9 @@ public class GifPickerToolbarButton implements CustomToolbarButton {
     private static final String BUTTON_ID = "gif_picker";
 
     private static final String[] DEMO_GIFS = {
-            "https://media.giphy.com/media/l3q2K5jinAlChoCLS/giphy.gif",
-            "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
-            "https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif",
+        "https://media.giphy.com/media/l3q2K5jinAlChoCLS/giphy.gif",
+        "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
+        "https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif",
     };
 
     private int gifIndex = 0;
@@ -44,7 +43,8 @@ public class GifPickerToolbarButton implements CustomToolbarButton {
         gifIndex++;
         String gifHtml = "<img src=\"" + gifUrl + "\" alt=\"GIF\" style=\"max-width: 200px;\" />";
         view.insertHtmlAtCursor(gifHtml);
-        Toast.makeText(buttonView.getContext(), "GIF inserted!", Toast.LENGTH_SHORT).show();
+        Toast.makeText(buttonView.getContext(), "GIF inserted!", Toast.LENGTH_SHORT)
+                .show();
     }
 
     @Override

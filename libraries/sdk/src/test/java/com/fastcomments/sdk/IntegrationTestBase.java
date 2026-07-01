@@ -1,27 +1,24 @@
 package com.fastcomments.sdk;
 
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.core.sso.FastCommentsSSO;
 import com.fastcomments.core.sso.SecureSSOUserData;
 import com.fastcomments.model.APIEmptyResponse;
 import com.fastcomments.model.APIError;
-import com.fastcomments.model.PublicComment;
-import com.fastcomments.model.SetCommentTextResult;
-import com.fastcomments.model.VoteResponse;
-import com.fastcomments.model.VoteDeleteResponse;
 import com.fastcomments.model.BlockSuccess;
-import com.fastcomments.model.UnblockSuccess;
 import com.fastcomments.model.ChangeCommentPinStatusResponse;
 import com.fastcomments.model.CreateFeedPostParams;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.model.GetCommentsResponseWithPresencePublicComment;
+import com.fastcomments.model.PublicComment;
 import com.fastcomments.model.PublicFeedPostsResponse;
-
-import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.robolectric.shadows.ShadowLooper;
-
+import com.fastcomments.model.SetCommentTextResult;
+import com.fastcomments.model.UnblockSuccess;
+import com.fastcomments.model.VoteDeleteResponse;
+import com.fastcomments.model.VoteResponse;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +29,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import okhttp3.Cookie;
 import okhttp3.CookieJar;
 import okhttp3.FormBody;
@@ -41,9 +37,10 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+import org.robolectric.shadows.ShadowLooper;
 
 /**
  * Base class for integration tests that hit the real FastComments API.
@@ -119,8 +116,8 @@ public class IntegrationTestBase {
 
         // 2. Get tenant ID via e2e test API
         Request tenantRequest = new Request.Builder()
-                .url(TestConfig.HOST + "/test-e2e/api/tenant/by-email/" + testTenantEmail
-                        + "?API_KEY=" + TestConfig.E2E_API_KEY)
+                .url(TestConfig.HOST + "/test-e2e/api/tenant/by-email/" + testTenantEmail + "?API_KEY="
+                        + TestConfig.E2E_API_KEY)
                 .get()
                 .build();
 
@@ -159,10 +156,16 @@ public class IntegrationTestBase {
     public void tearDown() throws Exception {
         // Close all SDK WebSocket connections
         for (FastCommentsSDK sdk : sdksToCleanup) {
-            try { sdk.cleanup(); } catch (Exception ignored) {}
+            try {
+                sdk.cleanup();
+            } catch (Exception ignored) {
+            }
         }
         for (FastCommentsFeedSDK sdk : feedSdksToCleanup) {
-            try { sdk.cleanup(); } catch (Exception ignored) {}
+            try {
+                sdk.cleanup();
+            } catch (Exception ignored) {
+            }
         }
 
         // Clean up comments for each urlId
@@ -174,14 +177,15 @@ public class IntegrationTestBase {
         if (testTenantEmail != null) {
             try {
                 Request deleteRequest = new Request.Builder()
-                        .url(TestConfig.HOST + "/test-e2e/api/tenant/by-email/" + testTenantEmail
-                                + "?API_KEY=" + TestConfig.E2E_API_KEY)
+                        .url(TestConfig.HOST + "/test-e2e/api/tenant/by-email/" + testTenantEmail + "?API_KEY="
+                                + TestConfig.E2E_API_KEY)
                         .delete()
                         .build();
                 try (Response ignored = httpClient.newCall(deleteRequest).execute()) {
                     // Best effort
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         urlIdsToCleanup.clear();
@@ -216,8 +220,7 @@ public class IntegrationTestBase {
                     userId,
                     "tester-" + userId.substring(0, Math.min(8, userId.length())) + "@fctest.com",
                     "Tester " + userId.substring(0, Math.min(6, userId.length())),
-                    ""
-            );
+                    "");
             FastCommentsSSO sso = FastCommentsSSO.createSecure(testTenantApiKey, userData);
             return sso.prepareToSend();
         } catch (Exception e) {
@@ -235,8 +238,7 @@ public class IntegrationTestBase {
                     userId,
                     "admin-" + userId.substring(0, Math.min(8, userId.length())) + "@fctest.com",
                     "Admin " + userId.substring(0, Math.min(6, userId.length())),
-                    ""
-            );
+                    "");
             userData.isAdmin = true;
             FastCommentsSSO sso = FastCommentsSSO.createSecure(testTenantApiKey, userData);
             return sso.prepareToSend();
@@ -456,7 +458,8 @@ public class IntegrationTestBase {
         }
     }
 
-    protected SetCommentTextResult editCommentSync(FastCommentsSDK sdk, String commentId, String newText) throws Exception {
+    protected SetCommentTextResult editCommentSync(FastCommentsSDK sdk, String commentId, String newText)
+            throws Exception {
         AtomicReference<SetCommentTextResult> resultRef = new AtomicReference<>();
         AtomicReference<APIError> errorRef = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
@@ -541,20 +544,23 @@ public class IntegrationTestBase {
         AtomicReference<APIError> errorRef = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
 
-        sdk.blockUserFromComment(commentId, new java.util.ArrayList<>(sdk.commentsTree.commentsById.keySet()), new FCCallback<BlockSuccess>() {
-            @Override
-            public boolean onFailure(APIError error) {
-                errorRef.set(error);
-                latch.countDown();
-                return FCCallback.CONSUME;
-            }
+        sdk.blockUserFromComment(
+                commentId,
+                new java.util.ArrayList<>(sdk.commentsTree.commentsById.keySet()),
+                new FCCallback<BlockSuccess>() {
+                    @Override
+                    public boolean onFailure(APIError error) {
+                        errorRef.set(error);
+                        latch.countDown();
+                        return FCCallback.CONSUME;
+                    }
 
-            @Override
-            public boolean onSuccess(BlockSuccess response) {
-                latch.countDown();
-                return FCCallback.CONSUME;
-            }
-        });
+                    @Override
+                    public boolean onSuccess(BlockSuccess response) {
+                        latch.countDown();
+                        return FCCallback.CONSUME;
+                    }
+                });
 
         awaitLatch(latch);
 
@@ -747,20 +753,23 @@ public class IntegrationTestBase {
         AtomicReference<APIError> errorRef = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
 
-        sdk.unblockUserFromComment(commentId, new java.util.ArrayList<>(sdk.commentsTree.commentsById.keySet()), new FCCallback<UnblockSuccess>() {
-            @Override
-            public boolean onFailure(APIError error) {
-                errorRef.set(error);
-                latch.countDown();
-                return FCCallback.CONSUME;
-            }
+        sdk.unblockUserFromComment(
+                commentId,
+                new java.util.ArrayList<>(sdk.commentsTree.commentsById.keySet()),
+                new FCCallback<UnblockSuccess>() {
+                    @Override
+                    public boolean onFailure(APIError error) {
+                        errorRef.set(error);
+                        latch.countDown();
+                        return FCCallback.CONSUME;
+                    }
 
-            @Override
-            public boolean onSuccess(UnblockSuccess response) {
-                latch.countDown();
-                return FCCallback.CONSUME;
-            }
-        });
+                    @Override
+                    public boolean onSuccess(UnblockSuccess response) {
+                        latch.countDown();
+                        return FCCallback.CONSUME;
+                    }
+                });
 
         awaitLatch(latch);
 
