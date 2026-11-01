@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Poll card under a comment's text. Spacing follows the web widget at phone widths. -->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:id="@+id/pollQuestion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:letterSpacing="-0.01"
+        android:lineSpacingMultiplier="1.1"
+        android:textColor="@color/fastcomments_poll_text"
+        android:textSize="14.7sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/pollOptions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
+
+    <com.google.android.flexbox.FlexboxLayout
+        android:id="@+id/pollFooter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        app:alignItems="center"
+        app:flexWrap="wrap">
+
+        <TextView
+            android:id="@+id/pollTotal"
+            style="@style/FastCommentsPollHelpText"
+            android:fontFeatureSettings="tnum" />
+
+        <TextView
+            android:id="@+id/pollPrivacy"
+            style="@style/FastCommentsPollHelpText" />
+
+        <TextView
+            android:id="@+id/pollCloses"
+            style="@style/FastCommentsPollHelpText" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_flexGrow="1" />
+
+        <TextView
+            android:id="@+id/pollError"
+            style="@style/FastCommentsPollHelpText"
+            android:textColor="@color/fastcomments_poll_danger"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/pollSaved"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/fastcomments_poll_pill"
+            android:drawablePadding="6dp"
+            android:gravity="center_vertical"
+            android:paddingStart="10dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="4dp"
+            android:text="@string/fastcomments_poll_vote_saved"
+            android:textColor="@color/fastcomments_poll_accent"
+            android:textSize="12.25sp"
+            android:textStyle="bold"
+            app:layout_flexShrink="0"
+            android:drawableStart="@drawable/fastcomments_ic_poll_check"
+            android:drawableTint="@color/fastcomments_poll_accent" />
+
+        <TextView
+            android:id="@+id/pollChangeVote"
+            style="@style/FastCommentsPollLink"
+            android:text="@string/fastcomments_poll_change_vote" />
+
+        <TextView
+            android:id="@+id/pollToggleResults"
+            style="@style/FastCommentsPollLink" />
+
+        <TextView
+            android:id="@+id/pollVoters"
+            style="@style/FastCommentsPollLink"
+            android:text="@string/fastcomments_poll_voters_show" />
+    </com.google.android.flexbox.FlexboxLayout>
+</merge>

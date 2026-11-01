@@ -17,6 +17,9 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private static final int VIEW_TYPE_BUTTON = 1;
     private static final int VIEW_TYPE_DATE_SEPARATOR = 2;
 
+    /** Payload that patches only a comment's poll tallies, so a live change animates instead of re-rendering. */
+    public static final Object PAYLOAD_POLL = new Object();
+
     private final Context context;
     private final CommentsTree commentsTree;
     private final FastCommentsSDK sdk;
@@ -111,6 +114,29 @@ public class CommentsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         } else if (holder instanceof ButtonViewHolder) {
             bindButtonViewHolder((ButtonViewHolder) holder, position);
         }
+    }
+
+    @Override
+    public void onBindViewHolder(
+            @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        RenderableNode node = commentsTree.visibleNodes.get(position);
+        if (holder instanceof CommentViewHolder
+                && node instanceof RenderableComment
+                && !payloads.isEmpty()
+                && onlyPollPayloads(payloads)) {
+            ((CommentViewHolder) holder).patchPollCounts((RenderableComment) node);
+            return;
+        }
+        onBindViewHolder(holder, position);
+    }
+
+    private static boolean onlyPollPayloads(List<Object> payloads) {
+        for (Object payload : payloads) {
+            if (payload != PAYLOAD_POLL) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void bindDateSeparatorViewHolder(DateSeparatorViewHolder holder, int position) {

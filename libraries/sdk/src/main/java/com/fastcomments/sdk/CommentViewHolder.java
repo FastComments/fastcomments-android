@@ -46,6 +46,8 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private final View heartVoteContainer; // Container for heart vote button
     private final TextView heartVoteCountTextView; // Count for heart votes
     private final ImageButton commentMenuButton; // Three-dot menu button
+    private final ViewGroup pollContainer;
+    private PollCardView pollCardView;
     private final FastCommentsSDK sdk;
 
     // Child comments pagination
@@ -78,6 +80,7 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         lockIcon = itemView.findViewById(R.id.lockIcon);
         heartButton = itemView.findViewById(R.id.heartButton);
         commentMenuButton = itemView.findViewById(R.id.commentMenuButton);
+        pollContainer = itemView.findViewById(R.id.pollContainer);
 
         // Get references to vote containers
         standardVoteContainer = itemView.findViewById(R.id.standardVoteContainer);
@@ -254,6 +257,12 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
             contentTextView.setText(HtmlLinkHandler.parseHtml(context, htmlContent, contentTextView));
         }
 
+        if (blocked) {
+            pollContainer.setVisibility(View.GONE);
+        } else {
+            bindPoll(comment);
+        }
+
         // No need for special handling for live chat - we're using a dedicated layout
 
         // Indent child comments to reflect hierarchy
@@ -350,6 +359,34 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
 
         // Store current comment reference
         this.currentComment = comment;
+    }
+
+    /**
+     * Render (or hide) the comment's poll. Also called alone for live tally updates.
+     */
+    public void bindPoll(RenderableComment comment) {
+        if (comment.getComment().getPoll() == null
+                || Boolean.TRUE.equals(comment.getComment().getIsDeleted())) {
+            pollContainer.setVisibility(View.GONE);
+            return;
+        }
+        if (pollCardView == null) {
+            pollCardView = new PollCardView(context);
+            pollContainer.addView(pollCardView);
+        }
+        pollContainer.setVisibility(View.VISIBLE);
+        pollCardView.bind(sdk, comment);
+    }
+
+    /**
+     * Apply a live poll tally change without rebuilding the card.
+     */
+    public void patchPollCounts(RenderableComment comment) {
+        if (pollCardView == null || pollContainer.getVisibility() != View.VISIBLE) {
+            bindPoll(comment);
+            return;
+        }
+        pollCardView.patchCounts(sdk, comment);
     }
 
     /**

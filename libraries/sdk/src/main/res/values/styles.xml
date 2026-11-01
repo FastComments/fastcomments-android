@@ -22,4 +22,25 @@
         <item name="android:textColor">?android:attr/textColorPrimary</item>
         <item name="android:includeFontPadding">true</item>
     </style>
+
+    <!-- Poll card footer text, the web's help text at 0.875em of the 14px card. -->
+    <style name="FastCommentsPollHelpText">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">12.25sp</item>
+        <item name="android:textColor">@color/fastcomments_poll_text_muted</item>
+        <!-- Footer items wrap to the next line instead of being squeezed and clipped. -->
+        <item name="layout_flexShrink">0</item>
+    </style>
+
+    <!-- Poll card footer actions. PollCardView underlines them like the web's text buttons. -->
+    <style name="FastCommentsPollLink">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/fastcomments_poll_text</item>
+        <item name="layout_flexShrink">0</item>
+    </style>
 </resources>

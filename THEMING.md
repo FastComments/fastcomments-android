@@ -151,6 +151,26 @@ Then apply this theme to your Activity:
 | `fastcomments_vote_count_zero_color` | Color for zero vote count | Gray (#808080) |
 | `fastcomments_vote_divider_color` | Color for vote divider lines | Light Gray (#DDDDDD) |
 
+### Poll Color Resources
+
+Polls use the same colors as the web widget's poll card. Override them in your app's `colors.xml`.
+
+| Color Resource | Description | Default Value |
+|----------------|-------------|---------------|
+| `fastcomments_poll_accent` | Selected option border and check, chosen duration, "Your vote is in" text | Dark Gray (#333333) |
+| `fastcomments_poll_accent_text` | Check mark and text drawn on the accent color | White |
+| `fastcomments_poll_text` | Question, action links and builder text | Black |
+| `fastcomments_poll_text_muted` | Percentages, response count and other footer text | Gray (#666666) |
+| `fastcomments_poll_chip_bg` | Option chip background | Off White (#F6F7F8) |
+| `fastcomments_poll_chip_bg_pressed` | Option chip background while pressed | Light Gray (#ECECEC) |
+| `fastcomments_poll_chip_text` | Option label text | Near Black (#171717) |
+| `fastcomments_poll_border` | Checkbox mark, outlined pills and dividers | Gray (#BFBFBF) |
+| `fastcomments_poll_bar_track` | Result bar for options you did not pick | Light Gray (#E5E5E5) |
+| `fastcomments_poll_bar_selected` | Result bar for the option you picked | Gray (#D9D9D9) |
+| `fastcomments_poll_mark_bg` | Unchecked checkbox mark fill | White |
+| `fastcomments_poll_danger` | Errors and "Remove poll" | Red (#C44A3F) |
+| `fastcomments_poll_toolbar_active` | Poll toolbar button background while the builder is open | Light Gray (#E6E6E6) |
+
 ### Base Color Resources (Affects multiple components)
 
 | Color Resource | Description | Default Value |

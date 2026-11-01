@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from fastcomments-localization text/widgets/comment-ui-polls. -->
+<resources>
+    <string name="fastcomments_poll_insert">Dodaj ankietę</string>
+    <string name="fastcomments_poll_question_placeholder">Zadaj pytanie…</string>
+    <string name="fastcomments_poll_option_placeholder">Opcja %1$d</string>
+    <string name="fastcomments_poll_add_option">Dodaj opcję</string>
+    <string name="fastcomments_poll_remove_option">Usuń opcję</string>
+    <string name="fastcomments_poll_closes_never">Bez daty zakończenia</string>
+    <string name="fastcomments_poll_closes_1_day">1 dzień</string>
+    <string name="fastcomments_poll_closes_3_days">3 dni</string>
+    <string name="fastcomments_poll_closes_1_week">1 tydzień</string>
+    <string name="fastcomments_poll_remove">Usuń ankietę</string>
+    <string name="fastcomments_poll_error_question_required">Wpisz pytanie do swojej ankiety.</string>
+    <string name="fastcomments_poll_error_min_options">Wpisz co najmniej dwie opcje.</string>
+    <string name="fastcomments_poll_show_results">Pokaż wyniki</string>
+    <string name="fastcomments_poll_hide_results">Ukryj wyniki</string>
+    <string name="fastcomments_poll_change_vote">Zmień głos</string>
+    <string name="fastcomments_poll_vote_saved">Twój głos został zapisany</string>
+    <string name="fastcomments_poll_closes_at">Ankieta kończy się: %1$s</string>
+    <string name="fastcomments_poll_closed">Ankieta zakończona</string>
+    <string name="fastcomments_poll_login_to_vote">Zaloguj się, aby oddać głos</string>
+    <string name="fastcomments_poll_vote_failed">Nie udało się zapisać Twojego głosu. Spróbuj ponownie.</string>
+    <string name="fastcomments_poll_privacy_label">Prywatność</string>
+    <string name="fastcomments_poll_privacy_anonymous">Anonimowa</string>
+    <string name="fastcomments_poll_privacy_admins">Administratorzy widzą, kto głosował</string>
+    <string name="fastcomments_poll_privacy_public">Publiczna</string>
+    <string name="fastcomments_poll_privacy_help">W ankietach publicznych każdy użytkownik widzi, kto na co zagłosował.</string>
+    <string name="fastcomments_poll_votes_anonymous">Głosy są anonimowe</string>
+    <string name="fastcomments_poll_votes_admins_visible">Administratorzy widzą, kto głosował</string>
+    <string name="fastcomments_poll_votes_public_visible">Poszczególne głosy są publiczne.</string>
+    <string name="fastcomments_poll_require_vote_to_see_results">Wymagaj głosu, aby zobaczyć wyniki</string>
+    <string name="fastcomments_poll_voters_show">Zobacz, kto głosował</string>
+    <string name="fastcomments_poll_voters_title">Kto głosował</string>
+    <string name="fastcomments_poll_voters_close">Zamknij</string>
+    <string name="fastcomments_poll_voters_search_placeholder">Szukaj nazw…</string>
+    <string name="fastcomments_poll_voters_prev">Poprzednie</string>
+    <string name="fastcomments_poll_voters_next">Następne</string>
+    <string name="fastcomments_poll_voters_loading">Ładowanie…</string>
+    <string name="fastcomments_poll_voters_none">Brak imiennych głosujących.</string>
+    <string name="fastcomments_poll_voters_failed">Nie udało się wczytać informacji o głosujących. Spróbuj ponownie.</string>
+    <plurals name="fastcomments_poll_responses">
+        <item quantity="one">Głosów: %1$s</item>
+        <item quantity="few">Głosów: %1$s</item>
+        <item quantity="many">Głosów: %1$s</item>
+        <item quantity="other">Głosów: %1$s</item>
+    </plurals>
+    <plurals name="fastcomments_poll_voters_count">
+        <item quantity="one">Głosujących: %1$s</item>
+        <item quantity="few">Głosujących: %1$s</item>
+        <item quantity="many">Głosujących: %1$s</item>
+        <item quantity="other">Głosujących: %1$s</item>
+    </plurals>
+</resources>

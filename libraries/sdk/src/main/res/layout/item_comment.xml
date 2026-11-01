@@ -167,8 +167,16 @@
             android:textSize="14sp"
             android:textColorLink="@color/fastcomments_link_color"
             android:autoLink="web"
-            style="@style/LinkText" 
+            style="@style/LinkText"
             android:textColor="@color/black" />
+
+        <!-- Poll card, filled by CommentViewHolder.bindPoll -->
+        <FrameLayout
+            android:id="@+id/pollContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:visibility="gone" />
 
         <LinearLayout
             android:layout_width="match_parent"
