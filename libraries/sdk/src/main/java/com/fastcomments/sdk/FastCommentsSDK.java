@@ -48,6 +48,7 @@ public class FastCommentsSDK {
     public int pageSize = 30;
     public Set<String> broadcastIdsSent;
     public String blockingErrorMessage;
+    private boolean loaded;
 
     private static final int MAX_BROADCAST_IDS = 200;
 
@@ -195,6 +196,7 @@ public class FastCommentsSDK {
                     currentUser = response.getUser();
                 }
                 isSiteAdmin = Boolean.TRUE.equals(response.getIsSiteAdmin());
+                loaded = true;
                 if (response.getUrlIdClean() != null) {
                     config.urlId = response.getUrlIdClean();
                 }
@@ -2020,6 +2022,13 @@ public class FastCommentsSDK {
     /**
      * Whether the current user may attach a poll to a new comment, per the pollCreation setting.
      */
+    /**
+     * Whether comments have loaded at least once, so the server's config (pollCreation, isSiteAdmin) is merged in.
+     */
+    public boolean hasLoaded() {
+        return loaded;
+    }
+
     public boolean canCreatePoll() {
         return PollHelper.canCreatePoll(config, isSiteAdmin);
     }

@@ -54,9 +54,32 @@ public class PollVotersDialog extends Dialog {
     private boolean loading = false;
 
     public PollVotersDialog(@NonNull Context context, @NonNull FastCommentsSDK sdk, @NonNull String commentId) {
+        this(context, sdk, commentId, 0, "");
+    }
+
+    /**
+     * Opens on the given page and search, e.g. when {@link PollVotersDialogFragment} restores it after rotation.
+     */
+    public PollVotersDialog(
+            @NonNull Context context,
+            @NonNull FastCommentsSDK sdk,
+            @NonNull String commentId,
+            int page,
+            @NonNull String search) {
         super(context);
         this.sdk = sdk;
         this.commentId = commentId;
+        this.page = page;
+        this.search = search;
+    }
+
+    public int getPage() {
+        return page;
+    }
+
+    @NonNull
+    public String getSearch() {
+        return search;
     }
 
     @Override
@@ -76,6 +99,9 @@ public class PollVotersDialog extends Dialog {
         for (TextView link : new TextView[] {prevView, nextView}) {
             link.setPaintFlags(link.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
         }
+        // The search is restored from this dialog's own state, set before the watcher so it doesn't search again.
+        searchView.setSaveEnabled(false);
+        searchView.setText(search);
         findViewById(R.id.pollVotersClose).setOnClickListener(v -> dismiss());
         prevView.setOnClickListener(v -> {
             if (!loading && page > 0) {
@@ -122,7 +148,7 @@ public class PollVotersDialog extends Dialog {
             scroll.setMaxHeight(Math.min(dp(560), screenHeight - dp(64)) - dp(170));
         }
 
-        fetchVoters(0);
+        fetchVoters(page);
     }
 
     @Override

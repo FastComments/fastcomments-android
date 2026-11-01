@@ -4,10 +4,12 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.Parcelable;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.SparseArray;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -187,6 +189,18 @@ public class PollBuilderView extends LinearLayout {
 
     public PollDraft getDraft() {
         return draft;
+    }
+
+    // Option rows share view ids, so the framework would restore one row's text into all of them. The owning input
+    // view saves the draft instead.
+    @Override
+    protected void dispatchSaveInstanceState(SparseArray<Parcelable> container) {
+        dispatchFreezeSelfOnly(container);
+    }
+
+    @Override
+    protected void dispatchRestoreInstanceState(SparseArray<Parcelable> container) {
+        dispatchThawSelfOnly(container);
     }
 
     public void setOnRemoveListener(OnRemoveListener listener) {

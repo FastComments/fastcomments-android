@@ -5,6 +5,8 @@ import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.text.Editable;
 import android.text.Spanned;
 import android.text.TextWatcher;
@@ -131,8 +133,8 @@ public class BottomCommentInputView extends FrameLayout {
         pollBuilder = findViewById(R.id.pollBuilder);
         pollBuilder.setOnRemoveListener(this::clearPollDraft);
         pollBuilderScroll = findViewById(R.id.pollBuilderScroll);
-        // A third of the screen keeps the input row and the keyboard in view with the builder open.
-        pollBuilderScroll.setMaxHeight(getResources().getDisplayMetrics().heightPixels / 3);
+        // A third of the window keeps the input row and the keyboard in view with the builder open.
+        pollBuilderScroll.setMaxHeightFraction(1f / 3);
 
         // Create reusable image getter for WYSIWYG HTML parsing
         editableImageGetter = new RichTextHelper.EditableImageGetter(commentInput);
@@ -292,9 +294,83 @@ public class BottomCommentInputView extends FrameLayout {
      */
     public void refreshPollAvailability() {
         rebuildToolbar();
-        if (pollButton == null && pollDraft != null) {
+        // A draft restored after recreation waits for the load, which is when the SDK learns whether polls are
+        // allowed.
+        if (pollButton == null && pollDraft != null && sdk != null && sdk.hasLoaded()) {
             clearPollDraft();
         }
+    }
+
+    @Override
+    protected Parcelable onSaveInstanceState() {
+        SavedState state = new SavedState(super.onSaveInstanceState());
+        state.pollDraft = pollDraft;
+        return state;
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Parcelable state) {
+        if (!(state instanceof SavedState)) {
+            super.onRestoreInstanceState(state);
+            return;
+        }
+        SavedState saved = (SavedState) state;
+        super.onRestoreInstanceState(saved.getSuperState());
+        if (saved.pollDraft != null) {
+            pollDraft = saved.pollDraft;
+            pollBuilder.bind(pollDraft);
+            pollBuilderScroll.setVisibility(View.VISIBLE);
+            if (pollButton != null) {
+                pollButton.setActivated(true);
+            }
+        }
+    }
+
+    static class SavedState extends BaseSavedState {
+        PollDraft pollDraft;
+
+        SavedState(Parcelable superState) {
+            super(superState);
+        }
+
+        private SavedState(Parcel in) {
+            super(in);
+            if (in.readInt() == 1) {
+                PollDraft draft = new PollDraft();
+                draft.question = in.readString();
+                draft.options.clear();
+                in.readStringList(draft.options);
+                draft.closesDays = in.readInt();
+                draft.privacy = in.readInt();
+                draft.requireVoteToSeeResults = in.readInt() == 1;
+                pollDraft = draft;
+            }
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags) {
+            super.writeToParcel(out, flags);
+            out.writeInt(pollDraft != null ? 1 : 0);
+            if (pollDraft != null) {
+                out.writeString(pollDraft.question);
+                out.writeStringList(pollDraft.options);
+                out.writeInt(pollDraft.closesDays);
+                out.writeInt(pollDraft.privacy);
+                out.writeInt(pollDraft.requireVoteToSeeResults ? 1 : 0);
+            }
+        }
+
+        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
+            @Override
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
+            }
+
+            @Override
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
     }
 
     private void openPollBuilder() {

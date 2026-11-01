@@ -15,6 +15,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -289,6 +290,11 @@ public class LiveChatView extends FrameLayout {
         if (config.useSingleLineCommentInput == null) {
             config.useSingleLineCommentInput = true;
         }
+    }
+
+    @Nullable
+    public FastCommentsSDK getSDK() {
+        return sdk;
     }
 
     /**

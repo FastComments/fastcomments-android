@@ -118,8 +118,8 @@ public class PollCardView extends LinearLayout {
             comment.pollShowResults = !PollHelper.isShowingResults(comment);
             refresh();
         });
-        votersView.setOnClickListener(v ->
-                new PollVotersDialog(getContext(), sdk, comment.getComment().getId()).show());
+        votersView.setOnClickListener(v -> PollVotersDialogFragment.show(
+                getContext(), sdk, comment.getComment().getId()));
     }
 
     public void bind(@NonNull FastCommentsSDK sdk, @NonNull RenderableComment comment) {

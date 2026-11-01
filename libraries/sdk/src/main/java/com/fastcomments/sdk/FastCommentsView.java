@@ -14,6 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -207,6 +208,11 @@ public class FastCommentsView extends FrameLayout {
         if (sdk != null) {
             initializeWithSDK();
         }
+    }
+
+    @Nullable
+    public FastCommentsSDK getSDK() {
+        return sdk;
     }
 
     /**
