@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Glyphs the web poll UI draws as text. -->
+    <string name="fastcomments_poll_close_symbol" translatable="false">×</string>
+    <string name="fastcomments_poll_add_symbol" translatable="false">+</string>
+    <string name="fastcomments_poll_help_symbol" translatable="false">\?</string>
+    <!-- The web card prints the rounded percent the same way in every locale. -->
+    <string name="fastcomments_poll_percent" translatable="false">%1$d%%</string>
+</resources>

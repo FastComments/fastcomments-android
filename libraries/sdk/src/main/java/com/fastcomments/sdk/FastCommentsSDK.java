@@ -13,8 +13,10 @@ import com.fastcomments.model.*;
 import com.fastcomments.pubsub.LiveEventSubscriber;
 import com.fastcomments.pubsub.SubscribeToChangesResult;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,6 +49,8 @@ public class FastCommentsSDK {
     public Set<String> broadcastIdsSent;
     public String blockingErrorMessage;
 
+    private static final int MAX_BROADCAST_IDS = 200;
+
     private SubscribeToChangesResult liveEventSubscription;
     private LiveEventSubscriber liveEventSubscriber;
     private String tenantIdWS;
@@ -73,7 +77,7 @@ public class FastCommentsSDK {
     public FastCommentsSDK(@NonNull CommentWidgetConfig config, boolean testMode) {
         this.api = new PublicApi();
         this.mainHandler = new Handler(Looper.getMainLooper());
-        this.broadcastIdsSent = new HashSet<>(0);
+        this.broadcastIdsSent = createBroadcastIdSet();
         this.config = config;
         this.api.getApiClient().setLenientOnJson(true);
         // Force HTTP/1.1 on the API client to prevent H2 interference with WebSocket
@@ -95,6 +99,19 @@ public class FastCommentsSDK {
 
         // Set up the presence status listener on the comments tree
         this.commentsTree.setPresenceStatusListener(this::fetchPresenceForUsers);
+    }
+
+    /**
+     * Ids of our own writes, so their live echo is skipped. An echo arrives within seconds, and ones that never
+     * come (live updates off, a dropped event) would otherwise pile up for the SDK's lifetime.
+     */
+    static Set<String> createBroadcastIdSet() {
+        return Collections.synchronizedSet(Collections.newSetFromMap(new LinkedHashMap<String, Boolean>() {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<String, Boolean> eldest) {
+                return size() > MAX_BROADCAST_IDS;
+            }
+        }));
     }
 
     public static String getAPIBasePath(CommentWidgetConfig config) {
@@ -177,6 +194,7 @@ public class FastCommentsSDK {
                 if (response.getUser() != null) {
                     currentUser = response.getUser();
                 }
+                isSiteAdmin = Boolean.TRUE.equals(response.getIsSiteAdmin());
                 if (response.getUrlIdClean() != null) {
                     config.urlId = response.getUrlIdClean();
                 }
@@ -445,6 +463,20 @@ public class FastCommentsSDK {
      */
     public void postComment(
             String commentText, String parentId, List<UserMention> mentions, final FCCallback<PublicComment> callback) {
+        postComment(commentText, parentId, mentions, null, callback);
+    }
+
+    /**
+     * Posts a new comment or reply, optionally with a poll attached
+     *
+     * @param poll The poll to attach, or null. See {@link PollDraft#toInput(long)}.
+     */
+    public void postComment(
+            String commentText,
+            String parentId,
+            List<UserMention> mentions,
+            CommentPollInput poll,
+            final FCCallback<PublicComment> callback) {
         if (commentText == null || commentText.trim().isEmpty()) {
             callback.onFailure(new APIError()
                     .status(APIStatus.FAILED)
@@ -461,6 +493,9 @@ public class FastCommentsSDK {
 
         // Create comment data with mentions if available
         CommentData commentData = createCommentData(commentText, parentId, mentions);
+        if (poll != null) {
+            commentData.setPoll(poll);
+        }
 
         try {
             // Make the API call
@@ -997,6 +1032,9 @@ public class FastCommentsSDK {
                     case UPDATE_BADGES:
                         handleBadgeUpdate(eventData);
                         break;
+                    case POLL_UPDATE:
+                        handlePollUpdate(eventData);
+                        break;
                     default:
                         // Ignore other event types for now
                         break;
@@ -1075,6 +1113,29 @@ public class FastCommentsSDK {
         comment.setVerified(pubSubComment.getVerified());
         comment.setIsPinned(pubSubComment.getIsPinned());
         comment.setIsLocked(pubSubComment.getIsLocked());
+        // Structural poll edits made through the API arrive as comment updates. myPollVotes is viewer state and
+        // never rides on these events, so it is left alone.
+        comment.setPoll(pubSubComment.getPoll());
+    }
+
+    /**
+     * Handle a poll-update event: new tallies (and closesAt) for a comment's poll
+     */
+    void handlePollUpdate(LiveEvent eventData) {
+        PickCommentPollOptionsOrTotalVotesOrClosesAt update = eventData.getPoll();
+        if (eventData.getCommentId() == null || update == null) {
+            return;
+        }
+        RenderableComment renderableComment = commentsTree.commentsById.get(eventData.getCommentId());
+        if (renderableComment == null || renderableComment.getComment().getPoll() == null) {
+            return;
+        }
+        CommentPoll poll = renderableComment.getComment().getPoll();
+        poll.setOptions(update.getOptions());
+        poll.setTotalVotes(update.getTotalVotes());
+        poll.setClosesAt(update.getClosesAt());
+        // The poll card patches only its numbers when the ids are unchanged, so nothing else needs rebinding.
+        commentsTree.notifyItemChanged(renderableComment, CommentsAdapter.PAYLOAD_POLL);
     }
 
     /**
@@ -1948,6 +2009,102 @@ public class FastCommentsSDK {
                         public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
                             // Not used
                         }
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+
+    // ===== POLLS =====
+
+    /**
+     * Whether the current user may attach a poll to a new comment, per the pollCreation setting.
+     */
+    public boolean canCreatePoll() {
+        return PollHelper.canCreatePoll(config, isSiteAdmin);
+    }
+
+    /**
+     * Vote on a comment's poll. Voting again moves the vote to the new option. On success the comment in the tree
+     * gets the updated poll and myPollVotes before the callback runs. Callbacks run on the main thread.
+     */
+    public void votePoll(String commentId, String optionId, final FCCallback<VotePollResponse> callback) {
+        String broadcastId = UUID.randomUUID().toString();
+        broadcastIdsSent.add(broadcastId);
+
+        try {
+            api.votePoll(config.tenantId, commentId, new VotePollBody().optionId(optionId))
+                    .urlId(config.urlId)
+                    .broadcastId(broadcastId)
+                    .sso(config.getSSOToken())
+                    .executeAsync(new ApiCallback<VotePollResponse>() {
+                        @Override
+                        public void onFailure(
+                                ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            APIError error = CallbackWrapper.createErrorFromException(e);
+                            mainHandler.post(() -> callback.onFailure(error));
+                        }
+
+                        @Override
+                        public void onSuccess(
+                                VotePollResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
+                            mainHandler.post(() -> {
+                                PublicComment comment = commentsTree.getPublicComment(commentId);
+                                if (comment != null && result.getPoll() != null) {
+                                    comment.setPoll(result.getPoll());
+                                    comment.setMyPollVotes(result.getMyPollVotes());
+                                }
+                                callback.onSuccess(result);
+                            });
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {}
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {}
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+
+    /**
+     * Page through who voted on a poll. Only polls whose privacy names voters can be listed, and admins-only polls
+     * only for admins. Callbacks run on the main thread.
+     *
+     * @param page   Zero-based page; the server returns 25 voters per page
+     * @param search Optional name filter
+     */
+    public void getPollVoters(
+            String commentId, int page, String search, final FCCallback<GetPollVoterNamesSuccessResponse> callback) {
+        try {
+            api.getPollVoters(config.tenantId, commentId)
+                    .urlId(config.urlId)
+                    .page(page)
+                    .search(search != null && !search.isEmpty() ? search : null)
+                    .sso(config.getSSOToken())
+                    .executeAsync(new ApiCallback<GetPollVoterNamesSuccessResponse>() {
+                        @Override
+                        public void onFailure(
+                                ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            APIError error = CallbackWrapper.createErrorFromException(e);
+                            mainHandler.post(() -> callback.onFailure(error));
+                        }
+
+                        @Override
+                        public void onSuccess(
+                                GetPollVoterNamesSuccessResponse result,
+                                int statusCode,
+                                Map<String, List<String>> responseHeaders) {
+                            mainHandler.post(() -> callback.onSuccess(result));
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {}
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {}
                     });
         } catch (ApiException e) {
             CallbackWrapper.handleAPIException(mainHandler, callback, e);

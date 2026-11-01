@@ -285,6 +285,10 @@ public class LiveChatView extends FrameLayout {
         config.defaultSortDirection = SortDirections.OF;
         config.maxReplyDepth = 0;
         config.disableVoting = true;
+        // Same default as the web live chat, which also keeps polls out of the chat composer.
+        if (config.useSingleLineCommentInput == null) {
+            config.useSingleLineCommentInput = true;
+        }
     }
 
     /**

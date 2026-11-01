@@ -905,6 +905,29 @@ public class IntegrationTestBase {
         }
     }
 
+    // ---- Widget config ----
+
+    /**
+     * Saves a tenant-wide widget config (domain and urlId "*") for the test tenant through the e2e API.
+     */
+    protected void createCustomConfigSync(JSONObject widgetConfig) throws Exception {
+        JSONObject body = new JSONObject()
+                .put("tenantId", testTenantId)
+                .put("name", "Android Test Config")
+                .put("domain", "*")
+                .put("urlId", "*")
+                .put("config", widgetConfig);
+        Request request = new Request.Builder()
+                .url(TestConfig.HOST + "/test-e2e/api/custom-configs?API_KEY=" + TestConfig.E2E_API_KEY)
+                .post(RequestBody.create(body.toString(), okhttp3.MediaType.get("application/json")))
+                .build();
+        try (Response response = httpClient.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                fail("Creating custom config failed with status: " + response.code());
+            }
+        }
+    }
+
     // ---- Polling / Waiting ----
 
     protected void waitFor(BooleanSupplier condition) throws Exception {

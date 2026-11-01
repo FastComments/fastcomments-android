@@ -3,6 +3,8 @@ package com.fastcomments.sdk;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.text.Editable;
 import android.text.Spanned;
 import android.text.TextWatcher;
@@ -39,6 +41,9 @@ import java.util.Set;
  */
 public class BottomCommentInputView extends FrameLayout {
 
+    /** View tag of the toolbar's poll button. */
+    public static final String POLL_BUTTON_TAG = "fastcomments_poll_button";
+
     private LinearLayout replyIndicator;
     private TextView replyingToText;
     private ImageButton cancelReplyButton;
@@ -51,6 +56,10 @@ public class BottomCommentInputView extends FrameLayout {
     private ProgressBar sendProgress;
     private TextView errorMessage;
     private ListView mentionSuggestionsList;
+    private PollBuilderView pollBuilder;
+    private PollScrollView pollBuilderScroll;
+    private ImageButton pollButton;
+    private PollDraft pollDraft;
 
     private OnCommentSubmitListener submitListener;
     private OnReplyStateChangeListener replyStateChangeListener;
@@ -119,6 +128,11 @@ public class BottomCommentInputView extends FrameLayout {
         sendProgress = findViewById(R.id.sendProgress);
         errorMessage = findViewById(R.id.errorMessage);
         mentionSuggestionsList = findViewById(R.id.mentionSuggestionsList);
+        pollBuilder = findViewById(R.id.pollBuilder);
+        pollBuilder.setOnRemoveListener(this::clearPollDraft);
+        pollBuilderScroll = findViewById(R.id.pollBuilderScroll);
+        // A third of the screen keeps the input row and the keyboard in view with the builder open.
+        pollBuilderScroll.setMaxHeight(getResources().getDisplayMetrics().heightPixels / 3);
 
         // Create reusable image getter for WYSIWYG HTML parsing
         editableImageGetter = new RichTextHelper.EditableImageGetter(commentInput);
@@ -205,6 +219,14 @@ public class BottomCommentInputView extends FrameLayout {
         sendButton.setOnClickListener(v -> {
             String plainText = commentInput.getText().toString().trim();
             if (!plainText.isEmpty() && submitListener != null) {
+                // A half-written poll blocks the post rather than being posted or silently dropped.
+                if (pollDraft != null) {
+                    int pollError = pollDraft.validate();
+                    if (pollError != 0) {
+                        pollBuilder.showError(pollError);
+                        return;
+                    }
+                }
                 String html = getText();
                 String parentId =
                         parentComment != null ? parentComment.getComment().getId() : null;
@@ -242,6 +264,47 @@ public class BottomCommentInputView extends FrameLayout {
     public void setCurrentUser(UserSessionInfo user) {
         this.currentUser = user;
         updateUserAvatar();
+        // Called once comments load, which is when the server's pollCreation and isSiteAdmin are known.
+        refreshPollAvailability();
+    }
+
+    /**
+     * The poll being written, or null when the poll builder is closed.
+     */
+    @Nullable
+    public PollDraft getPollDraft() {
+        return pollDraft;
+    }
+
+    /**
+     * Close the poll builder and discard its draft, e.g. after the comment posts.
+     */
+    public void clearPollDraft() {
+        pollDraft = null;
+        pollBuilderScroll.setVisibility(View.GONE);
+        if (pollButton != null) {
+            pollButton.setActivated(false);
+        }
+    }
+
+    /**
+     * Show or hide the poll toolbar button to match the SDK's current pollCreation setting.
+     */
+    public void refreshPollAvailability() {
+        rebuildToolbar();
+        if (pollButton == null && pollDraft != null) {
+            clearPollDraft();
+        }
+    }
+
+    private void openPollBuilder() {
+        if (pollDraft == null) {
+            pollDraft = new PollDraft();
+            pollBuilder.bind(pollDraft);
+        }
+        pollBuilderScroll.setVisibility(View.VISIBLE);
+        pollButton.setActivated(true);
+        pollBuilder.focusQuestion();
     }
 
     private void updateUserAvatar() {
@@ -625,7 +688,7 @@ public class BottomCommentInputView extends FrameLayout {
      */
     public void setToolbarVisible(boolean visible) {
         this.toolbarVisible = visible;
-        updateToolbarVisibility();
+        rebuildToolbar();
     }
 
     /**
@@ -709,7 +772,9 @@ public class BottomCommentInputView extends FrameLayout {
      * Update toolbar visibility based on current state
      */
     private void updateToolbarVisibility() {
-        boolean shouldShow = toolbarVisible && (defaultFormattingEnabled || !customButtons.isEmpty());
+        // When polls are allowed the toolbar shows for the poll button alone, like the web widget's toolbar.
+        boolean shouldShow =
+                (toolbarVisible && (defaultFormattingEnabled || !customButtons.isEmpty())) || pollButton != null;
         toolbarContainer.setVisibility(shouldShow ? View.VISIBLE : View.GONE);
         toolbarSeparator.setVisibility(shouldShow ? View.VISIBLE : View.GONE);
     }
@@ -720,15 +785,34 @@ public class BottomCommentInputView extends FrameLayout {
     private void rebuildToolbar() {
         // Clear existing buttons
         toolbar.removeAllViews();
+        defaultToolbarButtons.clear();
+        pollButton = null;
 
-        // Add default formatting buttons if enabled
-        if (defaultFormattingEnabled) {
-            addDefaultFormattingButtons();
+        if (toolbarVisible) {
+            // Add default formatting buttons if enabled
+            if (defaultFormattingEnabled) {
+                addDefaultFormattingButtons();
+            }
+
+            // Add custom buttons
+            for (CustomToolbarButton button : customButtons) {
+                addToolbarButtonView(button);
+            }
         }
 
-        // Add custom buttons
-        for (CustomToolbarButton button : customButtons) {
-            addToolbarButtonView(button);
+        if (sdk != null && sdk.canCreatePoll()) {
+            pollButton = addDefaultToolbarButton(
+                    R.drawable.fastcomments_ic_poll, R.string.fastcomments_poll_insert, v -> openPollBuilder());
+            pollButton.setTag(POLL_BUTTON_TAG);
+            pollButton.setTooltipText(getContext().getString(R.string.fastcomments_poll_insert));
+            // The web button's "active" background while its builder is open.
+            StateListDrawable background = new StateListDrawable();
+            GradientDrawable active = new GradientDrawable();
+            active.setCornerRadius(PollStyle.dp(getContext(), 4));
+            active.setColor(getContext().getColor(R.color.fastcomments_poll_toolbar_active));
+            background.addState(new int[] {android.R.attr.state_activated}, active);
+            pollButton.setBackground(background);
+            pollButton.setActivated(pollDraft != null);
         }
 
         // Update visibility

@@ -24,6 +24,7 @@ Works with Claude Code, Codex, Cursor, Copilot, Gemini, and every other agent th
 - 🧵 Threaded discussions with replies
 - 👤 Secure SSO authentication
 - 👍 Voting system with customizable styles
+- 📊 Polls in comments with live results
 - 🔔 User notifications and presence
 - 🔍 Comment moderation capabilities
 - 📱 Social feed integration
@@ -242,6 +243,29 @@ The SDK provides many configuration options through the `CommentWidgetConfig` cl
 | `readonly` | Disable commenting but show comments |
 | `disableVoting` | Disable voting functionality |
 | `disableLiveCommenting` | Disable real-time updates |
+| `pollCreation` | Who can attach a poll to a comment: `NUMBER_0` disabled, `NUMBER_1` admins and moderators, `NUMBER_2` everyone |
+| `pollVoting` | Who can vote on polls: `NUMBER_0` logged in users, `NUMBER_1` anyone |
+
+## Polls
+
+Polls work the same as in the web widget, and turn on from the same widget settings in your FastComments dashboard (or with `pollCreation` / `pollVoting` above).
+
+- Comments with a poll show it under their text. Readers vote by tapping an option, can show or hide results before voting, and can change their vote. Tallies update live as others vote.
+- Polls can close on a date, hide results until you vote, and make voters visible to admins or to everyone ("See who voted").
+- When the viewer may create polls, `FastCommentsView`'s comment input shows a poll button that opens the poll builder. The live chat input leaves it out, like the web live chat.
+
+To post a poll from your own UI, pass a `CommentPollInput` to `postComment`:
+
+```java
+PollDraft draft = new PollDraft();
+draft.question = "Where should we eat?";
+draft.options.set(0, "Tacos");
+draft.options.set(1, "Ramen");
+draft.closesDays = 1;
+sdk.postComment("Lunch vote", null, null, draft.toInput(System.currentTimeMillis()), callback);
+```
+
+`sdk.votePoll(commentId, optionId, callback)` and `sdk.getPollVoters(commentId, page, search, callback)` cover voting and the voter list. Poll colors are listed in [THEMING.md](THEMING.md#poll-color-resources).
 
 ## Comprehensive Theme Customization
 

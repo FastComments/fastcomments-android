@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The question is borderless like the web's editable title, with the web's 2px accent underline on focus. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <layer-list>
+            <item
+                android:height="2dp"
+                android:gravity="bottom">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/fastcomments_poll_accent" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item android:drawable="@android:color/transparent" />
+</selector>

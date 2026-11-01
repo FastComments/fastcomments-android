@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from fastcomments-localization text/widgets/comment-ui-polls. -->
+<resources>
+    <string name="fastcomments_poll_insert">Adicionar enquete.</string>
+    <string name="fastcomments_poll_question_placeholder">Faça uma pergunta…</string>
+    <string name="fastcomments_poll_option_placeholder">Opção %1$d</string>
+    <string name="fastcomments_poll_add_option">Adicionar opção</string>
+    <string name="fastcomments_poll_remove_option">Remover opção</string>
+    <string name="fastcomments_poll_closes_never">Sem data de término</string>
+    <string name="fastcomments_poll_closes_1_day">1 dia</string>
+    <string name="fastcomments_poll_closes_3_days">3 dias</string>
+    <string name="fastcomments_poll_closes_1_week">1 semana</string>
+    <string name="fastcomments_poll_remove">Remover enquete</string>
+    <string name="fastcomments_poll_error_question_required">Digite uma pergunta para sua enquete.</string>
+    <string name="fastcomments_poll_error_min_options">Digite pelo menos duas opções.</string>
+    <string name="fastcomments_poll_show_results">Mostrar resultados</string>
+    <string name="fastcomments_poll_hide_results">Ocultar resultados</string>
+    <string name="fastcomments_poll_change_vote">Alterar voto</string>
+    <string name="fastcomments_poll_vote_saved">Seu voto foi registrado</string>
+    <string name="fastcomments_poll_closes_at">A enquete encerra em %1$s</string>
+    <string name="fastcomments_poll_closed">Enquete encerrada</string>
+    <string name="fastcomments_poll_login_to_vote">Entre para votar</string>
+    <string name="fastcomments_poll_vote_failed">Não foi possível salvar seu voto. Por favor, tente novamente.</string>
+    <string name="fastcomments_poll_privacy_label">Privacidade</string>
+    <string name="fastcomments_poll_privacy_anonymous">Anônima</string>
+    <string name="fastcomments_poll_privacy_admins">Os administradores veem quem votou</string>
+    <string name="fastcomments_poll_privacy_public">Pública</string>
+    <string name="fastcomments_poll_privacy_help">Em enquetes públicas, qualquer usuário pode ver quem votou em qual opção.</string>
+    <string name="fastcomments_poll_votes_anonymous">Os votos são anônimos</string>
+    <string name="fastcomments_poll_votes_admins_visible">Os administradores podem ver quem votou</string>
+    <string name="fastcomments_poll_votes_public_visible">As respostas individuais são públicas.</string>
+    <string name="fastcomments_poll_require_vote_to_see_results">Exigir voto para ver os resultados</string>
+    <string name="fastcomments_poll_voters_show">Ver quem votou</string>
+    <string name="fastcomments_poll_voters_title">Quem votou</string>
+    <string name="fastcomments_poll_voters_close">Fechar</string>
+    <string name="fastcomments_poll_voters_search_placeholder">Pesquisar nomes…</string>
+    <string name="fastcomments_poll_voters_prev">Anterior</string>
+    <string name="fastcomments_poll_voters_next">Próximo</string>
+    <string name="fastcomments_poll_voters_loading">Carregando…</string>
+    <string name="fastcomments_poll_voters_none">Nenhum votante identificado.</string>
+    <string name="fastcomments_poll_voters_failed">Não foi possível carregar quem votou. Por favor, tente novamente.</string>
+    <plurals name="fastcomments_poll_responses">
+        <item quantity="one">%1$s resposta</item>
+        <item quantity="many">%1$s respostas</item>
+        <item quantity="other">%1$s respostas</item>
+    </plurals>
+    <plurals name="fastcomments_poll_voters_count">
+        <item quantity="one">%1$s votante</item>
+        <item quantity="many">%1$s votantes</item>
+        <item quantity="other">%1$s votantes</item>
+    </plurals>
+</resources>

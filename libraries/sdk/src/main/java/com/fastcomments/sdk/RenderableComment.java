@@ -26,6 +26,11 @@ public class RenderableComment extends RenderableNode {
     // Only initialized when needed to save memory
     public List<PublicComment> newChildComments = null;
 
+    // Poll card view state. pollShowResults is null until the viewer toggles results or changes their vote.
+    public Boolean pollShowResults = null;
+    public boolean pollSaving = false;
+    public String pollError = null;
+
     public PublicComment getComment() {
         return comment;
     }

@@ -69,6 +69,16 @@ public class CommentsTree {
         }
     }
 
+    /**
+     * Rebind only part of a visible node, e.g. {@link CommentsAdapter#PAYLOAD_POLL}.
+     */
+    public void notifyItemChanged(RenderableNode node, Object payload) {
+        final int index = this.visibleNodes.indexOf(node);
+        if (index >= 0) {
+            adapter.notifyItemChanged(index, payload);
+        }
+    }
+
     public void build(List<PublicComment> comments) {
         List<RenderableComment> allComments = new ArrayList<>(commentsById.size());
         List<RenderableNode> visibleNodes = new ArrayList<>(commentsById.size());

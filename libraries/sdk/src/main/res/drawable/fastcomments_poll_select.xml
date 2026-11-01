@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Privacy dropdown: outlined pill with the native select's arrow at its end. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/fastcomments_poll_outline_pill" />
+    <item
+        android:drawable="@drawable/fastcomments_ic_poll_dropdown"
+        android:end="8dp"
+        android:gravity="end|center_vertical" />
+</layer-list>

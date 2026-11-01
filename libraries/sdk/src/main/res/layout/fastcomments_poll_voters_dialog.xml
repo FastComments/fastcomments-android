@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Who voted" list for Public and Admins-only polls. Mirrors the web widget's voters modal. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/fastcomments_poll_dialog_background"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/fastcomments_poll_voters_title"
+            android:textColor="@color/fastcomments_poll_chip_text"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/pollVotersClose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/fastcomments_poll_voters_close"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:text="@string/fastcomments_poll_close_symbol"
+            android:textColor="@color/fastcomments_poll_chip_text"
+            android:textSize="19sp"
+            android:tooltipText="@string/fastcomments_poll_voters_close" />
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/pollVotersSearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:autofillHints="name"
+        android:background="@drawable/fastcomments_poll_outline_pill"
+        android:hint="@string/fastcomments_poll_voters_search_placeholder"
+        android:imeOptions="actionSearch"
+        android:inputType="textPersonName"
+        android:paddingStart="10dp"
+        android:paddingTop="7dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="7dp"
+        android:textColor="@color/fastcomments_poll_chip_text"
+        android:textColorHint="@color/fastcomments_poll_text_muted"
+        android:textSize="14sp" />
+
+    <com.fastcomments.sdk.PollScrollView
+        android:id="@+id/pollVotersScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp">
+
+        <LinearLayout
+            android:id="@+id/pollVotersList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </com.fastcomments.sdk.PollScrollView>
+
+    <TextView
+        android:id="@+id/pollVotersStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
+        android:textColor="@color/fastcomments_poll_text_muted"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/pollVotersPager"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/pollVotersPrev"
+            style="@style/FastCommentsPollLink"
+            android:textColor="@color/fastcomments_poll_chip_text"
+            android:text="@string/fastcomments_poll_voters_prev" />
+
+        <TextView
+            android:id="@+id/pollVotersCount"
+            style="@style/FastCommentsPollHelpText"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/pollVotersNext"
+            style="@style/FastCommentsPollLink"
+            android:textColor="@color/fastcomments_poll_chip_text"
+            android:text="@string/fastcomments_poll_voters_next" />
+    </LinearLayout>
+</LinearLayout>
