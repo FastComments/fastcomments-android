@@ -168,32 +168,38 @@ public class UITestBase {
             feedScenario.close();
         }
 
-        if (testTenantEmail != null && e2eApiKey != null && !e2eApiKey.isEmpty()) {
-            try {
-                Request deleteRequest = new Request.Builder()
-                        .url(HOST + "/test-e2e/api/tenant/by-email/" + testTenantEmail + "?API_KEY=" + e2eApiKey)
-                        .delete()
-                        .build();
-                try (Response ignored = httpClient.newCall(deleteRequest).execute()) {
-                    // Best effort
-                }
-            } catch (Exception ignored) {
-            }
+        if (testTenantEmail != null) {
+            deleteTenantByEmail(testTenantEmail);
         }
     }
 
-    /** Best-effort delete of a test tenant by email via the e2e API. */
+    /**
+     * Deletes a test tenant by email via the e2e API. Does not fail the test, but logs loudly when the
+     * delete did not happen, because the tenant is then left behind in production.
+     */
     private void deleteTenantByEmail(String email) {
-        if (e2eApiKey == null || e2eApiKey.isEmpty()) return;
+        if (e2eApiKey == null || e2eApiKey.isEmpty()) {
+            android.util.Log.e("FCTestCleanup", "E2E_API_KEY is not set, test tenant NOT deleted: " + email);
+            return;
+        }
         try {
             Request request = new Request.Builder()
                     .url(HOST + "/test-e2e/api/tenant/by-email/" + email + "?API_KEY=" + e2eApiKey)
                     .delete()
                     .build();
-            try (Response ignored = httpClient.newCall(request).execute()) {
-                // Best effort — tenant may not exist yet
+            try (Response response = httpClient.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    android.util.Log.e(
+                            "FCTestCleanup",
+                            "Deleting test tenant " + email + " failed with HTTP " + response.code()
+                                    + ", tenant is left behind in production");
+                }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            android.util.Log.e(
+                    "FCTestCleanup",
+                    "Deleting test tenant " + email + " threw, tenant is left behind in production",
+                    e);
         }
     }
 

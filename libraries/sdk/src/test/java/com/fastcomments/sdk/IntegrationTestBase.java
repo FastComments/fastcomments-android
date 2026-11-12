@@ -181,10 +181,15 @@ public class IntegrationTestBase {
                                 + TestConfig.E2E_API_KEY)
                         .delete()
                         .build();
-                try (Response ignored = httpClient.newCall(deleteRequest).execute()) {
-                    // Best effort
+                try (Response response = httpClient.newCall(deleteRequest).execute()) {
+                    if (!response.isSuccessful()) {
+                        System.err.println("FCTestCleanup: deleting test tenant " + testTenantEmail
+                                + " failed with HTTP " + response.code() + ", tenant is left behind in production");
+                    }
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                System.err.println("FCTestCleanup: deleting test tenant " + testTenantEmail
+                        + " threw, tenant is left behind in production: " + e);
             }
         }
 
