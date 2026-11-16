@@ -169,4 +169,9 @@ public class ThemeColorResolver {
                 FastCommentsTheme::getLiveChatUserCountTextColor,
                 R.color.fastcomments_live_chat_user_count_text);
     }
+
+    @ColorInt
+    public static int getPollAccentColor(@NonNull Context context, @Nullable FastCommentsTheme theme) {
+        return getColor(context, theme, FastCommentsTheme::getPollAccentColor, R.color.fastcomments_poll_accent);
+    }
 }

@@ -19,6 +19,7 @@ import com.fastcomments.model.SetCommentTextResult;
 import com.fastcomments.model.UnblockSuccess;
 import com.fastcomments.model.VoteDeleteResponse;
 import com.fastcomments.model.VoteResponse;
+import com.fastcomments.testing.E2eTestApi;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -908,6 +909,15 @@ public class IntegrationTestBase {
         if (errorRef.get() != null) {
             fail("likePost() failed: " + errorRef.get().getReason());
         }
+    }
+
+    // ---- Widget config ----
+
+    /**
+     * Saves a tenant-wide widget config (domain and urlId "*") for the test tenant through the e2e API.
+     */
+    protected void createCustomConfigSync(JSONObject widgetConfig) throws Exception {
+        E2eTestApi.createCustomConfig(httpClient, TestConfig.HOST, TestConfig.E2E_API_KEY, testTenantId, widgetConfig);
     }
 
     // ---- Polling / Waiting ----

@@ -76,6 +76,10 @@ public class FastCommentsTheme {
     @Nullable
     private Integer liveChatUserCountTextColor;
 
+    // Poll colors
+    @Nullable
+    private Integer pollAccentColor;
+
     /**
      * Builder pattern for easy theme construction
      */
@@ -179,6 +183,15 @@ public class FastCommentsTheme {
 
         public Builder setLiveChatUserCountTextColor(@ColorInt int color) {
             theme.liveChatUserCountTextColor = color;
+            return this;
+        }
+
+        /**
+         * Poll accent: the chosen option's border and check, the "Your vote is in" pill, the chosen poll length and
+         * the focused field in the poll builder.
+         */
+        public Builder setPollAccentColor(@ColorInt int color) {
+            theme.pollAccentColor = color;
             return this;
         }
 
@@ -298,5 +311,10 @@ public class FastCommentsTheme {
     @Nullable
     public Integer getLiveChatUserCountTextColor() {
         return liveChatUserCountTextColor;
+    }
+
+    @Nullable
+    public Integer getPollAccentColor() {
+        return pollAccentColor;
     }
 }

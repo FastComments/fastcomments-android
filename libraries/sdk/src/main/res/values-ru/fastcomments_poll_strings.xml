@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from fastcomments-localization text/widgets/comment-ui-polls. -->
+<resources>
+    <string name="fastcomments_poll_insert">Добавить опрос</string>
+    <string name="fastcomments_poll_question_placeholder">Задайте вопрос…</string>
+    <string name="fastcomments_poll_option_placeholder">Вариант %1$d</string>
+    <string name="fastcomments_poll_add_option">Добавить вариант</string>
+    <string name="fastcomments_poll_remove_option">Удалить вариант</string>
+    <string name="fastcomments_poll_closes_never">Без даты окончания</string>
+    <string name="fastcomments_poll_closes_1_day">1 день</string>
+    <string name="fastcomments_poll_closes_3_days">3 дня</string>
+    <string name="fastcomments_poll_closes_1_week">1 неделя</string>
+    <string name="fastcomments_poll_remove">Удалить опрос</string>
+    <string name="fastcomments_poll_error_question_required">Введите вопрос для опроса.</string>
+    <string name="fastcomments_poll_error_min_options">Введите хотя бы два варианта.</string>
+    <string name="fastcomments_poll_show_results">Показать результаты</string>
+    <string name="fastcomments_poll_hide_results">Скрыть результаты</string>
+    <string name="fastcomments_poll_change_vote">Изменить голос</string>
+    <string name="fastcomments_poll_vote_saved">Ваш голос учтен</string>
+    <string name="fastcomments_poll_closes_at">Опрос закрывается %1$s</string>
+    <string name="fastcomments_poll_closed">Опрос закрыт</string>
+    <string name="fastcomments_poll_login_to_vote">Войдите, чтобы проголосовать</string>
+    <string name="fastcomments_poll_vote_failed">Не удалось сохранить ваш голос. Пожалуйста, повторите попытку.</string>
+    <string name="fastcomments_poll_privacy_label">Конфиденциальность</string>
+    <string name="fastcomments_poll_privacy_anonymous">Анонимно</string>
+    <string name="fastcomments_poll_privacy_admins">Администраторы видят, кто голосовал</string>
+    <string name="fastcomments_poll_privacy_public">Публично</string>
+    <string name="fastcomments_poll_privacy_help">В публичных опросах любой пользователь видит, кто как проголосовал.</string>
+    <string name="fastcomments_poll_votes_anonymous">Голосование анонимное</string>
+    <string name="fastcomments_poll_votes_admins_visible">Администраторы видят, кто голосовал</string>
+    <string name="fastcomments_poll_votes_public_visible">Ответы отдельных участников публичны.</string>
+    <string name="fastcomments_poll_require_vote_to_see_results">Показывать результаты только проголосовавшим</string>
+    <string name="fastcomments_poll_voters_show">Посмотреть, кто голосовал</string>
+    <string name="fastcomments_poll_voters_title">Кто голосовал</string>
+    <string name="fastcomments_poll_voters_close">Закрыть</string>
+    <string name="fastcomments_poll_voters_search_placeholder">Поиск по именам…</string>
+    <string name="fastcomments_poll_voters_prev">Назад</string>
+    <string name="fastcomments_poll_voters_next">Далее</string>
+    <string name="fastcomments_poll_voters_loading">Загрузка…</string>
+    <string name="fastcomments_poll_voters_none">Имена проголосовавших недоступны.</string>
+    <string name="fastcomments_poll_voters_failed">Не удалось загрузить список проголосовавших. Пожалуйста, повторите попытку.</string>
+    <plurals name="fastcomments_poll_responses">
+        <item quantity="one">%1$s ответ</item>
+        <item quantity="few">%1$s ответа</item>
+        <item quantity="many">%1$s ответов</item>
+        <item quantity="other">%1$s ответов</item>
+    </plurals>
+    <plurals name="fastcomments_poll_voters_count">
+        <item quantity="one">%1$s проголосовавший</item>
+        <item quantity="few">%1$s проголосовавших</item>
+        <item quantity="many">%1$s проголосовавших</item>
+        <item quantity="other">%1$s проголосовавших</item>
+    </plurals>
+</resources>

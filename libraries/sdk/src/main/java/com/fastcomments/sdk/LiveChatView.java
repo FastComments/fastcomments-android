@@ -15,6 +15,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -287,6 +288,11 @@ public class LiveChatView extends FrameLayout {
         config.disableVoting = true;
     }
 
+    @Nullable
+    public FastCommentsSDK getSDK() {
+        return sdk;
+    }
+
     /**
      * Set the SDK instance to use with this view (for use when inflating from XML)
      *
@@ -397,6 +403,8 @@ public class LiveChatView extends FrameLayout {
         // Setup form listeners based on which input method is available
         if (bottomCommentInput != null) {
             // Setup bottom comment input for live chat
+            // Like the web live chat, the chat composer offers no polls.
+            bottomCommentInput.setPollCreationEnabled(false);
             bottomCommentInput.setCurrentUser(sdk.getCurrentUser());
             bottomCommentInput.setSDK(sdk);
 

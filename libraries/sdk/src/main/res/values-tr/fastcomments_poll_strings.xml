@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from fastcomments-localization text/widgets/comment-ui-polls. -->
+<resources>
+    <string name="fastcomments_poll_insert">Anket Ekle</string>
+    <string name="fastcomments_poll_question_placeholder">Bir soru sorun…</string>
+    <string name="fastcomments_poll_option_placeholder">Seçenek %1$d</string>
+    <string name="fastcomments_poll_add_option">Seçenek ekle</string>
+    <string name="fastcomments_poll_remove_option">Seçeneği kaldır</string>
+    <string name="fastcomments_poll_closes_never">Bitiş tarihi yok</string>
+    <string name="fastcomments_poll_closes_1_day">1 gün</string>
+    <string name="fastcomments_poll_closes_3_days">3 gün</string>
+    <string name="fastcomments_poll_closes_1_week">1 hafta</string>
+    <string name="fastcomments_poll_remove">Anketi kaldır</string>
+    <string name="fastcomments_poll_error_question_required">Anketiniz için bir soru girin.</string>
+    <string name="fastcomments_poll_error_min_options">En az iki seçenek girin.</string>
+    <string name="fastcomments_poll_show_results">Sonuçları Göster</string>
+    <string name="fastcomments_poll_hide_results">Sonuçları Gizle</string>
+    <string name="fastcomments_poll_change_vote">Oyu değiştir</string>
+    <string name="fastcomments_poll_vote_saved">Oyunuz kaydedildi</string>
+    <string name="fastcomments_poll_closes_at">Anket kapanışı: %1$s</string>
+    <string name="fastcomments_poll_closed">Anket kapandı</string>
+    <string name="fastcomments_poll_login_to_vote">Oy verebilmek için giriş yapın</string>
+    <string name="fastcomments_poll_vote_failed">Oyunuzu kaydedemedik. Lütfen tekrar deneyin.</string>
+    <string name="fastcomments_poll_privacy_label">Gizlilik</string>
+    <string name="fastcomments_poll_privacy_anonymous">Anonim</string>
+    <string name="fastcomments_poll_privacy_admins">Yöneticiler kimin oy verdiğini görebilir</string>
+    <string name="fastcomments_poll_privacy_public">Herkese açık</string>
+    <string name="fastcomments_poll_privacy_help">Herkese açık anketlerde her kullanıcı kimin neye oy verdiğini görebilir.</string>
+    <string name="fastcomments_poll_votes_anonymous">Oylar anonimdir</string>
+    <string name="fastcomments_poll_votes_admins_visible">Yöneticiler kimin oy verdiğini görebilir</string>
+    <string name="fastcomments_poll_votes_public_visible">Bireysel oylar herkese açıktır.</string>
+    <string name="fastcomments_poll_require_vote_to_see_results">Sonuçları görmek için oy zorunluluğu</string>
+    <string name="fastcomments_poll_voters_show">Kimin oy verdiğini göster</string>
+    <string name="fastcomments_poll_voters_title">Oy verenler</string>
+    <string name="fastcomments_poll_voters_close">Kapat</string>
+    <string name="fastcomments_poll_voters_search_placeholder">İsim arayın…</string>
+    <string name="fastcomments_poll_voters_prev">Önceki</string>
+    <string name="fastcomments_poll_voters_next">Sonraki</string>
+    <string name="fastcomments_poll_voters_loading">Yükleniyor…</string>
+    <string name="fastcomments_poll_voters_none">Adı görünen oy veren yok.</string>
+    <string name="fastcomments_poll_voters_failed">Kimin oy verdiğini yükleyemedik. Lütfen tekrar deneyin.</string>
+    <plurals name="fastcomments_poll_responses">
+        <item quantity="one">%1$s oy</item>
+        <item quantity="other">%1$s oy</item>
+    </plurals>
+    <plurals name="fastcomments_poll_voters_count">
+        <item quantity="one">%1$s oy veren</item>
+        <item quantity="other">%1$s oy veren</item>
+    </plurals>
+</resources>

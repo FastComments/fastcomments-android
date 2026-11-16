@@ -40,7 +40,6 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -102,7 +101,7 @@ public class FastCommentsFeedSDK {
         this.config = config;
         this.api.getApiClient().setBasePath(FastCommentsSDK.getAPIBasePath(config));
         this.api.getApiClient().setLenientOnJson(true);
-        this.broadcastIdsSent = new HashSet<>(0);
+        this.broadcastIdsSent = FastCommentsSDK.createBroadcastIdSet();
         this.liveEventSubscriber = new com.fastcomments.pubsub.LiveEventSubscriber();
     }
 

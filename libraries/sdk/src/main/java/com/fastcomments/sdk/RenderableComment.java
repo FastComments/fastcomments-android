@@ -26,6 +26,17 @@ public class RenderableComment extends RenderableNode {
     // Only initialized when needed to save memory
     public List<PublicComment> newChildComments = null;
 
+    // Poll card view state. pollShowResults is null until the viewer toggles results or changes their vote.
+    public Boolean pollShowResults = null;
+    public boolean pollSaving = false;
+    public String pollError = null;
+    // Live tally events seen, so a slower vote response can tell it would overwrite newer counts.
+    int pollUpdateCount = 0;
+    // Closing sends no event with the real counts, so a poll that closes on screen keeps its results hidden.
+    boolean pollCountsWithheld;
+    // The results fetch couldn't find this comment, which a retry won't change until the comments load again.
+    boolean pollResultsMissing;
+
     public PublicComment getComment() {
         return comment;
     }
@@ -37,6 +48,7 @@ public class RenderableComment extends RenderableNode {
      */
     public RenderableComment(PublicComment comment) {
         this.comment = comment;
+        this.pollCountsWithheld = PollHelper.countsWithheld(comment);
     }
 
     @Override

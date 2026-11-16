@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from fastcomments-localization text/widgets/comment-ui-polls. -->
+<resources>
+    <string name="fastcomments_poll_insert">투표 추가</string>
+    <string name="fastcomments_poll_question_placeholder">질문을 입력하세요…</string>
+    <string name="fastcomments_poll_option_placeholder">항목 %1$d</string>
+    <string name="fastcomments_poll_add_option">항목 추가</string>
+    <string name="fastcomments_poll_remove_option">항목 삭제</string>
+    <string name="fastcomments_poll_closes_never">종료일 없음</string>
+    <string name="fastcomments_poll_closes_1_day">1일</string>
+    <string name="fastcomments_poll_closes_3_days">3일</string>
+    <string name="fastcomments_poll_closes_1_week">1주일</string>
+    <string name="fastcomments_poll_remove">투표 삭제</string>
+    <string name="fastcomments_poll_error_question_required">투표에 사용할 질문을 입력하세요.</string>
+    <string name="fastcomments_poll_error_min_options">항목을 두 개 이상 입력하세요.</string>
+    <string name="fastcomments_poll_show_results">결과 보기</string>
+    <string name="fastcomments_poll_hide_results">결과 숨기기</string>
+    <string name="fastcomments_poll_change_vote">투표 변경</string>
+    <string name="fastcomments_poll_vote_saved">투표가 반영되었습니다</string>
+    <string name="fastcomments_poll_closes_at">%1$s에 투표 종료</string>
+    <string name="fastcomments_poll_closed">투표 종료</string>
+    <string name="fastcomments_poll_login_to_vote">로그인하고 투표하기</string>
+    <string name="fastcomments_poll_vote_failed">회원님의 투표를 저장하지 못했습니다. 다시 시도해 주세요.</string>
+    <string name="fastcomments_poll_privacy_label">공개 범위</string>
+    <string name="fastcomments_poll_privacy_anonymous">익명</string>
+    <string name="fastcomments_poll_privacy_admins">관리자가 투표자를 볼 수 있음</string>
+    <string name="fastcomments_poll_privacy_public">공개</string>
+    <string name="fastcomments_poll_privacy_help">공개 투표에서는 모든 사용자가 누가 어떤 항목에 투표했는지 볼 수 있습니다.</string>
+    <string name="fastcomments_poll_votes_anonymous">투표는 익명입니다</string>
+    <string name="fastcomments_poll_votes_admins_visible">관리자가 투표자를 볼 수 있습니다</string>
+    <string name="fastcomments_poll_votes_public_visible">개별 응답이 공개됩니다</string>
+    <string name="fastcomments_poll_require_vote_to_see_results">결과를 보려면 투표 필요</string>
+    <string name="fastcomments_poll_voters_show">투표자 보기</string>
+    <string name="fastcomments_poll_voters_title">투표자</string>
+    <string name="fastcomments_poll_voters_close">닫기</string>
+    <string name="fastcomments_poll_voters_search_placeholder">이름 검색…</string>
+    <string name="fastcomments_poll_voters_prev">이전</string>
+    <string name="fastcomments_poll_voters_next">다음</string>
+    <string name="fastcomments_poll_voters_loading">로딩 중…</string>
+    <string name="fastcomments_poll_voters_none">이름이 표시된 투표자가 없습니다.</string>
+    <string name="fastcomments_poll_voters_failed">투표자를 불러오지 못했습니다. 다시 시도해 주세요.</string>
+    <plurals name="fastcomments_poll_responses">
+        <item quantity="other">응답 %1$s개</item>
+    </plurals>
+    <plurals name="fastcomments_poll_voters_count">
+        <item quantity="other">투표자 %1$s명</item>
+    </plurals>
+</resources>

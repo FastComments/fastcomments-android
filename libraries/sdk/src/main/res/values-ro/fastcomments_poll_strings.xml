@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Translated for Android; the web comment-ui-polls bundle has no Romanian locale. -->
+<resources>
+    <string name="fastcomments_poll_insert">Adaugă un sondaj</string>
+    <string name="fastcomments_poll_question_placeholder">Pune o întrebare…</string>
+    <string name="fastcomments_poll_option_placeholder">Opțiunea %1$d</string>
+    <string name="fastcomments_poll_add_option">Adaugă opțiune</string>
+    <string name="fastcomments_poll_remove_option">Elimină opțiunea</string>
+    <string name="fastcomments_poll_closes_never">Fără dată de încheiere</string>
+    <string name="fastcomments_poll_closes_1_day">1 zi</string>
+    <string name="fastcomments_poll_closes_3_days">3 zile</string>
+    <string name="fastcomments_poll_closes_1_week">1 săptămână</string>
+    <string name="fastcomments_poll_remove">Elimină sondajul</string>
+    <string name="fastcomments_poll_error_question_required">Introdu o întrebare pentru sondaj.</string>
+    <string name="fastcomments_poll_error_min_options">Introdu cel puțin două opțiuni.</string>
+    <string name="fastcomments_poll_show_results">Arată rezultatele</string>
+    <string name="fastcomments_poll_hide_results">Ascunde rezultatele</string>
+    <string name="fastcomments_poll_change_vote">Schimbă votul</string>
+    <string name="fastcomments_poll_vote_saved">Ai votat</string>
+    <string name="fastcomments_poll_closes_at">Sondajul se încheie pe %1$s</string>
+    <string name="fastcomments_poll_closed">Sondaj încheiat</string>
+    <string name="fastcomments_poll_login_to_vote">Autentifică-te pentru a vota</string>
+    <string name="fastcomments_poll_vote_failed">Nu am putut salva votul. Te rugăm să încerci din nou.</string>
+    <string name="fastcomments_poll_privacy_label">Confidențialitate</string>
+    <string name="fastcomments_poll_privacy_anonymous">Anonim</string>
+    <string name="fastcomments_poll_privacy_admins">Administratorii pot vedea cine a votat</string>
+    <string name="fastcomments_poll_privacy_public">Public</string>
+    <string name="fastcomments_poll_privacy_help">La sondajele publice, orice utilizator poate vedea cine ce a votat.</string>
+    <string name="fastcomments_poll_votes_anonymous">Voturile sunt anonime</string>
+    <string name="fastcomments_poll_votes_admins_visible">Administratorii pot vedea cine a votat</string>
+    <string name="fastcomments_poll_votes_public_visible">Răspunsurile individuale sunt publice.</string>
+    <string name="fastcomments_poll_require_vote_to_see_results">Rezultate vizibile doar după vot</string>
+    <string name="fastcomments_poll_voters_show">Vezi cine a votat</string>
+    <string name="fastcomments_poll_voters_title">Cine a votat</string>
+    <string name="fastcomments_poll_voters_close">Închide</string>
+    <string name="fastcomments_poll_voters_search_placeholder">Caută nume…</string>
+    <string name="fastcomments_poll_voters_prev">Anterior</string>
+    <string name="fastcomments_poll_voters_next">Următor</string>
+    <string name="fastcomments_poll_voters_loading">Se încarcă…</string>
+    <string name="fastcomments_poll_voters_none">Niciun votant cu nume afișat.</string>
+    <string name="fastcomments_poll_voters_failed">Nu am putut încărca lista votanților. Te rugăm să încerci din nou.</string>
+    <plurals name="fastcomments_poll_responses">
+        <item quantity="one">%1$s răspuns</item>
+        <item quantity="few">%1$s răspunsuri</item>
+        <item quantity="other">%1$s de răspunsuri</item>
+    </plurals>
+    <plurals name="fastcomments_poll_voters_count">
+        <item quantity="one">%1$s votant</item>
+        <item quantity="few">%1$s votanți</item>
+        <item quantity="other">%1$s de votanți</item>
+    </plurals>
+</resources>

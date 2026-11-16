@@ -14,6 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -23,6 +24,7 @@ import com.fastcomments.core.VoteStyle;
 import com.fastcomments.model.APIEmptyResponse;
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.BlockSuccess;
+import com.fastcomments.model.CommentPollInput;
 import com.fastcomments.model.GetCommentsResponseWithPresencePublicComment;
 import com.fastcomments.model.PublicComment;
 import com.fastcomments.model.SetCommentTextResult;
@@ -206,6 +208,11 @@ public class FastCommentsView extends FrameLayout {
         if (sdk != null) {
             initializeWithSDK();
         }
+    }
+
+    @Nullable
+    public FastCommentsSDK getSDK() {
+        return sdk;
     }
 
     /**
@@ -1103,7 +1110,10 @@ public class FastCommentsView extends FrameLayout {
         // Get any selected mentions from the bottom comment input
         java.util.List<UserMention> mentions = bottomCommentInput.getSelectedMentions();
 
-        sdk.postComment(commentText, parentId, mentions, new FCCallback<PublicComment>() {
+        PollDraft pollDraft = bottomCommentInput.getPollDraft();
+        CommentPollInput poll = pollDraft != null ? pollDraft.toInput(System.currentTimeMillis()) : null;
+
+        sdk.postComment(commentText, parentId, mentions, poll, new FCCallback<PublicComment>() {
             @Override
             public boolean onFailure(APIError error) {
                 getHandler().post(() -> {
@@ -1130,6 +1140,7 @@ public class FastCommentsView extends FrameLayout {
                     bottomCommentInput.setSubmitting(false);
                     bottomCommentInput.clearText();
                     bottomCommentInput.clearReplyState();
+                    bottomCommentInput.clearPollDraft();
 
                     // Show a toast message to confirm successful posting
                     android.widget.Toast.makeText(

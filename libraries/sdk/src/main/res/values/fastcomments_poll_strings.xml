@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from fastcomments-localization text/widgets/comment-ui-polls. -->
+<resources>
+    <string name="fastcomments_poll_insert">Add a poll</string>
+    <string name="fastcomments_poll_question_placeholder">Ask a question…</string>
+    <string name="fastcomments_poll_option_placeholder">Option %1$d</string>
+    <string name="fastcomments_poll_add_option">Add option</string>
+    <string name="fastcomments_poll_remove_option">Remove option</string>
+    <string name="fastcomments_poll_closes_never">No end date</string>
+    <string name="fastcomments_poll_closes_1_day">1 day</string>
+    <string name="fastcomments_poll_closes_3_days">3 days</string>
+    <string name="fastcomments_poll_closes_1_week">1 week</string>
+    <string name="fastcomments_poll_remove">Remove poll</string>
+    <string name="fastcomments_poll_error_question_required">Enter a question for your poll.</string>
+    <string name="fastcomments_poll_error_min_options">Enter at least two options.</string>
+    <string name="fastcomments_poll_show_results">Show results</string>
+    <string name="fastcomments_poll_hide_results">Hide results</string>
+    <string name="fastcomments_poll_change_vote">Change vote</string>
+    <string name="fastcomments_poll_vote_saved">Your vote is in</string>
+    <string name="fastcomments_poll_closes_at">Poll closes %1$s</string>
+    <string name="fastcomments_poll_closed">Poll closed</string>
+    <string name="fastcomments_poll_login_to_vote">Log in to vote</string>
+    <string name="fastcomments_poll_vote_failed">We could not save your vote. Please try again.</string>
+    <string name="fastcomments_poll_privacy_label">Privacy</string>
+    <string name="fastcomments_poll_privacy_anonymous">Anonymous</string>
+    <string name="fastcomments_poll_privacy_admins">Admins can see who voted</string>
+    <string name="fastcomments_poll_privacy_public">Public</string>
+    <string name="fastcomments_poll_privacy_help">For public polls, any user can see who voted what.</string>
+    <string name="fastcomments_poll_votes_anonymous">Votes are anonymous</string>
+    <string name="fastcomments_poll_votes_admins_visible">Admins can see who voted</string>
+    <string name="fastcomments_poll_votes_public_visible">Individual responses are public.</string>
+    <string name="fastcomments_poll_require_vote_to_see_results">Require Vote to See Results</string>
+    <string name="fastcomments_poll_voters_show">See who voted</string>
+    <string name="fastcomments_poll_voters_title">Who voted</string>
+    <string name="fastcomments_poll_voters_close">Close</string>
+    <string name="fastcomments_poll_voters_search_placeholder">Search names…</string>
+    <string name="fastcomments_poll_voters_prev">Previous</string>
+    <string name="fastcomments_poll_voters_next">Next</string>
+    <string name="fastcomments_poll_voters_loading">Loading…</string>
+    <string name="fastcomments_poll_voters_none">No named voters.</string>
+    <string name="fastcomments_poll_voters_failed">We could not load who voted. Please try again.</string>
+    <plurals name="fastcomments_poll_responses">
+        <item quantity="one">%1$s response</item>
+        <item quantity="other">%1$s responses</item>
+    </plurals>
+    <plurals name="fastcomments_poll_voters_count">
+        <item quantity="one">%1$s voter</item>
+        <item quantity="other">%1$s voters</item>
+    </plurals>
+</resources>

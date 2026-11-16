@@ -71,6 +71,19 @@
             android:background="#E0E0E0"
             android:visibility="gone" />
 
+        <!-- Poll builder, shown by the toolbar's poll button. Capped in height so the input row stays on screen. -->
+        <com.fastcomments.sdk.PollScrollView
+            android:id="@+id/pollBuilderScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+
+            <com.fastcomments.sdk.PollBuilderView
+                android:id="@+id/pollBuilder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.fastcomments.sdk.PollScrollView>
+
         <!-- Main input area -->
         <LinearLayout
             android:layout_width="match_parent"

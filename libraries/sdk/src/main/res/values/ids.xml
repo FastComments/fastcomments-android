@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The toolbar's poll button, created in code. -->
+    <item name="fastcomments_poll_button" type="id" />
+    <!-- View tag key for a poll option's running bar animation. -->
+    <item name="fastcomments_poll_bar_animator" type="id" />
+</resources>

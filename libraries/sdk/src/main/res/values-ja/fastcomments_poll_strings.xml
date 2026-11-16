@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from fastcomments-localization text/widgets/comment-ui-polls. -->
+<resources>
+    <string name="fastcomments_poll_insert">アンケートを追加</string>
+    <string name="fastcomments_poll_question_placeholder">質問を入力してください…</string>
+    <string name="fastcomments_poll_option_placeholder">選択肢 %1$d</string>
+    <string name="fastcomments_poll_add_option">選択肢を追加</string>
+    <string name="fastcomments_poll_remove_option">選択肢を削除</string>
+    <string name="fastcomments_poll_closes_never">終了日なし</string>
+    <string name="fastcomments_poll_closes_1_day">1日</string>
+    <string name="fastcomments_poll_closes_3_days">3日</string>
+    <string name="fastcomments_poll_closes_1_week">1週間</string>
+    <string name="fastcomments_poll_remove">アンケートを削除</string>
+    <string name="fastcomments_poll_error_question_required">アンケートの質問を入力してください。</string>
+    <string name="fastcomments_poll_error_min_options">選択肢を2つ以上入力してください。</string>
+    <string name="fastcomments_poll_show_results">結果を表示</string>
+    <string name="fastcomments_poll_hide_results">結果を隠す</string>
+    <string name="fastcomments_poll_change_vote">投票を変更</string>
+    <string name="fastcomments_poll_vote_saved">投票を受け付けました</string>
+    <string name="fastcomments_poll_closes_at">アンケートは%1$sに終了します</string>
+    <string name="fastcomments_poll_closed">アンケートは終了しました</string>
+    <string name="fastcomments_poll_login_to_vote">ログインして投票</string>
+    <string name="fastcomments_poll_vote_failed">投票を保存できませんでした。もう一度お試しください。</string>
+    <string name="fastcomments_poll_privacy_label">プライバシー</string>
+    <string name="fastcomments_poll_privacy_anonymous">匿名</string>
+    <string name="fastcomments_poll_privacy_admins">管理者が投票者を確認できる</string>
+    <string name="fastcomments_poll_privacy_public">公開</string>
+    <string name="fastcomments_poll_privacy_help">公開アンケートでは、誰がどの選択肢を選んだかをすべてのユーザーが確認できます。</string>
+    <string name="fastcomments_poll_votes_anonymous">投票は匿名です</string>
+    <string name="fastcomments_poll_votes_admins_visible">管理者は投票者を確認できます</string>
+    <string name="fastcomments_poll_votes_public_visible">個々の回答は公開されます</string>
+    <string name="fastcomments_poll_require_vote_to_see_results">結果を見るには投票を必須にする</string>
+    <string name="fastcomments_poll_voters_show">投票者を表示</string>
+    <string name="fastcomments_poll_voters_title">投票者</string>
+    <string name="fastcomments_poll_voters_close">閉じる</string>
+    <string name="fastcomments_poll_voters_search_placeholder">名前を検索…</string>
+    <string name="fastcomments_poll_voters_prev">前へ</string>
+    <string name="fastcomments_poll_voters_next">次へ</string>
+    <string name="fastcomments_poll_voters_loading">読み込んでいます…</string>
+    <string name="fastcomments_poll_voters_none">名前のある投票者はいません。</string>
+    <string name="fastcomments_poll_voters_failed">投票者を読み込めませんでした。もう一度お試しください。</string>
+    <plurals name="fastcomments_poll_responses">
+        <item quantity="other">%1$s 件の回答</item>
+    </plurals>
+    <plurals name="fastcomments_poll_voters_count">
+        <item quantity="other">%1$s 名の投票者</item>
+    </plurals>
+</resources>

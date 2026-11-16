@@ -4,8 +4,8 @@ import android.os.Handler;
 import android.util.Log;
 import com.fastcomments.invoker.ApiCallback;
 import com.fastcomments.invoker.ApiException;
+import com.fastcomments.invoker.JSON;
 import com.fastcomments.model.APIError;
-import com.google.gson.Gson;
 import java.util.List;
 import java.util.Map;
 
@@ -54,8 +54,9 @@ public class CallbackWrapper<T> {
     public static APIError createErrorFromException(ApiException e) {
         if (e.getResponseBody() != null) {
             try {
-                final Gson gson = new Gson();
-                APIError error = gson.fromJson(e.getResponseBody(), APIError.class);
+                // The client's Gson carries the java.time adapters the models need; a plain Gson fails on them and
+                // every server error would collapse to "internal".
+                APIError error = JSON.getGson().fromJson(e.getResponseBody(), APIError.class);
                 if (error != null) {
                     return error;
                 }

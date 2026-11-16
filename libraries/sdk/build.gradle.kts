@@ -15,6 +15,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // E2E helpers the app's UI tests compile too.
+    sourceSets {
+        getByName("test") {
+            java.srcDir("src/testShared/java")
+        }
+    }
+
     testOptions {
         unitTests {
             // Required so Robolectric tests can inflate library layouts /

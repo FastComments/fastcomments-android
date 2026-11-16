@@ -289,6 +289,7 @@ SINGLE_EMU_TEST_CLASSES = [
     "ThreadingUITests",
     "LiveChatPaginationUITests",
     "MentionUITests",
+    "PollUITests",
 ]
 
 

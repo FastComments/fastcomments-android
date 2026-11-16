@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Translated for Android; the web comment-ui-polls bundle has no Swedish locale. -->
+<resources>
+    <string name="fastcomments_poll_insert">Lägg till en omröstning</string>
+    <string name="fastcomments_poll_question_placeholder">Ställ en fråga…</string>
+    <string name="fastcomments_poll_option_placeholder">Alternativ %1$d</string>
+    <string name="fastcomments_poll_add_option">Lägg till alternativ</string>
+    <string name="fastcomments_poll_remove_option">Ta bort alternativ</string>
+    <string name="fastcomments_poll_closes_never">Inget slutdatum</string>
+    <string name="fastcomments_poll_closes_1_day">1 dag</string>
+    <string name="fastcomments_poll_closes_3_days">3 dagar</string>
+    <string name="fastcomments_poll_closes_1_week">1 vecka</string>
+    <string name="fastcomments_poll_remove">Ta bort omröstning</string>
+    <string name="fastcomments_poll_error_question_required">Ange en fråga för din omröstning.</string>
+    <string name="fastcomments_poll_error_min_options">Ange minst två alternativ.</string>
+    <string name="fastcomments_poll_show_results">Visa resultat</string>
+    <string name="fastcomments_poll_hide_results">Dölj resultat</string>
+    <string name="fastcomments_poll_change_vote">Ändra röst</string>
+    <string name="fastcomments_poll_vote_saved">Din röst är registrerad</string>
+    <string name="fastcomments_poll_closes_at">Omröstningen stängs %1$s</string>
+    <string name="fastcomments_poll_closed">Omröstningen är stängd</string>
+    <string name="fastcomments_poll_login_to_vote">Logga in för att rösta</string>
+    <string name="fastcomments_poll_vote_failed">Vi kunde inte spara din röst. Försök igen.</string>
+    <string name="fastcomments_poll_privacy_label">Integritet</string>
+    <string name="fastcomments_poll_privacy_anonymous">Anonym</string>
+    <string name="fastcomments_poll_privacy_admins">Administratörer kan se vem som röstat</string>
+    <string name="fastcomments_poll_privacy_public">Offentlig</string>
+    <string name="fastcomments_poll_privacy_help">I offentliga omröstningar kan alla användare se vem som röstade på vad.</string>
+    <string name="fastcomments_poll_votes_anonymous">Rösterna är anonyma</string>
+    <string name="fastcomments_poll_votes_admins_visible">Administratörer kan se vem som röstat</string>
+    <string name="fastcomments_poll_votes_public_visible">Enskilda svar är offentliga.</string>
+    <string name="fastcomments_poll_require_vote_to_see_results">Kräv röst för att se resultat</string>
+    <string name="fastcomments_poll_voters_show">Se vem som röstat</string>
+    <string name="fastcomments_poll_voters_title">Vem som röstat</string>
+    <string name="fastcomments_poll_voters_close">Stäng</string>
+    <string name="fastcomments_poll_voters_search_placeholder">Sök namn…</string>
+    <string name="fastcomments_poll_voters_prev">Föregående</string>
+    <string name="fastcomments_poll_voters_next">Nästa</string>
+    <string name="fastcomments_poll_voters_loading">Laddar…</string>
+    <string name="fastcomments_poll_voters_none">Inga röstande med namn.</string>
+    <string name="fastcomments_poll_voters_failed">Vi kunde inte ladda vem som röstat. Försök igen.</string>
+    <plurals name="fastcomments_poll_responses">
+        <item quantity="one">%1$s svar</item>
+        <item quantity="other">%1$s svar</item>
+    </plurals>
+    <plurals name="fastcomments_poll_voters_count">
+        <item quantity="one">%1$s röstande</item>
+        <item quantity="other">%1$s röstande</item>
+    </plurals>
+</resources>

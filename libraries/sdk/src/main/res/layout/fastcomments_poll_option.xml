@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One poll option. The chip background doubles as its result bar (set in PollCardView). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="12dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="12dp"
+    android:paddingBottom="10dp">
+
+    <FrameLayout
+        android:id="@+id/pollOptionMark"
+        android:layout_width="18dp"
+        android:layout_height="18dp">
+
+        <ImageView
+            android:id="@+id/pollOptionCheck"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:src="@drawable/fastcomments_ic_poll_check"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/pollOptionLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:lineSpacingMultiplier="1.15"
+        android:textColor="@color/fastcomments_poll_chip_text"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/pollOptionPct"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:alpha="0"
+        android:fontFeatureSettings="tnum"
+        android:gravity="end"
+        android:minWidth="36dp"
+        android:textColor="@color/fastcomments_poll_text_muted"
+        android:textSize="14sp" />
+</LinearLayout>

@@ -14,6 +14,7 @@ import com.fastcomments.model.APIError;
 import com.fastcomments.model.CreateFeedPostParams;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.sdk.FCCallback;
+import com.fastcomments.testing.E2eTestApi;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -398,6 +399,15 @@ public class UITestBase {
             }
         }
         return null;
+    }
+
+    /** Save a tenant-wide widget config (domain and urlId "*") for the test tenant through the e2e API. */
+    protected void createCustomConfig(JSONObject widgetConfig) {
+        try {
+            E2eTestApi.createCustomConfig(httpClient, HOST, e2eApiKey, testTenantId, widgetConfig);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
     }
 
     // ---- Admin Operations ----

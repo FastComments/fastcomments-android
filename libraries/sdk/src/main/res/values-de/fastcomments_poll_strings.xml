@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from fastcomments-localization text/widgets/comment-ui-polls. -->
+<resources>
+    <string name="fastcomments_poll_insert">Umfrage hinzufügen</string>
+    <string name="fastcomments_poll_question_placeholder">Frage stellen…</string>
+    <string name="fastcomments_poll_option_placeholder">Option %1$d</string>
+    <string name="fastcomments_poll_add_option">Option hinzufügen</string>
+    <string name="fastcomments_poll_remove_option">Option entfernen</string>
+    <string name="fastcomments_poll_closes_never">Kein Enddatum</string>
+    <string name="fastcomments_poll_closes_1_day">1 Tag</string>
+    <string name="fastcomments_poll_closes_3_days">3 Tage</string>
+    <string name="fastcomments_poll_closes_1_week">1 Woche</string>
+    <string name="fastcomments_poll_remove">Umfrage entfernen</string>
+    <string name="fastcomments_poll_error_question_required">Gib eine Frage für deine Umfrage ein.</string>
+    <string name="fastcomments_poll_error_min_options">Gib mindestens zwei Optionen ein.</string>
+    <string name="fastcomments_poll_show_results">Ergebnisse anzeigen</string>
+    <string name="fastcomments_poll_hide_results">Ergebnisse ausblenden</string>
+    <string name="fastcomments_poll_change_vote">Stimme ändern</string>
+    <string name="fastcomments_poll_vote_saved">Deine Stimme wurde gezählt</string>
+    <string name="fastcomments_poll_closes_at">Umfrage endet am %1$s</string>
+    <string name="fastcomments_poll_closed">Umfrage beendet</string>
+    <string name="fastcomments_poll_login_to_vote">Zum Abstimmen anmelden</string>
+    <string name="fastcomments_poll_vote_failed">Wir konnten deine Stimme nicht speichern. Bitte versuche es erneut.</string>
+    <string name="fastcomments_poll_privacy_label">Datenschutz</string>
+    <string name="fastcomments_poll_privacy_anonymous">Anonym</string>
+    <string name="fastcomments_poll_privacy_admins">Administratoren sehen, wer abgestimmt hat</string>
+    <string name="fastcomments_poll_privacy_public">Öffentlich</string>
+    <string name="fastcomments_poll_privacy_help">Bei öffentlichen Umfragen kann jeder Benutzer sehen, wer wie abgestimmt hat.</string>
+    <string name="fastcomments_poll_votes_anonymous">Stimmen sind anonym</string>
+    <string name="fastcomments_poll_votes_admins_visible">Administratoren sehen, wer abgestimmt hat</string>
+    <string name="fastcomments_poll_votes_public_visible">Einzelne Stimmen sind öffentlich.</string>
+    <string name="fastcomments_poll_require_vote_to_see_results">Abstimmen erforderlich, um Ergebnisse zu sehen</string>
+    <string name="fastcomments_poll_voters_show">Anzeigen, wer abgestimmt hat</string>
+    <string name="fastcomments_poll_voters_title">Wer abgestimmt hat</string>
+    <string name="fastcomments_poll_voters_close">Schließen</string>
+    <string name="fastcomments_poll_voters_search_placeholder">Namen durchsuchen…</string>
+    <string name="fastcomments_poll_voters_prev">Zurück</string>
+    <string name="fastcomments_poll_voters_next">Weiter</string>
+    <string name="fastcomments_poll_voters_loading">Wird geladen…</string>
+    <string name="fastcomments_poll_voters_none">Niemand hat namentlich abgestimmt.</string>
+    <string name="fastcomments_poll_voters_failed">Wir konnten nicht laden, wer abgestimmt hat. Bitte versuche es erneut.</string>
+    <plurals name="fastcomments_poll_responses">
+        <item quantity="one">%1$s Stimme</item>
+        <item quantity="other">%1$s Stimmen</item>
+    </plurals>
+    <plurals name="fastcomments_poll_voters_count">
+        <item quantity="one">%1$s Teilnehmer</item>
+        <item quantity="other">%1$s Teilnehmer</item>
+    </plurals>
+</resources>

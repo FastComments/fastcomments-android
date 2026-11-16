@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from fastcomments-localization text/widgets/comment-ui-polls. -->
+<resources>
+    <string name="fastcomments_poll_insert">Ajouter un sondage</string>
+    <string name="fastcomments_poll_question_placeholder">Posez une question…</string>
+    <string name="fastcomments_poll_option_placeholder">Option %1$d</string>
+    <string name="fastcomments_poll_add_option">Ajouter une option</string>
+    <string name="fastcomments_poll_remove_option">Supprimer l’option</string>
+    <string name="fastcomments_poll_closes_never">Sans date de fin</string>
+    <string name="fastcomments_poll_closes_1_day">1 jour</string>
+    <string name="fastcomments_poll_closes_3_days">3 jours</string>
+    <string name="fastcomments_poll_closes_1_week">1 semaine</string>
+    <string name="fastcomments_poll_remove">Supprimer le sondage</string>
+    <string name="fastcomments_poll_error_question_required">Saisissez une question pour votre sondage.</string>
+    <string name="fastcomments_poll_error_min_options">Saisissez au moins deux options.</string>
+    <string name="fastcomments_poll_show_results">Afficher les résultats</string>
+    <string name="fastcomments_poll_hide_results">Masquer les résultats</string>
+    <string name="fastcomments_poll_change_vote">Modifier mon vote</string>
+    <string name="fastcomments_poll_vote_saved">Votre vote est enregistré</string>
+    <string name="fastcomments_poll_closes_at">Le sondage se termine le %1$s</string>
+    <string name="fastcomments_poll_closed">Sondage clos</string>
+    <string name="fastcomments_poll_login_to_vote">Se connecter pour voter</string>
+    <string name="fastcomments_poll_vote_failed">Nous n’avons pas pu enregistrer votre vote. Veuillez réessayer.</string>
+    <string name="fastcomments_poll_privacy_label">Confidentialité</string>
+    <string name="fastcomments_poll_privacy_anonymous">Anonyme</string>
+    <string name="fastcomments_poll_privacy_admins">Les administrateurs voient qui a voté</string>
+    <string name="fastcomments_poll_privacy_public">Public</string>
+    <string name="fastcomments_poll_privacy_help">Pour les sondages publics, tout utilisateur peut voir qui a voté pour quelle option.</string>
+    <string name="fastcomments_poll_votes_anonymous">Les votes sont anonymes</string>
+    <string name="fastcomments_poll_votes_admins_visible">Les administrateurs peuvent voir qui a voté</string>
+    <string name="fastcomments_poll_votes_public_visible">Les réponses individuelles sont publiques.</string>
+    <string name="fastcomments_poll_require_vote_to_see_results">Exiger un vote pour voir les résultats</string>
+    <string name="fastcomments_poll_voters_show">Voir qui a voté</string>
+    <string name="fastcomments_poll_voters_title">Qui a voté</string>
+    <string name="fastcomments_poll_voters_close">Fermer</string>
+    <string name="fastcomments_poll_voters_search_placeholder">Rechercher des noms…</string>
+    <string name="fastcomments_poll_voters_prev">Précédent</string>
+    <string name="fastcomments_poll_voters_next">Suivant</string>
+    <string name="fastcomments_poll_voters_loading">Chargement…</string>
+    <string name="fastcomments_poll_voters_none">Aucun votant identifié.</string>
+    <string name="fastcomments_poll_voters_failed">Nous n’avons pas pu charger qui a voté. Veuillez réessayer.</string>
+    <plurals name="fastcomments_poll_responses">
+        <item quantity="one">%1$s réponse</item>
+        <item quantity="many">%1$s réponses</item>
+        <item quantity="other">%1$s réponses</item>
+    </plurals>
+    <plurals name="fastcomments_poll_voters_count">
+        <item quantity="one">%1$s votant</item>
+        <item quantity="many">%1$s votants</item>
+        <item quantity="other">%1$s votants</item>
+    </plurals>
+</resources>
