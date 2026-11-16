@@ -286,10 +286,6 @@ public class LiveChatView extends FrameLayout {
         config.defaultSortDirection = SortDirections.OF;
         config.maxReplyDepth = 0;
         config.disableVoting = true;
-        // Same default as the web live chat, which also keeps polls out of the chat composer.
-        if (config.useSingleLineCommentInput == null) {
-            config.useSingleLineCommentInput = true;
-        }
     }
 
     @Nullable
@@ -407,6 +403,8 @@ public class LiveChatView extends FrameLayout {
         // Setup form listeners based on which input method is available
         if (bottomCommentInput != null) {
             // Setup bottom comment input for live chat
+            // Like the web live chat, the chat composer offers no polls.
+            bottomCommentInput.setPollCreationEnabled(false);
             bottomCommentInput.setCurrentUser(sdk.getCurrentUser());
             bottomCommentInput.setSDK(sdk);
 

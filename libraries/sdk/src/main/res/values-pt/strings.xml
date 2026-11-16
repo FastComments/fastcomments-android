@@ -181,4 +181,6 @@
     <string name="add_gif">Adicionar GIF</string>
     <string name="add_emoji">Adicionar emoji</string>
     <string name="mention_user">Mencionar usuário</string>
+    <string name="fastcomments_poll_results_failed">Não foi possível carregar os resultados. Por favor, tente novamente.</string>
+    <string name="fastcomments_poll_results_next_load">Os resultados serão exibidos na próxima vez que os comentários forem carregados.</string>
 </resources>

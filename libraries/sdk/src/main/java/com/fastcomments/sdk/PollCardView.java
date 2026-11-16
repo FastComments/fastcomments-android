@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.text.Html;
+import android.text.format.DateUtils;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -20,17 +21,17 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.widget.TextViewCompat;
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.CommentPoll;
 import com.fastcomments.model.CommentPollOption;
 import com.fastcomments.model.PollPrivacy;
 import com.fastcomments.model.PublicComment;
 import com.fastcomments.model.VotePollResponse;
-import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -48,10 +49,13 @@ public class PollCardView extends LinearLayout {
     private final TextView privacyView;
     private final TextView closesView;
     private final TextView errorView;
-    private final View savedView;
+    private final TextView savedView;
     private final TextView changeVoteView;
     private final TextView toggleResultsView;
     private final TextView votersView;
+
+    // From the SDK's runtime theme, falling back to the color resource.
+    private int accent;
 
     private final List<View> optionViews = new ArrayList<>();
     private final List<String> optionIds = new ArrayList<>();
@@ -62,7 +66,8 @@ public class PollCardView extends LinearLayout {
     private final ColorStateList votableChipColors;
     private final ColorStateList readOnlyChipColors;
     private final NumberFormat numberFormat = NumberFormat.getInstance();
-    private final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.SHORT);
+    // Rebinds the card when an open poll reaches its close time while on screen.
+    private final Runnable closeCheck = this::onCloseTime;
     private final AccessibilityDelegate optionAccessibility = new AccessibilityDelegate() {
         @Override
         public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfo info) {
@@ -77,6 +82,7 @@ public class PollCardView extends LinearLayout {
     private RenderableComment comment;
     private boolean showingResults;
     private OffsetDateTime boundClosesAt;
+    private boolean boundClosed;
     private String boundQuestion;
 
     public PollCardView(Context context) {
@@ -115,6 +121,10 @@ public class PollCardView extends LinearLayout {
             refresh();
         });
         toggleResultsView.setOnClickListener(v -> {
+            if (PollHelper.isClosed(comment.getComment().getPoll()) && comment.pollCountsWithheld) {
+                loadWithheldResults();
+                return;
+            }
             comment.pollShowResults = !PollHelper.isShowingResults(comment);
             refresh();
         });
@@ -130,6 +140,7 @@ public class PollCardView extends LinearLayout {
         final boolean wasShowingResults = showingResults;
         this.sdk = sdk;
         this.comment = comment;
+        accent = ThemeColorResolver.getPollAccentColor(getContext(), sdk.getTheme());
 
         final boolean closed = PollHelper.isClosed(poll);
         final boolean voted = PollHelper.hasVoted(publicComment);
@@ -137,6 +148,8 @@ public class PollCardView extends LinearLayout {
         final boolean results = PollHelper.isShowingResults(comment);
         final boolean votable = PollHelper.canVote(sdk.getConfig(), sdk.getCurrentUser(), poll);
         final int total = poll.getTotalVotes() != null ? poll.getTotalVotes() : 0;
+        // Closing sends no live event, so these counts are from load time and the results have to be fetched.
+        final boolean staleClosed = closed && comment.pollCountsWithheld;
 
         if (!Objects.equals(boundQuestion, poll.getQuestion())) {
             questionView.setText(htmlToText(poll.getQuestion()));
@@ -162,43 +175,106 @@ public class PollCardView extends LinearLayout {
         }
         optionsContainer.setAlpha(comment.pollSaving ? 0.6f : 1f);
 
+        totalView.setVisibility(staleClosed ? GONE : VISIBLE);
         totalView.setText(getResponsesText(total));
         privacyView.setText(getPrivacyText(poll));
         if (poll.getClosesAt() == null) {
             closesView.setVisibility(GONE);
         } else {
             closesView.setVisibility(VISIBLE);
+            // Date and time, since a one-day poll closes partway through the shown date.
             closesView.setText(
                     closed
                             ? getContext().getString(R.string.fastcomments_poll_closed)
                             : getContext()
                                     .getString(
                                             R.string.fastcomments_poll_closes_at,
-                                            dateFormat.format(
-                                                    Date.from(poll.getClosesAt().toInstant()))));
+                                            DateUtils.formatDateTime(
+                                                    getContext(),
+                                                    poll.getClosesAt()
+                                                            .toInstant()
+                                                            .toEpochMilli(),
+                                                    DateUtils.FORMAT_SHOW_DATE
+                                                            | DateUtils.FORMAT_SHOW_TIME
+                                                            | DateUtils.FORMAT_ABBREV_MONTH)));
         }
         errorView.setVisibility(comment.pollError != null ? VISIBLE : GONE);
         errorView.setText(comment.pollError);
         savedView.setVisibility(voted ? VISIBLE : GONE);
+        savedView.setTextColor(accent);
+        TextViewCompat.setCompoundDrawableTintList(savedView, ColorStateList.valueOf(accent));
         changeVoteView.setVisibility(voted && results && !closed ? VISIBLE : GONE);
         // The web shows this toggle on locked polls too, where it can't reveal anything; it is left out here.
-        toggleResultsView.setVisibility(!voted && !closed && !locked ? VISIBLE : GONE);
+        toggleResultsView.setVisibility(
+                (!voted && !closed && !locked) || (staleClosed && !comment.pollResultsMissing) ? VISIBLE : GONE);
         toggleResultsView.setText(
                 results ? R.string.fastcomments_poll_hide_results : R.string.fastcomments_poll_show_results);
         votersView.setVisibility(PollHelper.canSeeVoters(poll) && total > 0 ? VISIBLE : GONE);
 
         showingResults = results;
         boundClosesAt = poll.getClosesAt();
+        boundClosed = closed;
+        scheduleCloseCheck();
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        recheckClose();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        removeCallbacks(closeCheck);
+        super.onDetachedFromWindow();
+    }
+
+    // The close timer runs on uptime, which stops while the device sleeps, so check again when the screen returns.
+    @Override
+    protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        if (visibility == VISIBLE) {
+            recheckClose();
+        }
+    }
+
+    private void recheckClose() {
+        if (comment == null || comment.getComment().getPoll() == null) {
+            return;
+        }
+        if (PollHelper.isClosed(comment.getComment().getPoll()) != boundClosed) {
+            refresh();
+        } else {
+            scheduleCloseCheck();
+        }
+    }
+
+    private void scheduleCloseCheck() {
+        removeCallbacks(closeCheck);
+        if (boundClosed || boundClosesAt == null || !isAttachedToWindow()) {
+            return;
+        }
+        long delayMs = Duration.between(PollHelper.now(), boundClosesAt).toMillis();
+        postDelayed(closeCheck, Math.max(0, delayMs) + 1);
+    }
+
+    private void onCloseTime() {
+        if (comment != null && comment.getComment().getPoll() != null) {
+            refresh();
+        }
     }
 
     /**
      * Apply a live tally change. Like the web's patchPollCounts this only moves the numbers, falling back to a full
-     * bind when the options or close date changed.
+     * bind when the options, close date or results visibility changed.
      */
     public void patchCounts(@NonNull FastCommentsSDK sdk, @NonNull RenderableComment comment) {
         final CommentPoll poll = comment.getComment().getPoll();
         final List<CommentPollOption> options = poll.getOptions() != null ? poll.getOptions() : new ArrayList<>();
-        if (this.comment != comment || !hasOptionIds(options) || !Objects.equals(boundClosesAt, poll.getClosesAt())) {
+        if (this.comment != comment
+                || !hasOptionIds(options)
+                || !Objects.equals(boundClosesAt, poll.getClosesAt())
+                || PollHelper.isShowingResults(comment) != showingResults) {
             bind(sdk, comment);
             return;
         }
@@ -297,7 +373,6 @@ public class PollCardView extends LinearLayout {
         final LayerDrawable background = (LayerDrawable) optionView.getBackground();
         final GradientDrawable track = (GradientDrawable) background.getDrawable(0);
         final ClipDrawable bar = getBar(optionView);
-        final int accent = color(R.color.fastcomments_poll_accent);
 
         final TextView labelView = optionView.findViewById(R.id.pollOptionLabel);
         if (!Objects.equals(optionLabels.get(index), option.getLabel())) {
@@ -371,10 +446,44 @@ public class PollCardView extends LinearLayout {
         });
     }
 
-    // The holder may have been recycled for another comment while the vote was in flight.
+    // Fetched on tap rather than at close time, so a busy page doesn't send every viewer's request at once.
+    private void loadWithheldResults() {
+        final RenderableComment target = comment;
+        if (target.pollSaving) {
+            return;
+        }
+        target.pollSaving = true;
+        target.pollError = null;
+        refresh();
+        sdk.refreshPoll(target.getComment().getId(), new FCCallback<Boolean>() {
+            @Override
+            public boolean onFailure(APIError error) {
+                // The link stays, so the viewer can try again.
+                target.pollSaving = false;
+                target.pollError = getContext().getString(R.string.fastcomments_poll_results_failed);
+                refreshIfBound(target);
+                return CONSUME;
+            }
+
+            @Override
+            public boolean onSuccess(Boolean found) {
+                target.pollSaving = false;
+                if (!found) {
+                    target.pollResultsMissing = true;
+                    target.pollError = getContext().getString(R.string.fastcomments_poll_results_next_load);
+                }
+                refreshIfBound(target);
+                return CONSUME;
+            }
+        });
+    }
+
+    // The holder may have been recycled while the request was in flight, leaving the comment on another card.
     private void refreshIfBound(RenderableComment target) {
         if (comment == target) {
             refresh();
+        } else {
+            sdk.commentsTree.notifyItemChanged(target);
         }
     }
 
@@ -425,10 +534,10 @@ public class PollCardView extends LinearLayout {
     }
 
     private static void setBarLevel(View optionView, ClipDrawable bar, int level, boolean animate) {
-        Object running = optionView.getTag();
+        Object running = optionView.getTag(R.id.fastcomments_poll_bar_animator);
         if (running instanceof ValueAnimator) {
             ((ValueAnimator) running).cancel();
-            optionView.setTag(null);
+            optionView.setTag(R.id.fastcomments_poll_bar_animator, null);
         }
         if (!animate || bar.getLevel() == level) {
             bar.setLevel(level);
@@ -442,7 +551,7 @@ public class PollCardView extends LinearLayout {
                 bar.setLevel((Integer) value);
             }
         });
-        optionView.setTag(animator);
+        optionView.setTag(R.id.fastcomments_poll_bar_animator, animator);
         animator.start();
     }
 

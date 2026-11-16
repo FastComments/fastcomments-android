@@ -199,4 +199,7 @@
         <item quantity="one">%d User Online</item>
         <item quantity="other">%d Users Online</item>
     </plurals>
+    <!-- Android only: the web widget has no closed-poll results fetch. -->
+    <string name="fastcomments_poll_results_failed">We could not load the results. Please try again.</string>
+    <string name="fastcomments_poll_results_next_load">The results will show the next time the comments load.</string>
 </resources>

@@ -1,9 +1,11 @@
 package com.fastcomments.sdk;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.view.View;
+import android.widget.EditText;
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.model.APIError;
 import com.fastcomments.model.GetPollVoterNamesSuccessResponse;
@@ -12,16 +14,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.shadows.ShadowLooper;
 
 @RunWith(RobolectricTestRunner.class)
 public class PollVotersDialogTest {
 
     private final List<Integer> pagesRequested = new ArrayList<>();
+    private final List<String> searchesRequested = new ArrayList<>();
     private final List<FCCallback<GetPollVoterNamesSuccessResponse>> pending = new ArrayList<>();
     private PollVotersDialog dialog;
 
@@ -32,6 +37,7 @@ public class PollVotersDialogTest {
             public void getPollVoters(
                     String commentId, int page, String search, FCCallback<GetPollVoterNamesSuccessResponse> callback) {
                 pagesRequested.add(page);
+                searchesRequested.add(search);
                 pending.add(callback);
             }
         };
@@ -67,6 +73,27 @@ public class PollVotersDialogTest {
         pending.get(1).onSuccess(page(1, false));
         view(R.id.pollVotersPrev).performClick();
         assertEquals(Arrays.asList(0, 1, 0), pagesRequested);
+    }
+
+    @Test
+    public void searchRunsShortlyAfterTypingStops() {
+        pending.get(0).onSuccess(page(0, false));
+        ((EditText) view(R.id.pollVotersSearch)).setText("Ann");
+        ShadowLooper.idleMainLooper(100, TimeUnit.MILLISECONDS);
+        ((EditText) view(R.id.pollVotersSearch)).setText("Anna");
+        ShadowLooper.idleMainLooper(400, TimeUnit.MILLISECONDS);
+        assertEquals(Arrays.asList("", "Anna"), searchesRequested);
+    }
+
+    @Test
+    public void closeButtonHasAFullTouchTarget() {
+        View root = view(R.id.pollVotersClose).getRootView();
+        root.measure(
+                View.MeasureSpec.makeMeasureSpec(PollStyle.dp(root.getContext(), 400), View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        int min = PollStyle.dp(root.getContext(), 48);
+        assertTrue(view(R.id.pollVotersClose).getMeasuredWidth() >= min);
+        assertTrue(view(R.id.pollVotersClose).getMeasuredHeight() >= min);
     }
 
     @Test

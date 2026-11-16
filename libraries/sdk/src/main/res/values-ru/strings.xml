@@ -181,4 +181,6 @@
     <string name="add_gif">Добавить GIF</string>
     <string name="add_emoji">Добавить эмодзи</string>
     <string name="mention_user">Упомянуть пользователя</string>
+    <string name="fastcomments_poll_results_failed">Не удалось загрузить результаты. Пожалуйста, повторите попытку.</string>
+    <string name="fastcomments_poll_results_next_load">Результаты появятся при следующей загрузке комментариев.</string>
 </resources>

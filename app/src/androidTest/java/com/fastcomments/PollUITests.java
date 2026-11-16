@@ -11,27 +11,31 @@ import static androidx.test.espresso.matcher.ViewMatchers.hasSibling;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withHint;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
-import static androidx.test.espresso.matcher.ViewMatchers.withTagValue;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertTrue;
 
+import android.content.Context;
+import androidx.test.espresso.IdlingRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import com.fastcomments.sdk.BottomCommentInputView;
+import androidx.test.platform.app.InstrumentationRegistry;
 import com.fastcomments.sdk.R;
+import java.text.NumberFormat;
 import org.json.JSONObject;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Single-emulator tests for polls: building one in the composer, posting it, voting and changing the vote.
+ * Single-emulator tests for polls: building one in the composer, posting it, voting and changing the vote. Espresso
+ * waits on the SDK's API calls through an idling resource, and expected text comes from the SDK's resources so the
+ * tests pass in any device language.
  */
 @RunWith(AndroidJUnit4.class)
 public class PollUITests extends UITestBase {
 
     private String ssoToken;
+    private SdkIdlingResource apiIdling;
 
     @Before
     @Override
@@ -42,88 +46,102 @@ public class PollUITests extends UITestBase {
         ssoToken = makeSecureSSOToken("poll-user");
     }
 
-    private boolean waitForView(long timeoutMs, Runnable check) {
-        long deadline = System.currentTimeMillis() + timeoutMs;
-        while (System.currentTimeMillis() < deadline) {
-            try {
-                check.run();
-                return true;
-            } catch (Exception | AssertionError e) {
-                try {
-                    Thread.sleep(250);
-                } catch (InterruptedException ignored) {
-                }
-            }
+    @After
+    public void unregisterIdling() {
+        if (apiIdling != null) {
+            IdlingRegistry.getInstance().unregister(apiIdling);
         }
-        return false;
+    }
+
+    private void launchPolls(String urlId) {
+        launchActivity(urlId, ssoToken);
+        scenario.onActivity(activity -> apiIdling = new SdkIdlingResource(
+                "fastcomments-api", activity.getCommentsView().getSDK()));
+        IdlingRegistry.getInstance().register(apiIdling);
+    }
+
+    private static Context context() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    private static String percent(int pct) {
+        return context().getString(R.string.fastcomments_poll_percent, pct);
+    }
+
+    private static String responses(int count) {
+        return context()
+                .getResources()
+                .getQuantityString(
+                        R.plurals.fastcomments_poll_responses,
+                        count,
+                        NumberFormat.getInstance().format(count));
     }
 
     private void postPoll(String text, String question, String first, String second) {
-        assertTrue("Poll button should appear once polls are enabled", waitForView(20000, () -> onView(
-                        withTagValue(is(BottomCommentInputView.POLL_BUTTON_TAG)))
-                .check(matches(isDisplayed()))));
-        onView(withTagValue(is(BottomCommentInputView.POLL_BUTTON_TAG))).perform(click());
+        onView(withId(R.id.fastcomments_poll_button)).perform(click());
 
         onView(withId(R.id.pollBuilderQuestion)).perform(typeText(question), closeSoftKeyboard());
         // The builder scrolls inside the composer, so lower options can start out of view.
-        onView(allOf(withId(R.id.pollBuilderOptionInput), withHint("Option 1")))
+        onView(allOf(
+                        withId(R.id.pollBuilderOptionInput),
+                        withHint(context().getString(R.string.fastcomments_poll_option_placeholder, 1))))
                 .perform(scrollTo(), typeText(first), closeSoftKeyboard());
-        onView(allOf(withId(R.id.pollBuilderOptionInput), withHint("Option 2")))
+        onView(allOf(
+                        withId(R.id.pollBuilderOptionInput),
+                        withHint(context().getString(R.string.fastcomments_poll_option_placeholder, 2))))
                 .perform(scrollTo(), typeText(second), closeSoftKeyboard());
         onView(withId(R.id.commentInput)).perform(click(), typeText(text), closeSoftKeyboard());
         onView(withId(R.id.sendButton)).perform(click());
 
-        assertTrue("Posted poll should render", waitForView(15000, () -> onView(withId(R.id.recyclerViewComments))
-                .check(matches(hasDescendant(withText(question))))));
+        onView(withId(R.id.recyclerViewComments)).check(matches(hasDescendant(withText(question))));
     }
 
     private void tapOption(String label) {
         onView(allOf(withId(R.id.pollOptionLabel), withText(label))).perform(click());
     }
 
-    private boolean waitForPercent(String label, String pct) {
-        return waitForView(
-                15000, () -> onView(allOf(withId(R.id.pollOptionPct), withText(pct), hasSibling(withText(label))))
-                        .check(matches(isDisplayed())));
+    private void checkPercent(String label, int pct) {
+        onView(allOf(withId(R.id.pollOptionPct), withText(percent(pct)), hasSibling(withText(label))))
+                .check(matches(isDisplayed()));
     }
 
     @Test
     public void testBuildPostAndVote() {
-        launchActivity("poll-vote-" + System.currentTimeMillis(), ssoToken);
+        launchPolls("poll-vote-" + System.currentTimeMillis());
         postPoll("Lunch vote", "Lunch plan?", "Tacos", "Ramen");
 
         tapOption("Tacos");
 
-        assertTrue("Vote should show Tacos at 100%", waitForPercent("Tacos", "100%"));
+        checkPercent("Tacos", 100);
         onView(withId(R.id.pollSaved)).check(matches(isDisplayed()));
-        onView(withId(R.id.pollTotal)).check(matches(withText("1 response")));
+        onView(withId(R.id.pollTotal)).check(matches(withText(responses(1))));
     }
 
     @Test
     public void testChangeVote() {
-        launchActivity("poll-change-" + System.currentTimeMillis(), ssoToken);
+        launchPolls("poll-change-" + System.currentTimeMillis());
         postPoll("Lunch vote", "Lunch plan?", "Tacos", "Ramen");
         tapOption("Tacos");
-        assertTrue(waitForPercent("Tacos", "100%"));
+        checkPercent("Tacos", 100);
 
         onView(withId(R.id.pollChangeVote)).perform(click());
         tapOption("Ramen");
 
-        assertTrue("Changed vote should move to Ramen", waitForPercent("Ramen", "100%"));
-        assertTrue(waitForPercent("Tacos", "0%"));
-        onView(withId(R.id.pollTotal)).check(matches(withText("1 response")));
+        checkPercent("Ramen", 100);
+        checkPercent("Tacos", 0);
+        onView(withId(R.id.pollTotal)).check(matches(withText(responses(1))));
     }
 
     @Test
     public void testHalfWrittenPollBlocksPost() {
-        launchActivity("poll-invalid-" + System.currentTimeMillis(), ssoToken);
-        assertTrue(waitForView(20000, () -> onView(withTagValue(is(BottomCommentInputView.POLL_BUTTON_TAG)))
-                .check(matches(isDisplayed()))));
-        onView(withTagValue(is(BottomCommentInputView.POLL_BUTTON_TAG))).perform(click());
+        launchPolls("poll-invalid-" + System.currentTimeMillis());
+        onView(withId(R.id.fastcomments_poll_button)).perform(click());
         onView(withId(R.id.commentInput)).perform(click(), typeText("No question yet"), closeSoftKeyboard());
         onView(withId(R.id.sendButton)).perform(click());
 
         onView(withId(R.id.pollBuilderError))
-                .check(matches(allOf(isDisplayed(), withText("Enter a question for your poll."))));
+                .check(matches(allOf(
+                        isDisplayed(),
+                        withText(context().getString(R.string.fastcomments_poll_error_question_required)))));
     }
 }

@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.model.PollCreationMode;
+import com.fastcomments.model.PollPrivacy;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,15 +63,15 @@ public class PollDraftStateTest {
     @Test
     public void draftSurvivesRecreation() {
         BottomCommentInputView input = createInput();
-        input.findViewWithTag(BottomCommentInputView.POLL_BUTTON_TAG).performClick();
+        input.findViewById(R.id.fastcomments_poll_button).performClick();
         ((EditText) input.findViewById(R.id.pollBuilderQuestion)).setText("Lunch?");
         optionInput(input, 0).setText("Pizza");
         optionInput(input, 1).setText("Tacos");
         input.findViewById(R.id.pollBuilderAddOption).performClick();
         optionInput(input, 2).setText("Soup");
-        input.getPollDraft().closesDays = 3;
-        input.getPollDraft().privacy = 2;
-        input.getPollDraft().requireVoteToSeeResults = true;
+        input.getPollDraft().setDuration(PollDraft.Duration.THREE_DAYS);
+        input.getPollDraft().setPrivacy(PollPrivacy.NUMBER_2);
+        input.getPollDraft().setRequireVoteToSeeResults(true);
 
         SparseArray<Parcelable> state = new SparseArray<>();
         input.saveHierarchyState(state);
@@ -80,11 +81,11 @@ public class PollDraftStateTest {
 
         PollDraft draft = restored.getPollDraft();
         assertNotNull(draft);
-        assertEquals("Lunch?", draft.question);
-        assertEquals(java.util.Arrays.asList("Pizza", "Tacos", "Soup"), draft.options);
-        assertEquals(3, draft.closesDays);
-        assertEquals(2, draft.privacy);
-        assertTrue(draft.requireVoteToSeeResults);
+        assertEquals("Lunch?", draft.getQuestion());
+        assertEquals(java.util.Arrays.asList("Pizza", "Tacos", "Soup"), draft.getOptions());
+        assertEquals(PollDraft.Duration.THREE_DAYS, draft.getDuration());
+        assertEquals(PollPrivacy.NUMBER_2, draft.getPrivacy());
+        assertTrue(draft.isRequireVoteToSeeResults());
         assertEquals(View.VISIBLE, restored.findViewById(R.id.pollBuilderScroll).getVisibility());
         assertEquals("Pizza", optionInput(restored, 0).getText().toString());
         assertEquals("Tacos", optionInput(restored, 1).getText().toString());
@@ -99,7 +100,7 @@ public class PollDraftStateTest {
     @Test
     public void restoredDraftWaitsForTheServerConfig() {
         BottomCommentInputView input = createInput();
-        input.findViewWithTag(BottomCommentInputView.POLL_BUTTON_TAG).performClick();
+        input.findViewById(R.id.fastcomments_poll_button).performClick();
         ((EditText) input.findViewById(R.id.pollBuilderQuestion)).setText("Lunch?");
         SparseArray<Parcelable> state = new SparseArray<>();
         input.saveHierarchyState(state);
@@ -111,6 +112,6 @@ public class PollDraftStateTest {
         restored.setCurrentUser(null);
 
         assertNotNull(restored.getPollDraft());
-        assertEquals("Lunch?", restored.getPollDraft().question);
+        assertEquals("Lunch?", restored.getPollDraft().getQuestion());
     }
 }

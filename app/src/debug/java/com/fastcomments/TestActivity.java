@@ -37,6 +37,10 @@ public class TestActivity extends AppCompatActivity {
         commentsView.load();
     }
 
+    public FastCommentsView getCommentsView() {
+        return commentsView;
+    }
+
     @Override
     protected void onDestroy() {
         if (commentsView != null) {

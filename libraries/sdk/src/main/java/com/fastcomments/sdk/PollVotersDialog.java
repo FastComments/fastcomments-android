@@ -29,9 +29,8 @@ import java.text.NumberFormat;
  */
 public class PollVotersDialog extends Dialog {
 
-    // The search scans joined names server side, so typing a whole name should be one request. The keyboard's
-    // search key skips the wait.
-    private static final long SEARCH_DEBOUNCE_MS = 3000;
+    // Long enough to skip the requests between keystrokes, short enough to feel live without the search key.
+    private static final long SEARCH_DEBOUNCE_MS = 300;
 
     private final FastCommentsSDK sdk;
     private final String commentId;

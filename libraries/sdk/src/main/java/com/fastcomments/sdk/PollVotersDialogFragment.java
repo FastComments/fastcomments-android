@@ -40,7 +40,7 @@ public class PollVotersDialogFragment extends DialogFragment {
             return;
         }
         FragmentManager fragmentManager = fragmentActivity.getSupportFragmentManager();
-        if (fragmentManager.isStateSaved()) {
+        if (fragmentManager.isStateSaved() || fragmentManager.findFragmentByTag(TAG) != null) {
             return;
         }
         Bundle args = new Bundle();
@@ -49,7 +49,8 @@ public class PollVotersDialogFragment extends DialogFragment {
         PollVotersDialogFragment fragment = new PollVotersDialogFragment();
         fragment.setArguments(args);
         fragment.sdk = sdk;
-        fragment.show(fragmentManager, TAG);
+        // Committed now, so a second tap before the next frame finds this one by its tag.
+        fragment.showNow(fragmentManager, TAG);
     }
 
     private static void showWithoutFragment(Context context, FastCommentsSDK sdk, String commentId) {

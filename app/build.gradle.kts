@@ -23,6 +23,13 @@ android {
         baseline = file("lint-baseline.xml")
     }
 
+    // E2E helpers shared with the SDK's integration tests.
+    sourceSets {
+        getByName("androidTest") {
+            java.srcDir("../libraries/sdk/src/testShared/java")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false

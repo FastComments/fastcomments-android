@@ -13,6 +13,7 @@ import com.fastcomments.model.PollPrivacy;
 import com.fastcomments.model.PublicComment;
 import com.fastcomments.model.VotePollResponse;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -45,10 +46,10 @@ public class PollIntegrationTests extends IntegrationTestBase {
 
     private static CommentPollInput makePollInput(PollPrivacy privacy) {
         PollDraft draft = new PollDraft();
-        draft.question = "Best fruit?";
-        draft.options.set(0, "Apple");
-        draft.options.set(1, "Banana");
-        draft.privacy = privacy.getValue();
+        draft.setQuestion("Best fruit?");
+        draft.setOption(0, "Apple");
+        draft.setOption(1, "Banana");
+        draft.setPrivacy(privacy);
         return draft.toInput(System.currentTimeMillis());
     }
 
@@ -166,12 +167,14 @@ public class PollIntegrationTests extends IntegrationTestBase {
         PublicComment posted = postPollCommentSync(author, makePollInput(PollPrivacy.NUMBER_0));
 
         FastCommentsSDK viewer = makeSDKWithUrlId(author.getConfig().urlId);
+        AtomicBoolean viewerConnected = new AtomicBoolean();
+        viewer.setConnectionStatusListener(viewerConnected::set);
         loadSync(viewer);
         assertEquals(
                 Integer.valueOf(0),
                 viewer.commentsTree.getPublicComment(posted.getId()).getPoll().getTotalVotes());
-        // Let the viewer's websocket connect before the vote is broadcast.
-        Thread.sleep(3000);
+        // The vote is broadcast once, so the viewer's websocket has to be up first.
+        waitFor(viewerConnected::get);
 
         votePollExpectSuccess(
                 author, posted.getId(), posted.getPoll().getOptions().get(1).getId());
@@ -237,6 +240,57 @@ public class PollIntegrationTests extends IntegrationTestBase {
                 anonymous, posted.getId(), posted.getPoll().getOptions().get(0).getId());
         assertTrue(result instanceof APIError);
         assertEquals("poll-login-required", ((APIError) result).getCode());
+    }
+
+    @Test
+    public void testLockedPollResultsLoadAfterItCloses() throws Exception {
+        enablePolls(0);
+        FastCommentsSDK author = makeSDKWithUrlId(makeUrlId("testLockedPollResultsLoadAfterItCloses"), makeSSOToken());
+        loadWithPolls(author);
+        long closesAt = System.currentTimeMillis() + 15000;
+        PublicComment posted = postPollCommentSync(
+                author,
+                makePollInput(PollPrivacy.NUMBER_0)
+                        .requireVoteToSeeResults(true)
+                        .closesAt(java.time.Instant.ofEpochMilli(closesAt).toString()));
+        votePollExpectSuccess(
+                author, posted.getId(), posted.getPoll().getOptions().get(1).getId());
+
+        FastCommentsSDK viewer = makeSDKWithUrlId(author.getConfig().urlId, makeSSOToken());
+        loadSync(viewer);
+        RenderableComment seen = viewer.commentsTree.commentsById.get(posted.getId());
+        assertTrue(seen.pollCountsWithheld);
+        assertEquals(
+                Integer.valueOf(0),
+                seen.getComment().getPoll().getOptions().get(1).getVotes());
+
+        // A second past the close, so the server's clock also sees it closed.
+        waitFor(30000, 500, () -> System.currentTimeMillis() > closesAt + 1000);
+        AtomicReference<Boolean> found = new AtomicReference<>();
+        AtomicReference<APIError> error = new AtomicReference<>();
+        viewer.refreshPoll(posted.getId(), new FCCallback<Boolean>() {
+            @Override
+            public boolean onFailure(APIError e) {
+                error.set(e);
+                return CONSUME;
+            }
+
+            @Override
+            public boolean onSuccess(Boolean result) {
+                found.set(result);
+                return CONSUME;
+            }
+        });
+        waitFor(() -> found.get() != null || error.get() != null);
+        if (error.get() != null) {
+            fail("refreshPoll failed: " + error.get().getCode());
+        }
+        assertTrue(found.get());
+        assertTrue(!seen.pollCountsWithheld);
+        assertEquals(Integer.valueOf(1), seen.getComment().getPoll().getTotalVotes());
+        assertEquals(
+                Integer.valueOf(1),
+                seen.getComment().getPoll().getOptions().get(1).getVotes());
     }
 
     @Test

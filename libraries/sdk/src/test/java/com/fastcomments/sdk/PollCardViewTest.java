@@ -5,23 +5,35 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.view.View;
 import android.widget.TextView;
 import com.fastcomments.core.CommentWidgetConfig;
+import com.fastcomments.model.APIError;
 import com.fastcomments.model.CommentPoll;
 import com.fastcomments.model.CommentPollOption;
 import com.fastcomments.model.PollPrivacy;
 import com.fastcomments.model.PollVotingMode;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowLooper;
@@ -32,6 +44,11 @@ public class PollCardViewTest {
     private Context context;
     private FastCommentsSDK sdk;
     private PollCardView card;
+
+    @After
+    public void resetClock() {
+        PollHelper.clock = Clock.systemUTC();
+    }
 
     @Before
     public void setup() {
@@ -123,6 +140,21 @@ public class PollCardViewTest {
     }
 
     @Test
+    public void accentComesFromTheRuntimeTheme() {
+        int accent = 0xFF0066CC;
+        sdk.setTheme(new FastCommentsTheme.Builder().setPollAccentColor(accent).build());
+        RenderableComment comment =
+                new RenderableComment(PollHelperTest.makePollComment(PollHelperTest.makePoll(1, 2)));
+        comment.getComment().setMyPollVotes(Collections.singletonList("o1"));
+        card.bind(sdk, comment);
+
+        GradientDrawable mark = (GradientDrawable)
+                card.getOptionView(1).findViewById(R.id.pollOptionMark).getBackground();
+        assertEquals(accent, mark.getColor().getDefaultColor());
+        assertEquals(accent, text(R.id.pollSaved).getCurrentTextColor());
+    }
+
+    @Test
     public void changeVoteHidesResultsAgain() {
         RenderableComment comment =
                 new RenderableComment(PollHelperTest.makePollComment(PollHelperTest.makePoll(1, 2)));
@@ -160,6 +192,196 @@ public class PollCardViewTest {
     }
 
     @Test
+    public void lockedPollThatClosesOnScreenKeepsResultsHidden() {
+        Instant start = Instant.parse("2030-06-01T12:00:00Z");
+        PollHelper.clock = Clock.fixed(start, ZoneOffset.UTC);
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        activity.setContentView(card);
+        // What the server sends a viewer who hasn't voted: the real total, with every option at 0.
+        bind(PollHelperTest.makePoll(0, 0)
+                .requireVoteToSeeResults(true)
+                .totalVotes(12)
+                .closesAt(OffsetDateTime.ofInstant(start.plusSeconds(60), ZoneOffset.UTC)));
+
+        PollHelper.clock = Clock.fixed(start.plusSeconds(61), ZoneOffset.UTC);
+        ShadowLooper.idleMainLooper(61, TimeUnit.SECONDS);
+        assertEquals("Poll closed", text(R.id.pollCloses).getText().toString());
+        assertEquals(0f, card.getOptionView(0).findViewById(R.id.pollOptionPct).getAlpha(), 0f);
+    }
+
+    @Test
+    public void lockedPollWithNoVotesThatClosesOnScreenKeepsResultsHidden() {
+        Instant start = Instant.parse("2030-06-01T12:00:00Z");
+        PollHelper.clock = Clock.fixed(start, ZoneOffset.UTC);
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        activity.setContentView(card);
+        // Votes that arrive later send no live tally, so these zeros go stale.
+        bind(PollHelperTest.makePoll(0, 0)
+                .requireVoteToSeeResults(true)
+                .totalVotes(0)
+                .closesAt(OffsetDateTime.ofInstant(start.plusSeconds(60), ZoneOffset.UTC)));
+
+        PollHelper.clock = Clock.fixed(start.plusSeconds(61), ZoneOffset.UTC);
+        ShadowLooper.idleMainLooper(61, TimeUnit.SECONDS);
+        assertEquals("Poll closed", text(R.id.pollCloses).getText().toString());
+        assertEquals(0f, card.getOptionView(0).findViewById(R.id.pollOptionPct).getAlpha(), 0f);
+    }
+
+    @Test
+    public void closedPollWithStaleCountsLoadsResultsOnTap() {
+        Instant start = Instant.parse("2030-06-01T12:00:00Z");
+        PollHelper.clock = Clock.fixed(start, ZoneOffset.UTC);
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        activity.setContentView(card);
+        FastCommentsSDK spySdk = Mockito.spy(sdk);
+        List<FCCallback<Boolean>> pending = new ArrayList<>();
+        Mockito.doAnswer(call -> pending.add(call.getArgument(1)))
+                .when(spySdk)
+                .refreshPoll(Mockito.anyString(), Mockito.any());
+        RenderableComment comment = new RenderableComment(PollHelperTest.makePollComment(PollHelperTest.makePoll(0, 0)
+                .requireVoteToSeeResults(true)
+                .closesAt(OffsetDateTime.ofInstant(start.plusSeconds(60), ZoneOffset.UTC))));
+        card.bind(spySdk, comment);
+        PollHelper.clock = Clock.fixed(start.plusSeconds(61), ZoneOffset.UTC);
+        ShadowLooper.idleMainLooper(61, TimeUnit.SECONDS);
+
+        // "0 responses" was true at load; votes since then sent no live tally.
+        assertFalse(visible(R.id.pollTotal));
+        assertTrue(visible(R.id.pollToggleResults));
+        assertEquals("Show results", text(R.id.pollToggleResults).getText().toString());
+
+        card.findViewById(R.id.pollToggleResults).performClick();
+        assertEquals(1, pending.size());
+        card.findViewById(R.id.pollToggleResults).performClick();
+        assertEquals(1, pending.size());
+
+        comment.getComment()
+                .setPoll(comment.getComment()
+                        .getPoll()
+                        .options(PollHelperTest.makePoll(1, 3).getOptions())
+                        .totalVotes(4));
+        comment.pollCountsWithheld = false;
+        pending.get(0).onSuccess(true);
+        assertTrue(visible(R.id.pollTotal));
+        assertEquals("4 responses", text(R.id.pollTotal).getText().toString());
+        assertFalse(visible(R.id.pollToggleResults));
+        assertEquals(1f, card.getOptionView(0).findViewById(R.id.pollOptionPct).getAlpha(), 0f);
+        assertEquals(7500, card.getOptionBarLevel(1));
+    }
+
+    private final List<FCCallback<Boolean>> pendingRefreshes = new ArrayList<>();
+
+    private FastCommentsSDK refreshCapturingSdk() {
+        FastCommentsSDK spySdk = Mockito.spy(sdk);
+        Mockito.doAnswer(call -> pendingRefreshes.add(call.getArgument(1)))
+                .when(spySdk)
+                .refreshPoll(Mockito.anyString(), Mockito.any());
+        return spySdk;
+    }
+
+    private static RenderableComment closedWithheld() {
+        RenderableComment comment = new RenderableComment(PollHelperTest.makePollComment(PollHelperTest.makePoll(0, 0)
+                .requireVoteToSeeResults(true)
+                .closesAt(OffsetDateTime.now().minusMinutes(1))));
+        comment.pollCountsWithheld = true;
+        return comment;
+    }
+
+    @Test
+    public void failedResultsLoadSaysSoAndCanBeRetried() {
+        FastCommentsSDK spySdk = refreshCapturingSdk();
+        card.bind(spySdk, closedWithheld());
+        card.findViewById(R.id.pollToggleResults).performClick();
+        pendingRefreshes.get(0).onFailure(new APIError());
+
+        assertTrue(visible(R.id.pollError));
+        assertEquals(
+                "We could not load the results. Please try again.",
+                text(R.id.pollError).getText().toString());
+        assertTrue(visible(R.id.pollToggleResults));
+
+        card.findViewById(R.id.pollToggleResults).performClick();
+        assertEquals(2, pendingRefreshes.size());
+        assertFalse(visible(R.id.pollError));
+    }
+
+    @Test
+    public void resultsMissingFromThePageSaySoInsteadOfOfferingARetry() {
+        // A pending comment, or one past the numbered pages, has no page to fetch it from.
+        FastCommentsSDK spySdk = refreshCapturingSdk();
+        card.bind(spySdk, closedWithheld());
+        card.findViewById(R.id.pollToggleResults).performClick();
+        pendingRefreshes.get(0).onSuccess(false);
+
+        assertTrue(visible(R.id.pollError));
+        assertEquals(
+                "The results will show the next time the comments load.",
+                text(R.id.pollError).getText().toString());
+        assertFalse(visible(R.id.pollToggleResults));
+    }
+
+    @Test
+    public void resultsLoadedAfterTheCardWasRecycledRebindTheCommentsRow() {
+        FastCommentsSDK spySdk = refreshCapturingSdk();
+        CommentsAdapter adapter = Mockito.mock(CommentsAdapter.class);
+        spySdk.commentsTree.setAdapter(adapter);
+        RenderableComment withheld = closedWithheld();
+        spySdk.commentsTree.build(new ArrayList<>(Collections.singletonList(withheld.getComment())));
+        RenderableComment inTree =
+                spySdk.commentsTree.commentsById.get(withheld.getComment().getId());
+        inTree.pollCountsWithheld = true;
+        card.bind(spySdk, inTree);
+        card.findViewById(R.id.pollToggleResults).performClick();
+
+        // Scrolled away and back: the row is on another card, and this one shows a different poll.
+        PollCardView other = new PollCardView(context);
+        other.bind(spySdk, inTree);
+        assertEquals(0.6f, other.findViewById(R.id.pollOptions).getAlpha(), 0f);
+        card.bind(spySdk, new RenderableComment(PollHelperTest.makePollComment(PollHelperTest.makePoll(1, 1))));
+
+        pendingRefreshes.get(0).onSuccess(true);
+        Mockito.verify(adapter).notifyItemChanged(spySdk.commentsTree.visibleNodes.indexOf(inTree));
+    }
+
+    @Test
+    public void zeroedCountsSentJustBeforeCloseStayHidden() {
+        // The device clock is ahead of the server's, which still saw the poll open and zeroed the counts.
+        Instant closes = Instant.parse("2030-06-01T12:00:00Z");
+        PollHelper.clock = Clock.fixed(closes.plusSeconds(2), ZoneOffset.UTC);
+        bind(PollHelperTest.makePoll(0, 0)
+                .requireVoteToSeeResults(true)
+                .totalVotes(12)
+                .closesAt(OffsetDateTime.ofInstant(closes, ZoneOffset.UTC)));
+
+        assertEquals("Poll closed", text(R.id.pollCloses).getText().toString());
+        assertEquals(0f, card.getOptionView(0).findViewById(R.id.pollOptionPct).getAlpha(), 0f);
+    }
+
+    @Test
+    public void closedPollShowsResultsTheViewerHadHidden() {
+        RenderableComment comment = bind(PollHelperTest.makePoll(1, 3));
+        comment.getComment().setMyPollVotes(Collections.singletonList("o1"));
+        // "Change vote" hid the results, then the poll closed.
+        comment.pollShowResults = false;
+        comment.getComment().getPoll().setClosesAt(OffsetDateTime.now().minusMinutes(1));
+        card.bind(sdk, comment);
+
+        assertEquals(7500, card.getOptionBarLevel(1));
+        assertEquals(1f, card.getOptionView(1).findViewById(R.id.pollOptionPct).getAlpha(), 0f);
+    }
+
+    @Test
+    public void footerLinksHaveFullTouchTargets() {
+        bind(PollHelperTest.makePoll(1, 2).privacy(PollPrivacy.NUMBER_2));
+        card.measure(
+                View.MeasureSpec.makeMeasureSpec(PollStyle.dp(context, 360), View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        int min = PollStyle.dp(context, 48);
+        assertTrue(card.findViewById(R.id.pollToggleResults).getMeasuredHeight() >= min);
+        assertTrue(card.findViewById(R.id.pollVoters).getMeasuredHeight() >= min);
+    }
+
+    @Test
     public void closedPollIsReadOnly() {
         CommentPoll poll =
                 PollHelperTest.makePoll(1, 3).closesAt(OffsetDateTime.now().minusDays(1));
@@ -171,6 +393,29 @@ public class PollCardViewTest {
         assertEquals(7500, card.getOptionBarLevel(1));
         assertFalse(visible(R.id.pollToggleResults));
         assertFalse(visible(R.id.pollChangeVote));
+    }
+
+    @Test
+    public void openPollClosesItselfOnScreen() {
+        Instant start = Instant.parse("2030-06-01T12:00:00Z");
+        PollHelper.clock = Clock.fixed(start, ZoneOffset.UTC);
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        activity.setContentView(card);
+        bind(PollHelperTest.makePoll(1, 1).closesAt(OffsetDateTime.ofInstant(start.plusSeconds(60), ZoneOffset.UTC)));
+        assertTrue(card.getOptionView(0).isEnabled());
+
+        PollHelper.clock = Clock.fixed(start.plusSeconds(61), ZoneOffset.UTC);
+        ShadowLooper.idleMainLooper(61, TimeUnit.SECONDS);
+        assertFalse(card.getOptionView(0).isEnabled());
+        assertEquals("Poll closed", text(R.id.pollCloses).getText().toString());
+    }
+
+    @Test
+    public void closeTimeIncludesTheTimeOfDay() {
+        ZonedDateTime closes = LocalDateTime.of(2099, 6, 1, 15, 45).atZone(ZoneId.systemDefault());
+        bind(PollHelperTest.makePoll(1, 1).closesAt(closes.toOffsetDateTime()));
+        String text = text(R.id.pollCloses).getText().toString();
+        assertTrue(text, text.contains("3:45"));
     }
 
     @Test
@@ -230,6 +475,27 @@ public class PollCardViewTest {
     }
 
     @Test
+    public void barAnimationLeavesTheViewTagToTheHost() {
+        RenderableComment comment =
+                new RenderableComment(PollHelperTest.makePollComment(PollHelperTest.makePoll(1, 1)));
+        comment.getComment().setMyPollVotes(Collections.singletonList("o0"));
+        card.bind(sdk, comment);
+        View secondOption = card.getOptionView(1);
+        secondOption.setTag("host");
+
+        List<CommentPollOption> options = new ArrayList<>();
+        options.add(new CommentPollOption().id("o0").label("Option 0").votes(1));
+        options.add(new CommentPollOption().id("o1").label("Option 1").votes(3));
+        comment.getComment().getPoll().options(options).totalVotes(4);
+        card.patchCounts(sdk, comment);
+
+        assertEquals(5000, card.getOptionBarLevel(1));
+        assertEquals("host", secondOption.getTag());
+        ShadowLooper.idleMainLooper(400, TimeUnit.MILLISECONDS);
+        assertEquals(7500, card.getOptionBarLevel(1));
+    }
+
+    @Test
     public void patchCountsOnlyMovesTheNumbers() {
         RenderableComment comment =
                 new RenderableComment(PollHelperTest.makePollComment(PollHelperTest.makePoll(1, 1)));
@@ -273,6 +539,26 @@ public class PollCardViewTest {
         assertEquals(0, card.getOptionBarLevel(1));
         assertEquals("Option 1", card.getOptionView(1).getContentDescription());
         assertEquals("6 responses", text(R.id.pollTotal).getText().toString());
+    }
+
+    @Test
+    public void liveTalliesOnALockedPollStayHiddenUntilTheViewerVotes() {
+        // The server broadcasts a locked poll's real tallies to everyone, so the card is what hides them.
+        RenderableComment comment =
+                bind(PollHelperTest.makePoll(0, 0).requireVoteToSeeResults(true).totalVotes(4));
+
+        comment.getComment().getPoll().getOptions().get(0).votes(3);
+        comment.getComment().getPoll().getOptions().get(1).votes(2);
+        comment.getComment().getPoll().totalVotes(5);
+        card.patchCounts(sdk, comment);
+
+        for (int i = 0; i < 2; i++) {
+            assertEquals(0, card.getOptionBarLevel(i));
+            assertEquals(
+                    0f, card.getOptionView(i).findViewById(R.id.pollOptionPct).getAlpha(), 0f);
+            assertEquals("Option " + i, card.getOptionView(i).getContentDescription());
+        }
+        assertEquals("5 responses", text(R.id.pollTotal).getText().toString());
     }
 
     @Test

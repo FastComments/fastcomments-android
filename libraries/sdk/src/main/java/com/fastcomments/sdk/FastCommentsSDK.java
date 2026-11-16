@@ -5,6 +5,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RestrictTo;
 import com.fastcomments.api.PublicApi;
 import com.fastcomments.core.CommentWidgetConfig;
 import com.fastcomments.invoker.ApiCallback;
@@ -471,7 +473,7 @@ public class FastCommentsSDK {
     /**
      * Posts a new comment or reply, optionally with a poll attached
      *
-     * @param poll The poll to attach, or null. See {@link PollDraft#toInput(long)}.
+     * @param poll The poll to attach, or null. Only question and 2 to 10 options are required.
      */
     public void postComment(
             String commentText,
@@ -989,15 +991,18 @@ public class FastCommentsSDK {
     /**
      * Handle a live event from the FastComments WebSocket
      */
-    private void handleLiveEvent(LiveEvent eventData) {
+    void handleLiveEvent(LiveEvent eventData) {
         Log.d(
                 "FastCommentsSDK",
                 "handleLiveEvent: type=" + eventData.getType() + " broadcastId=" + eventData.getBroadcastId());
-        // Skip events from our own broadcasts
+        // Skip events from our own broadcasts. Poll tallies are the exception: they are snapshots in server order, so
+        // the one our vote caused is never older than counts that reached us before it.
         if (eventData.getBroadcastId() != null && broadcastIdsSent.contains(eventData.getBroadcastId())) {
-            Log.d("FastCommentsSDK", "handleLiveEvent: SKIPPING own broadcast " + eventData.getBroadcastId());
             broadcastIdsSent.remove(eventData.getBroadcastId());
-            return;
+            if (eventData.getType() != LiveEventType.POLL_UPDATE) {
+                Log.d("FastCommentsSDK", "handleLiveEvent: SKIPPING own broadcast " + eventData.getBroadcastId());
+                return;
+            }
         }
 
         try {
@@ -1132,6 +1137,9 @@ public class FastCommentsSDK {
         if (renderableComment == null || renderableComment.getComment().getPoll() == null) {
             return;
         }
+        renderableComment.pollUpdateCount++;
+        // Live tallies are the real counts even for a locked poll; the card keeps them hidden until the viewer votes.
+        renderableComment.pollCountsWithheld = false;
         CommentPoll poll = renderableComment.getComment().getPoll();
         poll.setOptions(update.getOptions());
         poll.setTotalVotes(update.getTotalVotes());
@@ -1158,6 +1166,7 @@ public class FastCommentsSDK {
             // Notify adapter so the ViewHolder re-renders with updated data
             RenderableComment renderable = commentsTree.commentsById.get(pubSubComment.getId());
             if (renderable != null) {
+                renderable.pollCountsWithheld = PollHelper.countsWithheld(existingComment);
                 commentsTree.notifyItemChanged(renderable);
             }
         }
@@ -2017,11 +2026,25 @@ public class FastCommentsSDK {
         }
     }
 
-    // ===== POLLS =====
+    /**
+     * Whether no API call is in flight, for test idling resources. Live events use their own connection and never
+     * count.
+     */
+    @RestrictTo(RestrictTo.Scope.TESTS)
+    public boolean isApiIdle() {
+        return api.getApiClient().getHttpClient().dispatcher().runningCallsCount() == 0;
+    }
 
     /**
-     * Whether the current user may attach a poll to a new comment, per the pollCreation setting.
+     * Runs each time the last API call in flight finishes, on the thread that ran it. Replaces any earlier callback.
      */
+    @RestrictTo(RestrictTo.Scope.TESTS)
+    public void setApiIdleCallback(@Nullable Runnable callback) {
+        api.getApiClient().getHttpClient().dispatcher().setIdleCallback(callback);
+    }
+
+    // ===== POLLS =====
+
     /**
      * Whether comments have loaded at least once, so the server's config (pollCreation, isSiteAdmin) is merged in.
      */
@@ -2029,6 +2052,9 @@ public class FastCommentsSDK {
         return loaded;
     }
 
+    /**
+     * Whether the current user may attach a poll to a new comment, per the pollCreation setting.
+     */
     public boolean canCreatePoll() {
         return PollHelper.canCreatePoll(config, isSiteAdmin);
     }
@@ -2040,6 +2066,7 @@ public class FastCommentsSDK {
     public void votePoll(String commentId, String optionId, final FCCallback<VotePollResponse> callback) {
         String broadcastId = UUID.randomUUID().toString();
         broadcastIdsSent.add(broadcastId);
+        final int updatesAtSend = getPollUpdateCount(commentId);
 
         try {
             api.votePoll(config.tenantId, commentId, new VotePollBody().optionId(optionId))
@@ -2058,11 +2085,7 @@ public class FastCommentsSDK {
                         public void onSuccess(
                                 VotePollResponse result, int statusCode, Map<String, List<String>> responseHeaders) {
                             mainHandler.post(() -> {
-                                PublicComment comment = commentsTree.getPublicComment(commentId);
-                                if (comment != null && result.getPoll() != null) {
-                                    comment.setPoll(result.getPoll());
-                                    comment.setMyPollVotes(result.getMyPollVotes());
-                                }
+                                applyPollVote(commentId, result, updatesAtSend);
                                 callback.onSuccess(result);
                             });
                         }
@@ -2076,6 +2099,85 @@ public class FastCommentsSDK {
         } catch (ApiException e) {
             CallbackWrapper.handleAPIException(mainHandler, callback, e);
         }
+    }
+
+    int getPollUpdateCount(String commentId) {
+        RenderableComment renderable = commentsTree.commentsById.get(commentId);
+        return renderable != null ? renderable.pollUpdateCount : 0;
+    }
+
+    void applyPollVote(String commentId, VotePollResponse result, int updatesAtSend) {
+        RenderableComment renderable = commentsTree.commentsById.get(commentId);
+        if (renderable == null || result.getPoll() == null) {
+            return;
+        }
+        PublicComment comment = renderable.getComment();
+        comment.setMyPollVotes(result.getMyPollVotes());
+        renderable.pollCountsWithheld = false;
+        // Tallies that arrived while the vote was in flight may be newer than this response; the live event our own
+        // vote causes brings the counts up to date either way.
+        if (getPollUpdateCount(commentId) == updatesAtSend) {
+            comment.setPoll(result.getPoll());
+        }
+    }
+
+    /**
+     * Re-read a poll whose counts were withheld when it loaded. Closing a poll sends no live event, so this is how a
+     * viewer who never voted gets the final results. Succeeds with whether the comment was found; runs on the main
+     * thread.
+     */
+    void refreshPoll(String commentId, final FCCallback<Boolean> callback) {
+        try {
+            // Not asTree: the server ignores fetchPageForCommentId for tree requests.
+            api.getCommentsPublic(config.tenantId, config.urlId)
+                    .fetchPageForCommentId(commentId)
+                    .direction(config.defaultSortDirection)
+                    .sso(config.getSSOToken())
+                    .locale(config.locale)
+                    .executeAsync(new ApiCallback<GetCommentsResponseWithPresencePublicComment>() {
+                        @Override
+                        public void onFailure(
+                                ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+                            APIError error = CallbackWrapper.createErrorFromException(e);
+                            mainHandler.post(() -> callback.onFailure(error));
+                        }
+
+                        @Override
+                        public void onSuccess(
+                                GetCommentsResponseWithPresencePublicComment result,
+                                int statusCode,
+                                Map<String, List<String>> responseHeaders) {
+                            mainHandler.post(
+                                    () -> callback.onSuccess(applyPollRefresh(commentId, result.getComments())));
+                        }
+
+                        @Override
+                        public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {}
+
+                        @Override
+                        public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {}
+                    });
+        } catch (ApiException e) {
+            CallbackWrapper.handleAPIException(mainHandler, callback, e);
+        }
+    }
+
+    boolean applyPollRefresh(String commentId, List<PublicComment> comments) {
+        RenderableComment renderable = commentsTree.commentsById.get(commentId);
+        if (renderable == null || comments == null) {
+            return false;
+        }
+        for (PublicComment fetched : comments) {
+            if (commentId.equals(fetched.getId()) && fetched.getPoll() != null) {
+                PublicComment comment = renderable.getComment();
+                comment.setPoll(fetched.getPoll());
+                comment.setMyPollVotes(fetched.getMyPollVotes());
+                // The server can still see the poll open and send zeroed counts again.
+                renderable.pollCountsWithheld = PollHelper.countsWithheld(comment);
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -2122,12 +2224,18 @@ public class FastCommentsSDK {
 
     // ===== TOOLBAR CONFIGURATION METHODS =====
 
-    private boolean toolbarEnabled = false;
+    // Null until the host chooses, so an unset toolbar can still show for the poll button.
+    @Nullable
+    private Boolean toolbarEnabled = null;
+
     private boolean defaultFormattingEnabled = true;
     private List<CustomToolbarButton> globalCustomButtons = new ArrayList<>();
 
     /**
-     * Enable or disable the comment toolbar globally
+     * Enable or disable the comment toolbar globally. Left unset, the toolbar still appears for the poll button when
+     * the tenant allows polls; false hides it, poll button included. Call this before creating the comments view: an
+     * input reads it when it receives the SDK. To change an input already on screen, call
+     * {@link BottomCommentInputView#setToolbarVisible(boolean)} on it.
      *
      * @param enabled true to enable toolbar, false to disable
      */
@@ -2141,7 +2249,7 @@ public class FastCommentsSDK {
      * @return true if toolbar is enabled
      */
     public boolean isCommentToolbarEnabled() {
-        return toolbarEnabled;
+        return Boolean.TRUE.equals(toolbarEnabled);
     }
 
     /**
@@ -2223,8 +2331,9 @@ public class FastCommentsSDK {
      */
     public void applyGlobalToolbarConfiguration(BottomCommentInputView inputView) {
         if (inputView != null) {
-            // Set global toolbar visibility
-            inputView.setToolbarVisible(toolbarEnabled);
+            if (toolbarEnabled != null) {
+                inputView.setToolbarVisible(toolbarEnabled);
+            }
 
             // Set default formatting buttons
             inputView.setDefaultFormattingEnabled(defaultFormattingEnabled);

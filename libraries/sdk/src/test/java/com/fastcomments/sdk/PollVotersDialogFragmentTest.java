@@ -127,6 +127,24 @@ public class PollVotersDialogFragmentTest {
     }
 
     @Test
+    public void doubleTapOpensOneDialog() {
+        hostSdk = createSdk();
+        FragmentActivity activity =
+                Robolectric.buildActivity(HostActivity.class).setup().get();
+        PollVotersDialogFragment.show(activity, hostSdk, "comment");
+        PollVotersDialogFragment.show(activity, hostSdk, "comment");
+        idle();
+
+        int dialogs = 0;
+        for (Fragment fragment : activity.getSupportFragmentManager().getFragments()) {
+            if (fragment instanceof PollVotersDialogFragment) {
+                dialogs++;
+            }
+        }
+        assertEquals(1, dialogs);
+    }
+
+    @Test
     public void plainActivityDialogClosesWithTheActivity() {
         ActivityController<Activity> controller =
                 Robolectric.buildActivity(Activity.class).setup();

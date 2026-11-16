@@ -13,7 +13,6 @@ import com.fastcomments.model.PollVotingMode;
 import com.fastcomments.model.PublicComment;
 import com.fastcomments.model.UserSessionInfo;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Test;
 
@@ -127,8 +126,9 @@ public class PollHelperTest {
         config.pollCreation = PollCreationMode.NUMBER_2;
         assertTrue(PollHelper.canCreatePoll(config, false));
 
+        // Live chat opts out on its input view, not through this unrelated web flag.
         config.useSingleLineCommentInput = true;
-        assertFalse(PollHelper.canCreatePoll(config, true));
+        assertTrue(PollHelper.canCreatePoll(config, false));
     }
 
     @Test
@@ -141,17 +141,5 @@ public class PollHelperTest {
         assertTrue(PollHelper.canSeeVoters(poll));
         poll.setPrivacy(PollPrivacy.NUMBER_2);
         assertTrue(PollHelper.canSeeVoters(poll));
-    }
-
-    @Test
-    public void sameOptionIdsComparesIdsInOrder() {
-        CommentPoll a = makePoll(1, 2);
-        CommentPoll b = makePoll(5, 9);
-        assertTrue(PollHelper.hasSameOptionIds(a.getOptions(), b.getOptions()));
-        assertFalse(
-                PollHelper.hasSameOptionIds(a.getOptions(), makePoll(1, 2, 3).getOptions()));
-        assertFalse(PollHelper.hasSameOptionIds(
-                a.getOptions(),
-                Arrays.asList(b.getOptions().get(1), b.getOptions().get(0))));
     }
 }

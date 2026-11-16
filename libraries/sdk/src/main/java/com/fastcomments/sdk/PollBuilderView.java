@@ -2,19 +2,27 @@ package com.fastcomments.sdk;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.InsetDrawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.os.Parcelable;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.SparseArray;
-import android.view.KeyEvent;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
@@ -22,8 +30,10 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import com.fastcomments.model.PollPrivacy;
 import com.google.android.flexbox.FlexboxLayout;
 
 /**
@@ -57,6 +67,7 @@ public class PollBuilderView extends LinearLayout {
 
     private PollDraft draft;
     private OnRemoveListener removeListener;
+    private int accent;
     // Set while views are filled from the draft, so their listeners don't write the draft back.
     private boolean binding;
 
@@ -70,6 +81,7 @@ public class PollBuilderView extends LinearLayout {
         // The web builder's area padding: 4px 14px 12px.
         setPaddingRelative(dp(14), dp(4), dp(14), dp(12));
         LayoutInflater.from(context).inflate(R.layout.fastcomments_poll_builder, this, true);
+        accent = color(R.color.fastcomments_poll_accent);
 
         questionView = findViewById(R.id.pollBuilderQuestion);
         optionsContainer = findViewById(R.id.pollBuilderOptions);
@@ -81,7 +93,7 @@ public class PollBuilderView extends LinearLayout {
         PollStyle.applyFooterGaps(findViewById(R.id.pollBuilderFooter));
 
         questionView.setFilters(createFilters(PollDraft.MAX_QUESTION_LENGTH));
-        questionView.addTextChangedListener(new SimpleWatcher(text -> draft.question = text));
+        questionView.addTextChangedListener(new SimpleWatcher(text -> draft.setQuestion(text)));
         questionView.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_NEXT && optionsContainer.getChildCount() > 0) {
                 getOptionInput(0).requestFocus();
@@ -106,26 +118,27 @@ public class PollBuilderView extends LinearLayout {
                         true));
         addOptionView.setOnClickListener(v -> addOption(true));
 
-        for (int i = 0; i < PollDraft.CLOSES_DAYS.length; i++) {
-            final int days = PollDraft.CLOSES_DAYS[i];
+        for (final PollDraft.Duration duration : PollDraft.Duration.values()) {
             TextView pill = new TextView(context);
-            pill.setText(DURATION_LABELS[i]);
+            pill.setText(DURATION_LABELS[duration.ordinal()]);
             pill.setTextSize(14);
-            pill.setTextColor(getContext().getColorStateList(R.color.fastcomments_poll_length_text));
-            pill.setBackgroundResource(R.drawable.fastcomments_poll_length_pill);
-            pill.setPaddingRelative(dp(10), dp(3), dp(10), dp(3));
+            pill.setPaddingRelative(dp(10), 0, dp(10), 0);
+            pill.setGravity(Gravity.CENTER);
+            pill.setMinHeight(dp(48));
+            pill.setMinWidth(dp(48));
             pill.setOnClickListener(v -> {
-                draft.closesDays = days;
+                draft.setDuration(duration);
                 clearError();
                 renderDurations();
             });
             durationsContainer.addView(pill);
         }
+        applyAccent();
 
         requireVoteView.setButtonTintList(ColorStateList.valueOf(textColor));
         requireVoteView.setOnCheckedChangeListener((button, checked) -> {
             if (!binding) {
-                draft.requireVoteToSeeResults = checked;
+                draft.setRequireVoteToSeeResults(checked);
                 clearError();
             }
         });
@@ -154,7 +167,8 @@ public class PollBuilderView extends LinearLayout {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (!binding && draft != null) {
-                    draft.privacy = position;
+                    // The labels are listed in PollPrivacy value order.
+                    draft.setPrivacy(PollPrivacy.fromValue(position));
                 }
             }
 
@@ -175,20 +189,16 @@ public class PollBuilderView extends LinearLayout {
         });
     }
 
-    public void bind(@NonNull PollDraft draft) {
+    void bind(@NonNull PollDraft draft) {
         this.draft = draft;
         binding = true;
-        questionView.setText(draft.question);
-        requireVoteView.setChecked(draft.requireVoteToSeeResults);
-        privacyView.setSelection(draft.privacy, false);
+        questionView.setText(draft.getQuestion());
+        requireVoteView.setChecked(draft.isRequireVoteToSeeResults());
+        privacyView.setSelection(draft.getPrivacy().getValue(), false);
         binding = false;
         renderOptions();
         renderDurations();
         clearError();
-    }
-
-    public PollDraft getDraft() {
-        return draft;
     }
 
     // Option rows share view ids, so the framework would restore one row's text into all of them. The owning input
@@ -203,12 +213,63 @@ public class PollBuilderView extends LinearLayout {
         dispatchThawSelfOnly(container);
     }
 
+    /**
+     * The poll accent from the SDK's runtime theme: the chosen poll length, the question underline and the focused
+     * option's border.
+     */
+    public void setAccentColor(@ColorInt int accent) {
+        if (this.accent == accent) {
+            return;
+        }
+        this.accent = accent;
+        applyAccent();
+        for (int i = 0; i < optionsContainer.getChildCount(); i++) {
+            setRowFocused(optionsContainer.getChildAt(i), getOptionInput(i).hasFocus());
+        }
+    }
+
+    private void applyAccent() {
+        // The web's 2px underline under the borderless question while it has focus.
+        GradientDrawable underline = new GradientDrawable();
+        underline.setColor(accent);
+        LayerDrawable focusedQuestion = new LayerDrawable(new Drawable[] {underline});
+        focusedQuestion.setLayerGravity(0, Gravity.BOTTOM);
+        focusedQuestion.setLayerHeight(0, dp(2));
+        StateListDrawable question = new StateListDrawable();
+        question.addState(new int[] {android.R.attr.state_focused}, focusedQuestion);
+        question.addState(new int[] {}, new ColorDrawable(Color.TRANSPARENT));
+        questionView.setBackground(question);
+
+        ColorStateList pillText = new ColorStateList(
+                new int[][] {new int[] {android.R.attr.state_selected}, new int[] {}},
+                new int[] {color(R.color.fastcomments_poll_accent_text), color(R.color.fastcomments_poll_text)});
+        for (int i = 0; i < durationsContainer.getChildCount(); i++) {
+            TextView pill = (TextView) durationsContainer.getChildAt(i);
+            // Outlined pill, filled with the accent once chosen.
+            StateListDrawable background = new StateListDrawable();
+            background.addState(new int[] {android.R.attr.state_selected}, createPill(accent, accent));
+            background.addState(new int[] {}, createPill(Color.TRANSPARENT, color(R.color.fastcomments_poll_border)));
+            // The tap target is 48dp tall; the drawn pill keeps the web's 3dp above and below the text.
+            int inset = Math.max(0, (dp(48) - pill.getLineHeight() - dp(6)) / 2);
+            pill.setBackground(new InsetDrawable(background, 0, inset, 0, inset));
+            pill.setTextColor(pillText);
+        }
+    }
+
+    private GradientDrawable createPill(int fill, int stroke) {
+        GradientDrawable pill = new GradientDrawable();
+        pill.setCornerRadius(dp(999));
+        pill.setColor(fill);
+        pill.setStroke(dp(1), stroke);
+        return pill;
+    }
+
     public void setOnRemoveListener(OnRemoveListener listener) {
         this.removeListener = listener;
     }
 
-    public void showError(int stringRes) {
-        errorView.setText(stringRes);
+    void showError(@NonNull PollDraft.Error error) {
+        errorView.setText(error.message);
         errorView.setVisibility(VISIBLE);
         // The builder scrolls inside the composer, so bring the error into view or it can go unseen.
         errorView.post(() ->
@@ -224,94 +285,115 @@ public class PollBuilderView extends LinearLayout {
     }
 
     private void addOption(boolean focus) {
-        if (draft.options.size() >= PollDraft.MAX_OPTIONS) {
+        if (!draft.addOption()) {
             return;
         }
-        draft.options.add("");
         clearError();
-        renderOptions();
+        optionsContainer.addView(createOptionRow(""));
+        updateOptionRows();
         if (focus) {
-            getOptionInput(draft.options.size() - 1).requestFocus();
+            getOptionInput(draft.getOptions().size() - 1).requestFocus();
         }
     }
 
     private void removeOption(int index) {
-        if (draft.options.size() <= PollDraft.MIN_OPTIONS) {
+        if (index < 0 || !draft.removeOption(index)) {
             return;
         }
-        draft.options.remove(index);
         clearError();
-        renderOptions();
-        getOptionInput(Math.max(0, index - 1)).requestFocus();
+        optionsContainer.removeViewAt(index);
+        updateOptionRows();
+        EditText previous = getOptionInput(Math.max(0, index - 1));
+        previous.requestFocus();
+        previous.setSelection(previous.length());
     }
 
     private void renderOptions() {
         optionsContainer.removeAllViews();
-        LayoutInflater inflater = LayoutInflater.from(getContext());
-        final boolean canRemove = draft.options.size() > PollDraft.MIN_OPTIONS;
-        for (int i = 0; i < draft.options.size(); i++) {
-            final int index = i;
-            View row = inflater.inflate(R.layout.fastcomments_poll_builder_option, optionsContainer, false);
-            LayoutParams params = (LayoutParams) row.getLayoutParams();
-            if (i > 0) {
-                params.topMargin = dp(8);
+        for (String option : draft.getOptions()) {
+            optionsContainer.addView(createOptionRow(option));
+        }
+        updateOptionRows();
+    }
+
+    // Rows look up their position when used, so adding or removing one leaves the others, and the keyboard, alone.
+    private View createOptionRow(String text) {
+        final View row = LayoutInflater.from(getContext())
+                .inflate(R.layout.fastcomments_poll_builder_option, optionsContainer, false);
+        setRowFocused(row, false);
+        row.findViewById(R.id.pollBuilderOptionMark)
+                .setBackground(PollStyle.createShape(
+                        getContext(),
+                        PollStyle.MARK_RADIUS_DP,
+                        color(R.color.fastcomments_poll_mark_bg),
+                        color(R.color.fastcomments_poll_border),
+                        false));
+
+        EditText input = row.findViewById(R.id.pollBuilderOptionInput);
+        input.setFilters(createFilters(PollDraft.MAX_OPTION_LENGTH));
+        input.setText(text);
+        input.addTextChangedListener(new SimpleWatcher(value -> {
+            int index = optionsContainer.indexOfChild(row);
+            // A removed row can still get a late edit from the keyboard.
+            if (index >= 0) {
+                draft.setOption(index, value);
             }
-            setRowFocused(row, false);
-            row.findViewById(R.id.pollBuilderOptionMark)
-                    .setBackground(PollStyle.createShape(
-                            getContext(),
-                            PollStyle.MARK_RADIUS_DP,
-                            color(R.color.fastcomments_poll_mark_bg),
-                            color(R.color.fastcomments_poll_border),
-                            false));
+        }));
+        input.setOnFocusChangeListener((v, hasFocus) -> setRowFocused(row, hasFocus));
+        input.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId != EditorInfo.IME_ACTION_NEXT) {
+                return false;
+            }
+            int index = optionsContainer.indexOfChild(row);
+            if (index < 0) {
+                return true;
+            }
+            if (index + 1 < draft.getOptions().size()) {
+                getOptionInput(index + 1).requestFocus();
+            } else {
+                addOption(true);
+            }
+            return true;
+        });
+        row.findViewById(R.id.pollBuilderOptionRemove)
+                .setOnClickListener(v -> removeOption(optionsContainer.indexOfChild(row)));
+        return row;
+    }
+
+    private void updateOptionRows() {
+        int count = optionsContainer.getChildCount();
+        boolean canRemove = count > PollDraft.MIN_OPTIONS;
+        for (int i = 0; i < count; i++) {
+            View row = optionsContainer.getChildAt(i);
+            LayoutParams params = (LayoutParams) row.getLayoutParams();
+            int topMargin = i > 0 ? dp(8) : 0;
+            if (params.topMargin != topMargin) {
+                params.topMargin = topMargin;
+                row.setLayoutParams(params);
+            }
+            row.findViewById(R.id.pollBuilderOptionRemove).setVisibility(canRemove ? VISIBLE : INVISIBLE);
 
             EditText input = row.findViewById(R.id.pollBuilderOptionInput);
             input.setHint(getContext().getString(R.string.fastcomments_poll_option_placeholder, i + 1));
-            input.setFilters(createFilters(PollDraft.MAX_OPTION_LENGTH));
-            input.setText(draft.options.get(i));
-            boolean isLast = i == draft.options.size() - 1;
-            input.setImeOptions(
-                    isLast && draft.options.size() >= PollDraft.MAX_OPTIONS
-                            ? EditorInfo.IME_ACTION_DONE
-                            : EditorInfo.IME_ACTION_NEXT);
-            input.addTextChangedListener(new SimpleWatcher(text -> draft.options.set(index, text)));
-            input.setOnFocusChangeListener((v, hasFocus) -> setRowFocused(row, hasFocus));
-            input.setOnEditorActionListener((v, actionId, event) -> {
-                if (actionId != EditorInfo.IME_ACTION_NEXT) {
-                    return false;
+            int imeAction = i == count - 1 && count >= PollDraft.MAX_OPTIONS
+                    ? EditorInfo.IME_ACTION_DONE
+                    : EditorInfo.IME_ACTION_NEXT;
+            if (input.getImeOptions() != imeAction) {
+                input.setImeOptions(imeAction);
+                if (input.isFocused()) {
+                    InputMethodManager imm = getContext().getSystemService(InputMethodManager.class);
+                    if (imm != null) {
+                        imm.restartInput(input);
+                    }
                 }
-                if (index + 1 < draft.options.size()) {
-                    getOptionInput(index + 1).requestFocus();
-                } else {
-                    addOption(true);
-                }
-                return true;
-            });
-            input.setOnKeyListener((v, keyCode, event) -> {
-                if (keyCode == KeyEvent.KEYCODE_DEL
-                        && event.getAction() == KeyEvent.ACTION_DOWN
-                        && input.getText().length() == 0
-                        && draft.options.size() > PollDraft.MIN_OPTIONS) {
-                    removeOption(index);
-                    return true;
-                }
-                return false;
-            });
-
-            View remove = row.findViewById(R.id.pollBuilderOptionRemove);
-            remove.setVisibility(canRemove ? VISIBLE : INVISIBLE);
-            remove.setOnClickListener(v -> removeOption(index));
-
-            optionsContainer.addView(row, params);
+            }
         }
-        addOptionView.setVisibility(draft.options.size() < PollDraft.MAX_OPTIONS ? VISIBLE : GONE);
+        addOptionView.setVisibility(count < PollDraft.MAX_OPTIONS ? VISIBLE : GONE);
     }
 
     private void renderDurations() {
         for (int i = 0; i < durationsContainer.getChildCount(); i++) {
-            View pill = durationsContainer.getChildAt(i);
-            boolean pressed = PollDraft.CLOSES_DAYS[i] == draft.closesDays;
-            pill.setSelected(pressed);
+            durationsContainer.getChildAt(i).setSelected(draft.getDuration().ordinal() == i);
         }
     }
 
@@ -320,7 +402,7 @@ public class PollBuilderView extends LinearLayout {
                 getContext(),
                 PollStyle.OPTION_RADIUS_DP,
                 color(R.color.fastcomments_poll_chip_bg),
-                focused ? color(R.color.fastcomments_poll_accent) : color(android.R.color.transparent),
+                focused ? accent : color(android.R.color.transparent),
                 false));
     }
 

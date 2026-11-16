@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Poll card under a comment's text. Spacing follows the web widget at phone widths. -->
+<!-- Poll card under a comment's text. Spacing follows the web widget at phone widths. The compat drawable attributes
+     are skipped because they need an AppCompat host activity; PollCardView tints the saved pill's icon. -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <TextView
         android:id="@+id/pollQuestion"
@@ -11,7 +13,7 @@
         android:letterSpacing="-0.01"
         android:lineSpacingMultiplier="1.1"
         android:textColor="@color/fastcomments_poll_text"
-        android:textSize="14.7sp"
+        android:textSize="15sp"
         android:textStyle="bold" />
 
     <LinearLayout
@@ -65,11 +67,11 @@
             android:paddingBottom="4dp"
             android:text="@string/fastcomments_poll_vote_saved"
             android:textColor="@color/fastcomments_poll_accent"
-            android:textSize="12.25sp"
+            android:textSize="12sp"
             android:textStyle="bold"
             app:layout_flexShrink="0"
             android:drawableStart="@drawable/fastcomments_ic_poll_check"
-            android:drawableTint="@color/fastcomments_poll_accent" />
+            tools:ignore="UseCompatTextViewDrawableXml" />
 
         <TextView
             android:id="@+id/pollChangeVote"

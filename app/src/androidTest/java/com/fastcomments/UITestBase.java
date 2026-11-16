@@ -14,6 +14,7 @@ import com.fastcomments.model.APIError;
 import com.fastcomments.model.CreateFeedPostParams;
 import com.fastcomments.model.FeedPost;
 import com.fastcomments.sdk.FCCallback;
+import com.fastcomments.testing.E2eTestApi;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -397,23 +398,9 @@ public class UITestBase {
     /** Save a tenant-wide widget config (domain and urlId "*") for the test tenant through the e2e API. */
     protected void createCustomConfig(JSONObject widgetConfig) {
         try {
-            JSONObject body = new JSONObject()
-                    .put("tenantId", testTenantId)
-                    .put("name", "Android UI Test Config")
-                    .put("domain", "*")
-                    .put("urlId", "*")
-                    .put("config", widgetConfig);
-            Request request = new Request.Builder()
-                    .url(HOST + "/test-e2e/api/custom-configs?API_KEY=" + e2eApiKey)
-                    .post(RequestBody.create(body.toString(), JSON_TYPE))
-                    .build();
-            try (Response response = httpClient.newCall(request).execute()) {
-                if (!response.isSuccessful()) {
-                    fail("createCustomConfig failed: " + response.code());
-                }
-            }
+            E2eTestApi.createCustomConfig(httpClient, HOST, e2eApiKey, testTenantId, widgetConfig);
         } catch (Exception e) {
-            fail("createCustomConfig failed: " + e.getMessage());
+            fail(e.getMessage());
         }
     }
 

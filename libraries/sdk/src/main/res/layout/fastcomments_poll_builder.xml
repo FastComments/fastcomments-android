@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
-        android:background="@drawable/fastcomments_poll_question_input"
+        android:background="@android:color/transparent"
         android:hint="@string/fastcomments_poll_question_placeholder"
         android:imeOptions="actionNext"
         android:importantForAutofill="no"
@@ -18,7 +18,7 @@
         android:paddingBottom="2dp"
         android:textColor="@color/fastcomments_poll_text"
         android:textColorHint="@color/fastcomments_poll_text_muted"
-        android:textSize="14.7sp"
+        android:textSize="15sp"
         android:textStyle="bold" />
 
     <LinearLayout
@@ -33,11 +33,10 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center_vertical"
+        android:minHeight="48dp"
         android:orientation="horizontal"
         android:paddingStart="14dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="10dp"
-        android:paddingBottom="10dp">
+        android:paddingEnd="10dp">
 
         <TextView
             android:id="@+id/pollBuilderAddOptionMark"
@@ -107,9 +106,8 @@
 
             <TextView
                 android:id="@+id/pollBuilderPrivacyHelp"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_marginStart="6dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@drawable/fastcomments_poll_help_circle"
                 android:contentDescription="@string/fastcomments_poll_privacy_help"
                 android:gravity="center"

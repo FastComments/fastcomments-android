@@ -19,6 +19,7 @@ import com.fastcomments.model.SetCommentTextResult;
 import com.fastcomments.model.UnblockSuccess;
 import com.fastcomments.model.VoteDeleteResponse;
 import com.fastcomments.model.VoteResponse;
+import com.fastcomments.testing.E2eTestApi;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -911,21 +912,7 @@ public class IntegrationTestBase {
      * Saves a tenant-wide widget config (domain and urlId "*") for the test tenant through the e2e API.
      */
     protected void createCustomConfigSync(JSONObject widgetConfig) throws Exception {
-        JSONObject body = new JSONObject()
-                .put("tenantId", testTenantId)
-                .put("name", "Android Test Config")
-                .put("domain", "*")
-                .put("urlId", "*")
-                .put("config", widgetConfig);
-        Request request = new Request.Builder()
-                .url(TestConfig.HOST + "/test-e2e/api/custom-configs?API_KEY=" + TestConfig.E2E_API_KEY)
-                .post(RequestBody.create(body.toString(), okhttp3.MediaType.get("application/json")))
-                .build();
-        try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                fail("Creating custom config failed with status: " + response.code());
-            }
-        }
+        E2eTestApi.createCustomConfig(httpClient, TestConfig.HOST, TestConfig.E2E_API_KEY, testTenantId, widgetConfig);
     }
 
     // ---- Polling / Waiting ----
